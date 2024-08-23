@@ -11,7 +11,8 @@ from config import (
 )
 
 
-URL_DATABASE = f'postgresql://postgres:{DATABASE_PASS}!@localhost:{PORT}/{DATABASE_NAME}'
+URL_DATABASE = f'postgresql://postgres:{DATABASE_PASS}@localhost:{PORT}/{DATABASE_NAME}'
+
 
 engine = create_engine(URL_DATABASE)
 

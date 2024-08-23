@@ -6,7 +6,9 @@ Base.metadata.create_all(bind=engine) # create all tables in database
 app = FastAPI()
 
 
-
+@app.route('')
+def index():
+    return "hehe"
 
 
 
