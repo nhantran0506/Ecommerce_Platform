@@ -13,7 +13,7 @@ routing = RouteConfig()
 
 # allow NextJS, ReactJS to bypass CORS
 routing.configure_fe_policy(app)
-routing.routing_config(
+routing.routing_config(app,
     list_routing=[
         views.products.router,
     ]
