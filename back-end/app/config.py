@@ -5,9 +5,12 @@ load_dotenv()
 
 DATABASE_PASS = str(os.getenv('DATABASE_PASS'))
 DATABASE_NAME = str(os.getenv('DATABASE_NAME'))
-PORT = str(int(os.getenv('PORT')))
+PORT = str(os.getenv('PORT'))
 
 
 SERECT_KEY=str(os.getenv('SERECT_KEY'))
 ALGORITHM=str(os.getenv('ALGORITHM'))
-EXPIRE_TOKEN_TIME=int(os.getenv('EXPIRE_TOKEN_TIME'))
+EXPIRE_TOKEN_TIME=int(str(os.getenv('EXPIRE_TOKEN_TIME')))
+
+PORT_FE=str(os.getenv('PORT_FE'))
+ADDRESS_FE=str(os.getenv('ADDRESS_FE'))

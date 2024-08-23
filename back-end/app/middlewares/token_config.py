@@ -25,31 +25,31 @@ def create_access_token(data : dict, expires_delta : Optional[timedelta] = None)
     return encoded_jwt
 
 
-def get_current_user(token: str = Depends(oauth2_scheme), db : Session = db_dependency):
-    credentials_exceptions = HTTPException(
-        status_code= status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers = {"WWW-Authenticate": "Bearer"}
+# def get_current_user(token: str = Depends(oauth2_scheme), db : Session = db_dependency):
+#     credentials_exceptions = HTTPException(
+#         status_code= status.HTTP_401_UNAUTHORIZED,
+#         detail="Could not validate credentials",
+#         headers = {"WWW-Authenticate": "Bearer"}
 
-    )
+#     )
 
-    try:
-        payload = jwt.decode(token, SERECT_KEY, algorithms=[ALGORITHM])
-        phonenumber : str = payload.get("sub",)
-        if phonenumber is None:
-            raise credentials_exceptions
-    except:
-        raise credentials_exceptions
-    user = get_user_by_phone(db, phonenumber)
-    if user is None:
-        raise credentials_exceptions
-    return user
+#     try:
+#         payload = jwt.decode(token, SERECT_KEY, algorithms=[ALGORITHM])
+#         phonenumber : str = payload.get("sub", None)
+#         if phonenumber is None:
+#             raise credentials_exceptions
+#     except:
+#         raise credentials_exceptions
+#     user = get_user_by_phone(db, phonenumber)
+#     if user is None:
+#         raise credentials_exceptions
+#     return user
 
 
-def authenticate_user (db : Session, phonenumber : str, password: str):
-    user = get_user_by_phone(db, phonenumber)
-    if not user:
-        return False
-    if not user.verify_password(password):
-        return False
-    return user
+# def authenticate_user (db : Session, phonenumber : str, password: str):
+#     user = get_user_by_phone(db, phonenumber)
+#     if not user:
+#         return False
+#     if not user.verify_password(password):
+#         return False
+#     return user

@@ -1,20 +1,22 @@
 from fastapi import FastAPI, HTTPException, Depends
-from fastapi.middleware.cors import CORSMiddleware
 from db_connector import engine, Base, SessionLocal
-from routers import products
+from middlewares.routing_config import RouteConfig
+import views
+import views.products
 
 
 Base.metadata.create_all(bind=engine)  # create all tables in database
 
 app = FastAPI()
 
+routing = RouteConfig()
+
 # allow NextJS, ReactJS to bypass CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+routing.configure_fe_policy(app)
+routing.routing_config(
+    list_routing=[
+        views.products.router,
+    ]
 )
 
 
@@ -23,4 +25,4 @@ def connection_check():
     return {"message": "connect to server successfully!"}
 
 
-app.include_router(products.router)
+
