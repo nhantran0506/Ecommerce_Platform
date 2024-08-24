@@ -11,7 +11,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 @router.get("/login")
 async def login(user : UserLogin):
     try:
-        user_controller = UserController()
+        user_controller = UserController(db_dependency)
         return await user_controller.login(user)
     except Exception as e:
         return JSONResponse(content={"message": str(e)}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -21,7 +21,7 @@ async def login(user : UserLogin):
 
 @router.get("/{user_id}")
 async def get_user(user_id: str):
-    user_controller = UserController()
+    user_controller = UserController(db_dependency)
     try:
         return await user_controller.get_user_by_id(user_id)
     except Exception as e:

@@ -9,7 +9,7 @@ from fastapi import status
 
 
 class UserController():
-    def __init__(self, db : Session = db_dependency):
+    def __init__(self, db : Session):
         self.db = db
     
     async def login(self, user : UserLogin):
