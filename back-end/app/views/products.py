@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from fastapi import APIRouter, status
-
+from sqlalchemy.orm import Session
 from models.Products import Product, ProductBase
 from db_connector import db_dependency
 
@@ -13,17 +13,17 @@ class ProductCreate(ProductBase):
 
 
 @router.get("/all")
-def get_products(db: db_dependency):
+def get_products(db: Session = db_dependency):
     return db.query(Product).all()
 
 
 @router.get("/")
-def get_product(db: db_dependency, product_id: int):
+def get_product(product_id: int , db: Session = db_dependency):
     return db.query(Product).filter(Product.product_id == product_id).first()
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def create_product(db: db_dependency, product: ProductCreate):
+def create_product(product: ProductCreate , db: Session = db_dependency ):
     db_product = Product(**product.model_dump())
     db.add(db_product)
     db.commit()
@@ -32,7 +32,7 @@ def create_product(db: db_dependency, product: ProductCreate):
 
 
 @router.delete("/")
-def delete_product(db: db_dependency, product_id: int):
+def delete_product(product_id: int, db: Session = db_dependency):
     db_product = db.query(Product).filter(Product.product_id == product_id).first()
     if db_product:
         db.delete(db_product)

@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from db_connector import engine, Base, SessionLocal
 from middlewares.routing_config import RouteConfig
 import views
+import views.UserViews
 import views.products
 
 
@@ -16,6 +17,7 @@ routing.configure_fe_policy(app)
 routing.routing_config(app,
     list_routing=[
         views.products.router,
+        views.UserViews.router,
     ]
 )
 

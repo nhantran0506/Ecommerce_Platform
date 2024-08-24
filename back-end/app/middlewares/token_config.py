@@ -2,8 +2,10 @@ from datetime import datetime, timedelta
 from typing import Optional, Any
 from jose import JWSError, jwt
 from fastapi import HTTPException, status, Depends
+from db_connector import get_db
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+from models.Authentication import Authentication
 from db_connector import db_dependency
 from config import(
     ALGORITHM,
@@ -25,31 +27,31 @@ def create_access_token(data : dict, expires_delta : Optional[timedelta] = None)
     return encoded_jwt
 
 
-# def get_current_user(token: str = Depends(oauth2_scheme), db : Session = db_dependency):
-#     credentials_exceptions = HTTPException(
-#         status_code= status.HTTP_401_UNAUTHORIZED,
-#         detail="Could not validate credentials",
-#         headers = {"WWW-Authenticate": "Bearer"}
+def get_current_user(token: str = Depends(oauth2_scheme), db : Session = db_dependency):
+    credentials_exceptions = HTTPException(
+        status_code= status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers = {"WWW-Authenticate": "Bearer"}
 
-#     )
+    )
+    try:
+        payload = jwt.decode(token, SERECT_KEY, algorithms=[ALGORITHM])
+        user_name : str = payload.get("user_name", None)
+        if user_name is None:
+            raise credentials_exceptions
+    except:
+        raise credentials_exceptions
+    user = Authentication.get_user_by_username(db, user_name)
+    if user is None:
+        raise credentials_exceptions
+    return user
 
-#     try:
-#         payload = jwt.decode(token, SERECT_KEY, algorithms=[ALGORITHM])
-#         phonenumber : str = payload.get("sub", None)
-#         if phonenumber is None:
-#             raise credentials_exceptions
-#     except:
-#         raise credentials_exceptions
-#     user = get_user_by_phone(db, phonenumber)
-#     if user is None:
-#         raise credentials_exceptions
-#     return user
 
 
-# def authenticate_user (db : Session, phonenumber : str, password: str):
-#     user = get_user_by_phone(db, phonenumber)
-#     if not user:
-#         return False
-#     if not user.verify_password(password):
-#         return False
-#     return user
+def authenticate_user(user_name : str, password: str, db : Session = db_dependency):
+    user = Authentication.get_user_by_username(db, user_name)
+    if not user:
+        return False
+    if not user.verify_password(password):
+        return False
+    return user

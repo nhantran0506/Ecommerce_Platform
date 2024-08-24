@@ -1,5 +1,6 @@
 from sqlalchemy import Boolean, String, Integer, Column, ForeignKey, DateTime, Enum, ForeignKey
 from sqlalchemy.orm import relationship
+from datetime import datetime
 import enum
 from db_connector import Base
 from pydantic import BaseModel
@@ -9,25 +10,31 @@ import uuid
 
 
 class UserBase(BaseModel):
-    id : str
-    first_name : str
-    last_name : str
-    address : str
-    dob : DateTime
-    email : str
-    is_deleted : bool
+    id: str
+    first_name: str
+    last_name: str
+    address: str
+    dob: DateTime
+    email: str
+    is_deleted: bool
 
+    class Config:
+        arbitrary_types_allowed = True
+        from_attributes = True
+
+class UserLogin(BaseModel):
+    user_name : str
+    password : str
 
 class UserRoles(enum.Enum):
     USER = "USER"
     ADMIN = "ADMIN"
     SHOP_OWNER = "SHOP_OWNER"
 
-
 class User(Base):
     __tablename__ = 'users'
 
-    id = Column(UUID(as_uuid = True), primary_key=True, default=str(uuid.uuid4()))
+    id = Column(UUID(as_uuid = True), primary_key=True, default=uuid.uuid4())
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     address = Column(String, nullable=False)
@@ -36,7 +43,9 @@ class User(Base):
     role = Column(Enum(UserRoles), nullable=False, default=UserRoles.USER)
     is_deleted = Column(Boolean, default=False)
 
-    authenticate = relationship("Authentication", back_populates="user")
+    def __init__(self):
+        from Authentication import Authentication
+        self.authenticate = relationship("Authentication", back_populates="user")
 
     
     
