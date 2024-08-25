@@ -49,16 +49,18 @@ async def get_user(user_id: str):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-
-# @router.post("/add_user")
-# async def add_user(request: User):
-#     pass
-
-
 # @router.post("/update_user/{user_id}")
 # async def update_user(user_id: int, request: User):
 #     pass
 
-# @router.post("/delete_user/{user_id}")
-# async def delete_user(user_id: int):
-#     passc
+@router.post("/delete_user")
+async def delete_user(user_deleted : UserDelete, user_controller : UserController = Depends()):
+    try:
+        
+        return await user_controller.delete_user_by_id(user_deleted)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )

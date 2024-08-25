@@ -6,16 +6,15 @@ from db_connector import get_db
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from models.Authentication import Authentication
-from config import(
-    ALGORITHM,
-    SERECT_KEY,
-    EXPIRE_TOKEN_TIME
-)
+from fastapi import status, HTTPException, Security
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from config import ALGORITHM, SERECT_KEY, EXPIRE_TOKEN_TIME
 
+security = HTTPBearer()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-def create_access_token(data : dict, expires_delta : Optional[timedelta] = None):
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
@@ -26,28 +25,26 @@ def create_access_token(data : dict, expires_delta : Optional[timedelta] = None)
     return encoded_jwt
 
 
-def get_current_user(db : Session, token: str = Depends(oauth2_scheme)):
+def get_current_user(db: Session, token: str):
     credentials_exceptions = HTTPException(
-        status_code= status.HTTP_401_UNAUTHORIZED,
+        status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
-        headers = {"WWW-Authenticate": "Bearer"}
-
+        headers={"WWW-Authenticate": "Bearer"},
     )
     try:
         payload = jwt.decode(token, SERECT_KEY, algorithms=[ALGORITHM])
-        user_name : str = payload.get("user_name", None)
-        if user_name is None:
-            raise credentials_exceptions
+        user_name: str = payload.get("user_name", "")
+        if user_name:
+            user = Authentication.get_user_by_username(db, user_name)
+            if user is None:
+                raise credentials_exceptions
+            return user
+        raise "credentials_exceptions"
     except:
         raise credentials_exceptions
-    user = Authentication.get_user_by_username(db, user_name)
-    if user is None:
-        raise credentials_exceptions
-    return user
 
 
-
-def authenticate_user(db : Session, user_name : str, password: str):
+def authenticate_user(db: Session, user_name: str, password: str):
     user = Authentication.get_user_by_username(db, user_name)
     if not user:
         return False
@@ -56,4 +53,10 @@ def authenticate_user(db : Session, user_name : str, password: str):
     return user
 
 
-    
+def get_user_role(
+    db: Session, authorization: HTTPAuthorizationCredentials = Security(security)
+):
+    token = authorization.credentials
+    user = get_current_user(db = db , token=token)
+    if user:
+        return user.role

@@ -4,6 +4,7 @@ from middlewares.routing_config import RouteConfig
 import views
 import views.UserViews
 import views.products
+import uvicorn
 
 
 Base.metadata.create_all(bind=engine)  # create all tables in database
@@ -25,6 +26,10 @@ routing.routing_config(app,
 @app.get("/")
 def connection_check():
     return {"message": "connect to server successfully!"}
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
 

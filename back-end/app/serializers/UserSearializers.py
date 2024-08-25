@@ -28,3 +28,7 @@ class UserCreateSerializer(UserPostSerializer):
 class UserLogin(BaseModel):
     user_name: str = Field(..., alias="user_name")
     password: str = Field(..., alias="password")
+
+
+class UserDelete(BaseModel):
+    user_id : str = Field(..., alias="user_id")
