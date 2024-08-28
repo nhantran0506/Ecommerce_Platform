@@ -68,19 +68,18 @@ class UserController:
             content={"Message" : "User created successfully."}, status_code=status.HTTP_201_CREATED
         )
 
-
-
-    async def delete_user_by_id(self, user_delete : UserDelete):
-        user_delete_id = user_delete.user_id
-        user_role = get_user_role(self.db)
-
-        if user_role != UserRoles.ADMIN:
-            return JSONResponse(
-                content={"Message": "Unauthorized to delete user."},
-                status_code=status.HTTP_403_FORBIDDEN,
-            )
-
-        user = self.db.query(User).filter(User.id == user_delete_id).first()
+    async def delete_user_by_id(self,user_delte: UserDelete, role: str = Depends(get_user_role)):
+        if role != 'ADMIN':
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have power here.")
+        
+        user_id = user_delte.user_id
+        
+        auth_records = self.db.query(Authentication).filter(Authentication.user_id == user_id).all()
+        for auth_record in auth_records:
+            self.db.delete(auth_record)
+        self.db.commit()
+    
+        user = self.db.query(User).filter(User.id == user_id).first()
         if user:
             self.db.delete(user)
             self.db.commit()
@@ -93,4 +92,9 @@ class UserController:
                 content={"Message": "Unable to find any user."},
                 status_code=status.HTTP_404_NOT_FOUND,
             )
+
+
+
+
+
 

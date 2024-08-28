@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from models.Authentication import Authentication
 from fastapi import status, HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from typing import Annotated
 from config import ALGORITHM, SERECT_KEY, EXPIRE_TOKEN_TIME
 
 security = HTTPBearer()
@@ -54,9 +55,15 @@ def authenticate_user(db: Session, user_name: str, password: str):
 
 
 def get_user_role(
-    db: Session, authorization: HTTPAuthorizationCredentials = Security(security)
+    db: Session = Depends(get_db),
+    credentials: HTTPAuthorizationCredentials = Depends(oauth2_scheme)
 ):
-    token = authorization.credentials
-    user = get_current_user(db = db , token=token)
+    token = credentials.credentials  # Extract token from credentials
+    user = get_current_user(db=db, token=token)
     if user:
         return user.role
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Could not determine user role"
+        )

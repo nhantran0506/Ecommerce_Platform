@@ -38,8 +38,7 @@ async def signup(user : UserCreateSerializer, user_controller : UserController =
 
 
 @router.get("/{user_id}")
-async def get_user(user_id: str):
-    user_controller = UserController(Depends(get_db))
+async def get_user(user_id: str, user_controller : UserController = Depends()):
     try:
         return await user_controller.get_user_by_id(user_id)
     except Exception as e:
@@ -64,3 +63,5 @@ async def delete_user(user_deleted : UserDelete, user_controller : UserControlle
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
