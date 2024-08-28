@@ -1,52 +1,45 @@
-from sqlalchemy import Boolean, String, Integer, Column, ForeignKey, DateTime, Enum, ForeignKey
+from sqlalchemy import (
+    Boolean,
+    String,
+    Column,
+    DateTime,
+    Enum,
+)
 from sqlalchemy.orm import relationship
-from datetime import datetime
 import enum
 from db_connector import Base
-from pydantic import BaseModel
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
-
-
-
-class UserBase(BaseModel):
-    id: str
-    first_name: str
-    last_name: str
-    address: str
-    dob: DateTime
-    email: str
-    is_deleted: bool
-
-    class Config:
-        arbitrary_types_allowed = True
-        from_attributes = True
-
-class UserLogin(BaseModel):
-    user_name : str
-    password : str
 
 class UserRoles(enum.Enum):
     USER = "USER"
     ADMIN = "ADMIN"
     SHOP_OWNER = "SHOP_OWNER"
 
-class User(Base):
-    __tablename__ = 'users'
 
-    id = Column(UUID(as_uuid = True), primary_key=True, default=uuid.uuid4())
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4())
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
+    phone_number = Column(String, nullable=False, unique=True)
     address = Column(String, nullable=False)
     dob = Column(DateTime, nullable=False)
     email = Column(String, nullable=True)
     role = Column(Enum(UserRoles), nullable=False, default=UserRoles.USER)
     is_deleted = Column(Boolean, default=False)
-
-    def __init__(self):
-        from Authentication import Authentication
-        self.authenticate = relationship("Authentication", back_populates="user")
-
     
     
+    def __init__(self, first_name, last_name, phone_number, address, dob, email=None):
+        self.first_name = first_name
+        self.last_name = last_name
+        self.phone_number = phone_number
+        self.address = address
+        self.dob = dob
+        self.email = email
+
+        self.authenticate = relationship("Authentication", back_populates="user", uselist=False, foreign_keys="[Authentication.user_id]")
+
+        
     

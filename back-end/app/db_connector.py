@@ -1,8 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from typing import List, Annotated
-from sqlalchemy.orm import Session
 from fastapi import Depends
 from config import DATABASE_PASS, DATABASE_NAME, PORT
 
@@ -24,5 +22,3 @@ def get_db():
     finally:
         db.close()
 
-
-db_dependency = Depends(get_db)
