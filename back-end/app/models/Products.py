@@ -1,12 +1,16 @@
 from datetime import datetime
 from sqlalchemy import Boolean, String, Integer, Column, ForeignKey, DateTime
 from db_connector import Base
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 
 
 class ProductBase(BaseModel):
     product_name: str
+    create_at_datetime: Optional[datetime] = Field(default_factory=datetime.now)
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class Product(Base):
