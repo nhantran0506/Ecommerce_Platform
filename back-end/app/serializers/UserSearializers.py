@@ -24,6 +24,12 @@ class UserCreateSerializer(UserPostSerializer):
     email: str = Field(..., alias="email")
     dob: Optional[DateTime] = Field(..., alias="dob")
 
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = Field(..., alias="first_name")
+    last_name: Optional[str] = Field(..., alias="last_name")
+    address: Optional[str] = Field(..., alias="address")
+    dob: Optional[DateTime] = Field(..., alias="dob")
+
 
 class UserLogin(BaseModel):
     user_name: str = Field(..., alias="user_name")
@@ -32,3 +38,5 @@ class UserLogin(BaseModel):
 
 class UserDelete(BaseModel):
     user_id : str = Field(..., alias="user_id")
+
+

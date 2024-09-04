@@ -46,6 +46,7 @@ class Authentication(Base):
     def hash_password(self, password: str) -> str:
         return pwd_context.hash(password)
 
+
     def verify_password(self, password: str) -> bool:
         try:
             if not password:

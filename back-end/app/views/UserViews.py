@@ -15,14 +15,14 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 @router.get("/login")
 async def login(user: UserLogin, user_controller : UserController = Depends()):
-    try:
-        return await user_controller.login(user)
-    except Exception as e:
-        logger.error(str(e))
-        return JSONResponse(
-            content={"Message": "Unexpected error"},
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+    # try:
+    return await user_controller.login(user)
+    # except Exception as e:
+    #     logger.error(str(e))
+    #     return JSONResponse(
+    #         content={"Message": "Unexpected error"},
+    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #     )
 
 
 @router.post("/signup")
@@ -49,9 +49,16 @@ async def get_user(user_id: str, user_controller : UserController = Depends()):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-# @router.post("/update_user/{user_id}")
-# async def update_user(user_id: int, request: User):
-#     pass
+@router.post("/update_user")
+async def update_user(user_update: UserUpdate , user_controller : UserController = Depends() ,current_user = Depends(token_config.get_current_user)):
+    try:
+        return await user_controller.update_user(user_update, current_user=current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 @router.post("/delete_user")
 async def delete_user(user_deleted : UserDelete, user_controller : UserController = Depends(), role = Depends(token_config.get_user_role)):

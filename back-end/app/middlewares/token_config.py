@@ -22,13 +22,18 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 
-def get_current_user(db: Session, token: str):
+def get_current_user(
+    db: Session =  Depends(get_db),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+    ):
+    
     credentials_exceptions = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
+        token = credentials.credentials 
         payload = jwt.decode(token, SERECT_KEY, algorithms=[ALGORITHM])
         user_name: str = payload.get("user_name")
         if not user_name:
@@ -42,18 +47,17 @@ def get_current_user(db: Session, token: str):
 
 
 def authenticate_user(db: Session, user_name: str, password: str):
-    user = Authentication.get_user_by_username(db, user_name)
-    if not user or not user.verify_password(password):
+    user_auth = db.query(Authentication).filter(Authentication.user_name == user_name).first()
+    if not user_auth or not user_auth.verify_password(password):
         return False
-    return user
+    return user_auth
 
 
 def get_user_role(
     db: Session = Depends(get_db),
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
-    token = credentials.credentials  
-    user = get_current_user(db=db, token=token)
+    user = get_current_user(db=db, credentials = credentials)
     if user:
         return user.role
     else:
