@@ -68,8 +68,8 @@ class UserController:
             content={"Message" : "User created successfully."}, status_code=status.HTTP_201_CREATED
         )
 
-    async def delete_user_by_id(self,user_delte: UserDelete, role: str = Depends(get_user_role)):
-        if role != 'ADMIN':
+    async def delete_user_by_id(self,user_delte: UserDelete, role: str):
+        if role != UserRoles.ADMIN:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have power here.")
         
         user_id = user_delte.user_id
@@ -92,6 +92,37 @@ class UserController:
                 content={"Message": "Unable to find any user."},
                 status_code=status.HTTP_404_NOT_FOUND,
             )
+    
+    async def update_user(self, user_update: UserUpdate, current_user):
+        if not current_user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+
+        if user_update.first_name is not None:
+            current_user.first_name = user_update.first_name
+        if user_update.last_name is not None:
+            current_user.last_name = user_update.last_name
+        if user_update.phone_number is not None:
+            current_user.phone_number = user_update.phone_number
+        if user_update.address is not None:
+            current_user.address = user_update.address
+        if user_update.email is not None:
+            current_user.email = user_update.email
+        if user_update.dob is not None:
+            current_user.dob = user_update.dob
+
+        self.db.commit()
+        self.db.refresh(current_user)  
+
+        return JSONResponse(
+            content={"Message": "User updated successfully."},
+            status_code=status.HTTP_200_OK
+        )
+
+        
+
+
+    
+
 
 
 

@@ -5,6 +5,7 @@ from abc import abstractmethod
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from db_connector import Base
+from models.Users import User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -35,17 +36,16 @@ class Authentication(Base):
     @abstractmethod
     def get_user_by_username(db_connector: Session, user_name: str):
         try:
-            return (
-                db_connector.query(Authentication)
-                .filter(Authentication.user_name == user_name)
-                .first()
-            )
+            user =  db_connector.query(Authentication).filter(Authentication.user_name == user_name).first()
+            user = db_connector.query(User).filter(User.id == user.user_id).first()
+            return user
         except Exception as e:
             raise e
 
     @abstractmethod
     def hash_password(self, password: str) -> str:
         return pwd_context.hash(password)
+
 
     def verify_password(self, password: str) -> bool:
         try:
