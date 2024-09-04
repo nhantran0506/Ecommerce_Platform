@@ -69,6 +69,7 @@ class UserController:
         )
 
     async def delete_user_by_id(self,user_delte: UserDelete, role: str = Depends(get_user_role)):
+        print(role)
         if role != 'ADMIN':
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have power here.")
         

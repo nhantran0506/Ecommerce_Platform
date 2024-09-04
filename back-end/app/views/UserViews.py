@@ -5,6 +5,7 @@ from models.Users import User
 from serializers.UserSearializers import *
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Session
+from middlewares import token_config
 from db_connector import get_db
 import logging
 
@@ -53,10 +54,10 @@ async def get_user(user_id: str, user_controller : UserController = Depends()):
 #     pass
 
 @router.post("/delete_user")
-async def delete_user(user_deleted : UserDelete, user_controller : UserController = Depends()):
+async def delete_user(user_deleted : UserDelete, user_controller : UserController = Depends(), role = Depends(token_config.get_user_role)):
     try:
         
-        return await user_controller.delete_user_by_id(user_deleted)
+        return await user_controller.delete_user_by_id(user_deleted, role=role)
     except Exception as e:
         logger.error(str(e))
         return JSONResponse(
