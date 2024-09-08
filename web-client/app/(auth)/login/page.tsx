@@ -5,6 +5,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { API_BASE_URL, API_ROUTES } from '@/libraries/api';
+import loginImage from '@/assets/login-image.jpg';
+import googleIcon from '@/assets/google-icon.png';
+import zaloIcon from '@/assets/zalo-icon.png';
+import facebookIcon from '@/assets/facebook-icon.png';
 
 export default function LoginPage() {
   const [form_data, set_form_data] = useState({
@@ -52,7 +56,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex">
       <div className="w-1/2 relative">
         <Image
-          src="/login-image.jpg"
+          src={loginImage}
           alt="Login"
           layout="fill"
           objectFit="cover"
@@ -112,13 +116,13 @@ export default function LoginPage() {
             <p className="text-center text-sm text-gray-500">or do it via other accounts</p>
             <div className="mt-4 flex justify-center space-x-4">
               <button className="p-2 border border-gray-300 rounded-full">
-                <Image src="/google-icon.png" alt="Google" width={24} height={24} />
+                <Image src={googleIcon} alt="Google" width={24} height={24} />
               </button>
               <button className="p-2 border border-gray-300 rounded-full">
-                <Image src="/zalo-icon.png" alt="Zalo" width={24} height={24} />
+                <Image src={zaloIcon} alt="Zalo" width={24} height={24} />
               </button>
               <button className="p-2 border border-gray-300 rounded-full">
-                <Image src="/facebook-icon.png" alt="Facebook" width={24} height={24} />
+                <Image src={facebookIcon} alt="Facebook" width={24} height={24} />
               </button>
             </div>
           </div>
