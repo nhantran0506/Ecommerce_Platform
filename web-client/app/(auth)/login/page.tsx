@@ -1,14 +1,18 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { API_BASE_URL, API_ROUTES } from '@/libraries/api';
 
 export default function LoginPage() {
   const [form_data, set_form_data] = useState({
-    email_or_phone: '',
+    user_name: '',
     password: '',
   });
+  const [error, set_error] = useState('');
+  const router = useRouter();
 
   const handle_change = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -18,10 +22,30 @@ export default function LoginPage() {
     }));
   };
 
-  const handle_submit = (e: FormEvent<HTMLFormElement>) => {
+  const handle_submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-   
-    console.log('Login attempt with:', form_data);
+    set_error('');
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}${API_ROUTES.LOGIN}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(form_data),
+
+      });
+      if (!response.ok) {
+        throw new Error('Login failed');
+      }
+
+      const data = await response.json();
+      
+      localStorage.setItem('token', data.token);
+      router.push('/');
+    } catch (error) {
+      set_error('Invalid credentials. Please try again.');
+    }
   };
 
   return (
@@ -41,17 +65,17 @@ export default function LoginPage() {
           </h2>
           <form className="space-y-4" onSubmit={handle_submit}>
             <div>
-              <label htmlFor="email_or_phone" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="user_name" className="block text-sm font-medium text-gray-700 mb-1">
                 E-mail or phone number
               </label>
               <input
-                id="email_or_phone"
-                name="email_or_phone"
+                id="user_name"
+                name="user_name"
                 type="text"
                 required
                 className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 placeholder="Type your e-mail or phone number"
-                value={form_data.email_or_phone}
+                value={form_data.user_name}
                 onChange={handle_change}
               />
             </div>
@@ -91,7 +115,7 @@ export default function LoginPage() {
                 <Image src="/google-icon.png" alt="Google" width={24} height={24} />
               </button>
               <button className="p-2 border border-gray-300 rounded-full">
-                <Image src="/apple-icon.png" alt="Apple" width={24} height={24} />
+                <Image src="/zalo-icon.png" alt="Zalo" width={24} height={24} />
               </button>
               <button className="p-2 border border-gray-300 rounded-full">
                 <Image src="/facebook-icon.png" alt="Facebook" width={24} height={24} />

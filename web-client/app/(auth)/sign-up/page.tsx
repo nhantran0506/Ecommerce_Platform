@@ -1,8 +1,10 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { API_BASE_URL, API_ROUTES } from '@/libraries/api';
 
 export default function SignUpPage() {
   const [form_data, set_form_data] = useState({
@@ -14,6 +16,8 @@ export default function SignUpPage() {
     email: '',
     password: '',
   });
+  const [error, set_error] = useState('');
+  const router = useRouter();
 
   const handle_change = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -25,9 +29,10 @@ export default function SignUpPage() {
 
   const handle_submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    set_error('');
     
     try {
-      const response = await fetch('http://localhost:8000/api/users/signup', {
+      const response = await fetch(`${API_BASE_URL}${API_ROUTES.SIGNUP}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,15 +41,12 @@ export default function SignUpPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error('Sign-up failed');
       }
 
-      const data = await response.json();
-      console.log('Sign-up successful:', data);
-      
+      router.push('/login');
     } catch (error) {
-      console.error('Error during sign-up:', error);
-     
+      set_error('Sign-up failed. Please try again.');
     }
   };
 
@@ -63,6 +65,7 @@ export default function SignUpPage() {
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
             Create your account
           </h2>
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           <form className="space-y-4" onSubmit={handle_submit}>
             {[
               { name: 'first_name', label: 'First name', type: 'text' },
