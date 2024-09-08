@@ -13,16 +13,16 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get("/login")
+@router.post("/login")
 async def login(user: UserLogin, user_controller : UserController = Depends()):
-    # try:
-    return await user_controller.login(user)
-    # except Exception as e:
-    #     logger.error(str(e))
-    #     return JSONResponse(
-    #         content={"Message": "Unexpected error"},
-    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #     )
+    try:
+        return await user_controller.login(user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 @router.post("/signup")

@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from db_connector import engine, Base, SessionLocal
 from middlewares.routing_config import RouteConfig
 import views
+import views.AIViews
 import views.UserViews
 import views.products
 import uvicorn
@@ -19,6 +20,7 @@ routing.routing_config(app,
     list_routing=[
         views.products.router,
         views.UserViews.router,
+        views.AIViews.router,
     ]
 )
 

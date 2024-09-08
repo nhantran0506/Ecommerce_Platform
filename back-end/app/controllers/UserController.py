@@ -21,7 +21,7 @@ class UserController:
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
         access_token = create_access_token(data={"user_name": user.user_name})
-        return {"Access Token": access_token, "Type": "bearer"}
+        return {"token": access_token, "type": "bearer"}
 
     async def get_user_by_id(self, user_id: str):
         try:
