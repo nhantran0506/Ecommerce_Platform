@@ -5,6 +5,7 @@ from models.Users import User
 from serializers.UserSearializers import *
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Session
+from middlewares import token_config
 from db_connector import get_db
 import logging
 
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get("/login")
+@router.post("/login")
 async def login(user: UserLogin, user_controller : UserController = Depends()):
     try:
         return await user_controller.login(user)
@@ -48,15 +49,22 @@ async def get_user(user_id: str, user_controller : UserController = Depends()):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-# @router.post("/update_user/{user_id}")
-# async def update_user(user_id: int, request: User):
-#     pass
+@router.post("/update_user")
+async def update_user(user_update: UserUpdate , user_controller : UserController = Depends() ,current_user = Depends(token_config.get_current_user)):
+    try:
+        return await user_controller.update_user(user_update, current_user=current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 @router.post("/delete_user")
-async def delete_user(user_deleted : UserDelete, user_controller : UserController = Depends()):
+async def delete_user(user_deleted : UserDelete, user_controller : UserController = Depends(), role = Depends(token_config.get_user_role)):
     try:
         
-        return await user_controller.delete_user_by_id(user_deleted)
+        return await user_controller.delete_user_by_id(user_deleted, role=role)
     except Exception as e:
         logger.error(str(e))
         return JSONResponse(
