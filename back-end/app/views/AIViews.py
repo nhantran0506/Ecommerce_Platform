@@ -10,7 +10,7 @@ from db_connector import get_db
 import logging
 from transformers import pipeline
 
-pipe = pipeline("depth-estimation", model="Intel/dpt-hybrid-midas")
+# pipe = pipeline("depth-estimation", model="Intel/dpt-hybrid-midas")
 
 
 logger = logging.getLogger(__name__)

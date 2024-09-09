@@ -4,6 +4,7 @@ from fastapi import APIRouter, status, Depends
 from sqlalchemy.orm import Session
 from db_connector import get_db
 from models.Products import Product, ProductBase
+from middlewares import token_config
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -23,7 +24,7 @@ def get_product(product_id: int , db: Session = Depends(get_db)):
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def create_product(product: ProductCreate , db: Session = Depends(get_db) ):
+def create_product(product: ProductCreate , db: Session = Depends(get_db), current_user = Depends(token_config.get_current_user) ):
     db_product = Product(**product.model_dump())
     db.add(db_product)
     db.commit()
@@ -32,7 +33,7 @@ def create_product(product: ProductCreate , db: Session = Depends(get_db) ):
 
 
 @router.delete("/")
-def delete_product(product_id: int, db: Session = Depends(get_db)):
+def delete_product(product_id: int, db: Session = Depends(get_db), current_user = Depends(token_config.get_current_user)):
     db_product = db.query(Product).filter(Product.product_id == product_id).first()
     if db_product:
         db.delete(db_product)
