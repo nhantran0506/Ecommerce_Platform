@@ -29,6 +29,7 @@ class User(Base):
     email = Column(String, nullable=True)
     role = Column(Enum(UserRoles), nullable=False, default=UserRoles.USER)
     is_deleted = Column(Boolean, default=False)
+    deleted_date = Column(DateTime, nullable=True)
     
     
     def __init__(self, first_name, last_name, phone_number, address, dob, email=None):
