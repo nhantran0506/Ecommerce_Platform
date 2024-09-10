@@ -6,9 +6,11 @@ import views.AIViews
 import views.UserViews
 import views.products
 import uvicorn
-
+from tasks.UserTasks import UserTasks
 
 Base.metadata.create_all(bind=engine)  # create all tables in database
+
+user_tasks = UserTasks() 
 
 app = FastAPI()
 

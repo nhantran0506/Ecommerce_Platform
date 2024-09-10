@@ -61,10 +61,10 @@ async def update_user(user_update: UserUpdate , user_controller : UserController
         )
 
 @router.post("/delete_user")
-async def delete_user(user_deleted : UserDelete, user_controller : UserController = Depends(), role = Depends(token_config.get_user_role)):
+async def delete_user(user_controller : UserController = Depends(), current_user = Depends(token_config.get_current_user)):
     try:
         
-        return await user_controller.delete_user_by_id(user_deleted, role=role)
+        return await user_controller.delete_user(current_user)
     except Exception as e:
         logger.error(str(e))
         return JSONResponse(
