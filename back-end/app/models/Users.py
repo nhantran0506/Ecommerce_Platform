@@ -30,8 +30,10 @@ class User(Base):
     role = Column(Enum(UserRoles), nullable=False, default=UserRoles.USER)
     is_deleted = Column(Boolean, default=False)
     deleted_date = Column(DateTime, nullable=True)
+
     
-    
+    chat_history = relationship("ChatHistory", back_populates="user", foreign_keys="[ChatHistory.user_id]")
+
     def __init__(self, first_name, last_name, phone_number, address, dob, email=None):
         self.first_name = first_name
         self.last_name = last_name
@@ -41,7 +43,7 @@ class User(Base):
         self.email = email
 
         self.authenticate = relationship("Authentication", back_populates="user", uselist=False, foreign_keys="[Authentication.user_id]")
-        self.chat_history = relationship("ChatHistory", back_populates="user", uselist=False, foreign_keys="[ChatHistory.user_id]")
+        # self.chat_history = relationship("ChatHistory", back_populates="user", uselist=False, foreign_keys="[ChatHistory.user_id]")
 
         
     

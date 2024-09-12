@@ -3,7 +3,6 @@ from sqlalchemy import (
     String,
     Column,
     DateTime,
-    Enum,
     ForeignKey
 )
 from sqlalchemy.orm import relationship
@@ -21,16 +20,9 @@ class ChatHistory(Base):
     user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
-        primary_key=True,
         default=uuid.uuid4(),
     )
-    at = Column(DateTime, nullable=False, default=datetime.now())
-    content = Column(String)
+    model_name = Column(String)
     
-    
-    def __init__(self, user_id : uuid, content : str):
-        self.user_id = user_id
-        self.content = content
-        
-        self.user = relationship("User", back_populates="chat_history", foreign_keys=[user_id])
-    
+    user = relationship("User", back_populates="chat_history", foreign_keys=[user_id])
+    message_history = relationship("MessageHistory", back_populates="chat_history")

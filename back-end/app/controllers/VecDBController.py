@@ -21,4 +21,6 @@ class VectorDBController():
             return self.faq_collection.similarity_search(query, k=top_k)
         else:
             return []
+        
+    
 
