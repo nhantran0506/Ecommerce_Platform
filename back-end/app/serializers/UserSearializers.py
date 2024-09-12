@@ -36,11 +36,12 @@ class UserCreateSerializer(UserPostSerializer):
     def validate_phone_number(cls, value):
         if not re.match(r"^[0-9]{10}$", value):
             raise ValueError("Invalid phone number")
+        
         return value
     
     @field_validator("password")
     def validate_password(cls, value):
-        pattern = r"^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()]).+$"
+        pattern = r"^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*().]).+$"
         if len(value) < 8:
             raise ValueError("Password must be at least 8 characters")
         

@@ -26,7 +26,7 @@ class Authentication(Base):
     is_deleted = Column(Boolean, default=False)
     
 
-    def __init__(self, user_id, user_name, hash_pwd):
+    def __init__(self, user_id : uuid, user_name : str, hash_pwd : str):
         self.user_id = user_id
         self.user_name = user_name
         self.hash_pwd = self.hash_password(hash_pwd)

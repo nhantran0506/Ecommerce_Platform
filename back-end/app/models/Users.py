@@ -41,6 +41,7 @@ class User(Base):
         self.email = email
 
         self.authenticate = relationship("Authentication", back_populates="user", uselist=False, foreign_keys="[Authentication.user_id]")
+        self.chat_history = relationship("ChatHistory", back_populates="user", uselist=False, foreign_keys="[ChatHistory.user_id]")
 
         
     
