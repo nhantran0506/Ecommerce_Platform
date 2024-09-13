@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from models.Users import User, UserRoles
+from models.Authentication import Authentication
 from serializers.UserSearializers import *
 from middlewares.token_config import *
 from fastapi.responses import JSONResponse
@@ -15,7 +16,7 @@ class UserController:
         
 
     async def login(self, user: UserLogin):
-        auth = authenticate_user(self.db, user.user_name, user.password)
+        auth = await authenticate_user(self.db, user.user_name, user.password)
         if not auth:
             return JSONResponse(
                 content={"Message": "Invalid username or password."},
@@ -47,6 +48,12 @@ class UserController:
         
     async def signup(self, user : UserCreateSerializer):
         data = user.model_dump(by_alias=True)
+        
+        check_exist = self.db.query(Authentication).filter(Authentication.user_name == data["phone_number"]).first()
+        if check_exist:
+            return JSONResponse(
+                content={"Message" : "Phone number already exist"}, status_code=status.HTTP_409_CONFLICT
+        )
         
         user_parse = User(
             first_name=data["first_name"],

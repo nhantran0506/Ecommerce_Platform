@@ -24,22 +24,27 @@ class Authentication(Base):
     )
     hash_pwd = Column(String, nullable=False)
     is_deleted = Column(Boolean, default=False)
-    
 
-    def __init__(self, user_id, user_name, hash_pwd):
+    def __init__(self, user_id: uuid, user_name: str, hash_pwd: str):
         self.user_id = user_id
         self.user_name = user_name
         self.hash_pwd = self.hash_password(hash_pwd)
-         
-        self.user = relationship("User", back_populates="authenticate", foreign_keys=[user_id])
+
+        self.user = relationship(
+            "User", back_populates="authenticate", foreign_keys=[user_id]
+        )
 
     @abstractmethod
     def get_user_by_username(db_connector: Session, user_name: str):
         try:
-            user =  db_connector.query(Authentication).filter(Authentication.user_name == user_name).first()
+            user = (
+                db_connector.query(Authentication)
+                .filter(Authentication.user_name == user_name)
+                .first()
+            )
             if user.is_deleted:
                 return None
-            
+
             user = db_connector.query(User).filter(User.id == user.user_id).first()
             return user
         except Exception as e:
@@ -48,7 +53,6 @@ class Authentication(Base):
     @abstractmethod
     def hash_password(self, password: str) -> str:
         return pwd_context.hash(password)
-
 
     def verify_password(self, password: str) -> bool:
         try:
