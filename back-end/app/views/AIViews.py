@@ -31,7 +31,7 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     session_id = str(uuid.uuid4())
     
-    # Send the session_id to the client
+    
     await websocket.send_text(f"SESSION_ID:{session_id}")
 
     try:
@@ -42,7 +42,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
             client_session_id = message.get("session_id")
             ws_manager.add_websocket(client_session_id, websocket, ChatBotController("llama3.1"))
-            # Process the message and send the response
+           
             await ws_manager.llm_answer(query, session_id)
 
     except WebSocketDisconnect:

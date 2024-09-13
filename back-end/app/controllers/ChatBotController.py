@@ -7,7 +7,7 @@ from db_connector import SessionLocal
 
 class ChatBotController():
     def __init__(self, model_name: str):
-        self.llm =  Ollama(model_name) # MODELS.get_model(model_name)
+        self.llm =  Ollama(model_name, request_timeout=500) # MODELS.get_model(model_name)
         
     
     async def get_history(self, session_id : str):
