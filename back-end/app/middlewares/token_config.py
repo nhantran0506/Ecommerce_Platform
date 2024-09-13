@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWSError, jwt
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status, Depends, WebSocket
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 
@@ -22,7 +22,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 
-def get_current_user(
+async def get_current_user(
     db: Session =  Depends(get_db),
     credentials: HTTPAuthorizationCredentials = Depends(security)
     ):
@@ -46,18 +46,18 @@ def get_current_user(
         raise credentials_exceptions
 
 
-def authenticate_user(db: Session, user_name: str, password: str):
+async def authenticate_user(db: Session, user_name: str, password: str):
     user_auth = db.query(Authentication).filter(Authentication.user_name == user_name).first()
     if not user_auth or not user_auth.verify_password(password):
         return False
     return user_auth
 
 
-def get_user_role(
+async def get_user_role(
     db: Session = Depends(get_db),
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
-    user = get_current_user(db=db, credentials = credentials)
+    user = await get_current_user(db=db, credentials = credentials)
     if user:
         return user.role
     else:
@@ -65,3 +65,34 @@ def get_user_role(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail="Could not determine user role"
         )
+
+
+async def get_current_user_ws(
+        websocket: WebSocket, 
+        db: Session =  Depends(get_db)):
+    token = websocket.query_params.get("token")
+    if token is None:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authentication token",
+        )
+    
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+    )
+    try:
+        payload = jwt.decode(token, SERECT_KEY, algorithms=[ALGORITHM])
+        user_name: str = payload.get("user_name")
+        if user_name is None:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            raise credentials_exception
+        user = Authentication.get_user_by_username(db, user_name)
+        if user is None:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            raise credentials_exception
+        return user
+    except (JWSError, KeyError):
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        raise credentials_exception

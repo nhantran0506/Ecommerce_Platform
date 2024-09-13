@@ -11,6 +11,7 @@ from db_connector import Base
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
+
 class UserRoles(enum.Enum):
     USER = "USER"
     ADMIN = "ADMIN"
@@ -20,7 +21,7 @@ class UserRoles(enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4())
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     phone_number = Column(String, nullable=False, unique=True)
@@ -31,8 +32,9 @@ class User(Base):
     is_deleted = Column(Boolean, default=False)
     deleted_date = Column(DateTime, nullable=True)
 
-    
-    chat_history = relationship("ChatHistory", back_populates="user", foreign_keys="[ChatHistory.user_id]")
+    chat_history = relationship(
+        "ChatHistory", back_populates="user", foreign_keys="[ChatHistory.user_id]"
+    )
 
     def __init__(self, first_name, last_name, phone_number, address, dob, email=None):
         self.first_name = first_name
@@ -42,8 +44,10 @@ class User(Base):
         self.dob = dob
         self.email = email
 
-        self.authenticate = relationship("Authentication", back_populates="user", uselist=False, foreign_keys="[Authentication.user_id]")
+        self.authenticate = relationship(
+            "Authentication",
+            back_populates="user",
+            uselist=False,
+            foreign_keys="[Authentication.user_id]",
+        )
         # self.chat_history = relationship("ChatHistory", back_populates="user", uselist=False, foreign_keys="[ChatHistory.user_id]")
-
-        
-    

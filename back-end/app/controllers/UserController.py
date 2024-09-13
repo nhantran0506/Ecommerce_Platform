@@ -16,7 +16,7 @@ class UserController:
         
 
     async def login(self, user: UserLogin):
-        auth = authenticate_user(self.db, user.user_name, user.password)
+        auth = await authenticate_user(self.db, user.user_name, user.password)
         if not auth:
             return JSONResponse(
                 content={"Message": "Invalid username or password."},

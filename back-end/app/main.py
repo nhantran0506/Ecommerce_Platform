@@ -10,7 +10,7 @@ from tasks.UserTasks import UserTasks
 
 Base.metadata.create_all(bind=engine)  # create all tables in database
 
-user_tasks = UserTasks() 
+user_tasks = UserTasks()
 
 app = FastAPI()
 
@@ -18,12 +18,13 @@ routing = RouteConfig()
 
 # allow NextJS, ReactJS to bypass CORS
 routing.configure_fe_policy(app)
-routing.routing_config(app,
+routing.routing_config(
+    app,
     list_routing=[
         views.products.router,
         views.UserViews.router,
         views.AIViews.router,
-    ]
+    ],
 )
 
 
@@ -33,7 +34,10 @@ def connection_check():
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-
-
-
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        # ssl_keyfile="key.pem",
+        # ssl_certfile="cert.pem"
+    )

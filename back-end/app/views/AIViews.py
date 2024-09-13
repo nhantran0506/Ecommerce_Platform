@@ -12,6 +12,7 @@ from managers.WebSocketManagers import WebSocketManager
 import logging
 import uuid
 from transformers import pipeline
+from middlewares import token_config
 
 # pipe = pipeline("depth-estimation", model="Intel/dpt-hybrid-midas")
 
@@ -26,27 +27,26 @@ ws_manager = WebSocketManager()
 async def login(image, user):
     pass
 
+
 @router.websocket("/chatbot")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(
+    websocket: WebSocket, current_user=Depends(token_config.get_current_user_ws)
+):
     await websocket.accept()
-    session_id = str(uuid.uuid4())
-    
-    
+    session_id = await ws_manager.add_websocket(
+        current_user, websocket, ChatBotController("llama3.1")
+    )
+
     await websocket.send_text(f"SESSION_ID:{session_id}")
 
     try:
         while True:
             message = await websocket.receive_json()
-            print(type(message))
             query = message.get("message")
 
             client_session_id = message.get("session_id")
-            ws_manager.add_websocket(client_session_id, websocket, ChatBotController("llama3.1"))
-           
-            await ws_manager.llm_answer(query, session_id)
+            await ws_manager.llm_answer(query, client_session_id)
 
     except WebSocketDisconnect:
         print(f"WebSocket connection closed for session: {session_id}")
         ws_manager.remove_websocket(session_id)
-
-
