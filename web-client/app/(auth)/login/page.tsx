@@ -1,66 +1,60 @@
-'use client';
+"use client";
 
-import { useState, FormEvent } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { API_BASE_URL, API_ROUTES } from '@/libraries/api';
-import loginImage from '@/assets/login-image.jpg';
-import googleIcon from '@/assets/google-icon.png';
-import zaloIcon from '@/assets/zalo-icon.png';
-import facebookIcon from '@/assets/facebook-icon.png';
+import { useState, FormEvent } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
+import loginImage from "@/assets/login-image.jpg";
+import googleIcon from "@/assets/google-icon.png";
+import zaloIcon from "@/assets/zalo-icon.png";
+import facebookIcon from "@/assets/facebook-icon.png";
 
 export default function LoginPage() {
   const [form_data, set_form_data] = useState({
-    user_name: '',
-    password: '',
+    user_name: "",
+    password: "",
   });
-  const [error, set_error] = useState('');
+  const [error, set_error] = useState("");
   const router = useRouter();
 
   const handle_change = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    set_form_data(prev_state => ({
+    set_form_data((prev_state) => ({
       ...prev_state,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handle_submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    set_error('');
-    
+    set_error("");
+
     try {
       const response = await fetch(`${API_BASE_URL}${API_ROUTES.LOGIN}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(form_data),
-
       });
       if (!response.ok) {
-        throw new Error('Login failed');
+        throw new Error("Login failed");
       }
 
       const data = await response.json();
-      
-      localStorage.setItem('token', data.token);
-      router.push('/');
+
+      localStorage.setItem("token", data.token);
+      router.push("/");
     } catch (error) {
-      set_error('Invalid credentials. Please try again.');
+      set_error("Invalid credentials. Please try again.");
     }
   };
 
   return (
     <div className="min-h-screen flex">
       <div className="w-1/2 relative">
-        <Image
-          src={loginImage}
-          alt="Login"
-          layout="fill"
-          objectFit="cover"
-        />
+        <Image src={loginImage} alt="Login" layout="fill" objectFit="cover" />
       </div>
       <div className="w-1/2 flex items-center justify-center bg-white">
         <div className="max-w-md w-full p-8">
@@ -69,7 +63,10 @@ export default function LoginPage() {
           </h2>
           <form className="space-y-4" onSubmit={handle_submit}>
             <div>
-              <label htmlFor="user_name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="user_name"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 E-mail or phone number
               </label>
               <input
@@ -84,7 +81,10 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Password
               </label>
               <input
@@ -99,7 +99,10 @@ export default function LoginPage() {
               />
             </div>
             <div className="flex items-center justify-end">
-              <Link href="/forgot-password" className="text-sm text-indigo-600 hover:text-indigo-500">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-indigo-600 hover:text-indigo-500"
+              >
                 Forgot Password?
               </Link>
             </div>
@@ -113,7 +116,9 @@ export default function LoginPage() {
             </div>
           </form>
           <div className="mt-6">
-            <p className="text-center text-sm text-gray-500">or do it via other accounts</p>
+            <p className="text-center text-sm text-gray-500">
+              or do it via other accounts
+            </p>
             <div className="mt-4 flex justify-center space-x-4">
               <button className="p-2 border border-gray-300 rounded-full">
                 <Image src={googleIcon} alt="Google" width={24} height={24} />
@@ -122,14 +127,22 @@ export default function LoginPage() {
                 <Image src={zaloIcon} alt="Zalo" width={24} height={24} />
               </button>
               <button className="p-2 border border-gray-300 rounded-full">
-                <Image src={facebookIcon} alt="Facebook" width={24} height={24} />
+                <Image
+                  src={facebookIcon}
+                  alt="Facebook"
+                  width={24}
+                  height={24}
+                />
               </button>
             </div>
           </div>
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link href="/sign-up" className="font-medium text-indigo-600 hover:text-indigo-500">
+              {"Don't have an account? "}
+              <Link
+                href="/sign-up"
+                className="font-medium text-indigo-600 hover:text-indigo-500"
+              >
                 Sign Up
               </Link>
             </p>

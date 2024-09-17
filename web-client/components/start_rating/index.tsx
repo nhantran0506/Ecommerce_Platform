@@ -24,7 +24,7 @@ const StarRating: React.FC<StarRatingProps> = ({ totalStars = 5 }) => {
             onMouseLeave={() => setHover(0)}
           >
             <Star
-              size={24}
+              size={15}
               fill={starValue <= (hover || rating) ? "yellow" : "none"}
               color={starValue <= (hover || rating) ? "yellow" : "gray"}
             />

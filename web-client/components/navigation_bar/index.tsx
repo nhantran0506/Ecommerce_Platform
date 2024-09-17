@@ -69,7 +69,10 @@ export default function NavigationBar() {
           </NavbarBrand>
           {pageNavigation.map((item, index) => {
             return (
-              <NavbarItem isActive={pathname == item.link ? true : false}>
+              <NavbarItem
+                isActive={pathname == item.link ? true : false}
+                key={index}
+              >
                 <Link color="foreground" href={item.link}>
                   {item.name}
                 </Link>
