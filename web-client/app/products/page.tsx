@@ -1,60 +1,90 @@
 "use client";
+import FilterMenu from "@/components/filter_menu";
+import {
+  IFilterMenu,
+  IOptionMenuFilter,
+} from "@/components/filter_menu/interface";
 import ProductCard from "@/components/product_card";
-import { IProduct } from "@/interface/IProduct";
+import SearchBar from "@/components/search";
+import SectionHeader from "@/components/section_header";
+import { Button } from "@nextui-org/react";
+import { DollarSign, Filter, MapPin } from "react-feather";
+import { productlist, recommendProductlist } from "./data";
 
 const ProductPage = () => {
-  // Fake product data
-  const productlist: IProduct[] = [
+  const listFilterOptionForPrice: IOptionMenuFilter[] = [
+    { key: "ascending", label: "Ascending" },
+    { key: "descending", label: "Descending" },
+  ];
+
+  const listFilterOptionForLocation: IOptionMenuFilter[] = [
+    { key: "ha_noi", label: "Hà Nội" },
+    { key: "tp_hcm", label: "Hồ Chí Minh" },
+  ];
+
+  const listFilterMenu: IFilterMenu[] = [
     {
-      id: 1,
-      name: "Wireless Headphones",
-      description:
-        "High-quality wireless headphones with noise-canceling feature.",
-      price: 99.99,
-      image:
-        "https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/1015f/MainAfter.jpg",
+      prefix: <MapPin size={28} />,
+      listFilterOption: listFilterOptionForLocation,
     },
     {
-      id: 2,
-      name: "Smartphone",
-      description: "Latest model with advanced camera and fast performance.",
-      price: 699.99,
-    },
-    {
-      id: 3,
-      name: "Gaming Laptop",
-      description:
-        "Powerful laptop with a high-refresh-rate screen and strong GPU.",
-      price: 1299.99,
-    },
-    {
-      id: 4,
-      name: "Smartwatch",
-      description:
-        "Water-resistant smartwatch with fitness tracking and notifications.",
-      price: 199.99,
-    },
-    {
-      id: 5,
-      name: "Bluetooth Speaker",
-      description: "Portable speaker with deep bass and long battery life.",
-      price: 49.99,
-    },
-    {
-      id: 6,
-      name: "4K TV",
-      description:
-        "Ultra HD 4K television with vibrant colors and smart TV features.",
-      price: 499.99,
+      prefix: (
+        <div className=" bg-black rounded-full p-2">
+          <DollarSign size={18} color="white" />
+        </div>
+      ),
+      listFilterOption: listFilterOptionForPrice,
     },
   ];
 
   return (
-    <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {productlist.map((item) => (
-          <ProductCard key={item.id} product={item} />
-        ))}
+    <div className="flex justify-center my-8">
+      <div className="flex flex-col">
+        <div className="mb-8 flex">
+          <div className="w-1/2 flex justify-start gap-4 pr-4">
+            {listFilterMenu.map((item, index) => (
+              <FilterMenu
+                key={index}
+                prefix={item.prefix}
+                listFilterOption={item.listFilterOption}
+              />
+            ))}
+          </div>
+          <div className="w-1/2 flex justify-between">
+            <SearchBar />
+
+            <Button
+              isIconOnly
+              aria-label="Filter"
+              radius="sm"
+              className="w-10 h-10 bg-black"
+            >
+              <Filter className="text-white" />
+            </Button>
+          </div>
+        </div>
+
+        <SectionHeader
+          title={"Recommended"}
+          content={
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {recommendProductlist.map((item) => (
+                <ProductCard key={item.id} product={item} />
+              ))}
+            </div>
+          }
+        />
+
+        <SectionHeader
+          title={"All Products"}
+          content={
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {productlist.map((item) => (
+                <ProductCard key={item.id} product={item} />
+              ))}
+            </div>
+          }
+        />
       </div>
     </div>
   );

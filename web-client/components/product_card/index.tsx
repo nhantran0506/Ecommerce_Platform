@@ -13,7 +13,7 @@ interface IProductCard {
 const ProductCard: React.FC<IProductCard> = ({ product }) => {
   return (
     <Card
-      className="border-2 rounded-xl w-[250px] h-[300px]"
+      className="border-2 rounded-xl w-[220px] h-[280px]"
       isPressable
       onPress={() => console.log("item pressed")}
     >
@@ -26,7 +26,7 @@ const ProductCard: React.FC<IProductCard> = ({ product }) => {
             radius="lg"
             width="100%"
             alt={product.name}
-            className="w-full h-[200px] object-cover"
+            className="w-full h-[180px] object-cover"
             src={product.image}
             style={{
               objectFit: "cover",
