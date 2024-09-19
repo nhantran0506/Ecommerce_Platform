@@ -34,7 +34,7 @@ const ChatIcon: React.FC = () => {
           className="rounded-full shadow-lg"
         />
       </div>
-      {isOpen && <ChatWindow />}
+      {isOpen && <ChatWindow onClose={() => setIsOpen(false)} />}
     </div>
   );
 };
