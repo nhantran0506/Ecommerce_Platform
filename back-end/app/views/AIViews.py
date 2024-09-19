@@ -47,7 +47,6 @@ async def websocket_endpoint(
     try:
         while True:
             message = await websocket.receive_json()
-            print(message)
             query = message.get("message")
 
             client_session_id = message.get("session_id")

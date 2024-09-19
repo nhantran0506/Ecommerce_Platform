@@ -1,13 +1,17 @@
+"use client";
+
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { XMarkIcon, MinusIcon } from '@heroicons/react/24/solid';
+import Image from 'next/image';
+import chatIcon from '@/assets/chatbot.png';
 
 export default function ChatWindow() {
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<{ sender: 'You' | 'Chatbot'; content: string }[]>([]);
   const [input, setInput] = useState('');
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const websocketRef = useRef<WebSocket | null>(null);
-  const router = useRouter();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const connectWebSocket = useCallback(() => {
     const token = localStorage.getItem('token');
@@ -16,35 +20,28 @@ export default function ChatWindow() {
     const ws = new WebSocket(uri);
 
     ws.onopen = () => {
-      console.log("Connected to the chatbot.");
       setIsConnected(true);
     };
 
     ws.onmessage = (event) => {
-      const response = JSON.parse(event.data);
+      const response = JSON.parse(JSON.parse(event.data));
       console.log("Received message:", response);
 
       if (response.session_id) {
-        setSessionId(response.session_id);
         localStorage.setItem('sessionId', response.session_id);
-        console.log(`Received session ID: ${response.session_id}`);
       }
 
       if (response.message) {
-        setMessages((prev) => [...prev, `Chatbot: ${response.message}`]);
+        setMessages((prev) => [...prev, { sender: 'Chatbot', content: response.message }]);
       }
     };
 
     ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
       setIsConnected(false);
     };
 
     ws.onclose = () => {
-      console.log("Disconnected from the chatbot.");
       setIsConnected(false);
-      // Attempt to reconnect after a delay
-      setTimeout(connectWebSocket, 5000);
     };
 
     websocketRef.current = ws;
@@ -54,11 +51,13 @@ export default function ChatWindow() {
     connectWebSocket();
 
     return () => {
-      if (websocketRef.current) {
-        websocketRef.current.close();
-      }
+      // Do not close the WebSocket here; it will be closed by the turn off button
     };
   }, [connectWebSocket]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleSendMessage = useCallback(() => {
     if (input.trim() && websocketRef.current && isConnected) {
@@ -68,53 +67,70 @@ export default function ChatWindow() {
       };
       console.log("Sending payload:", payload);
       websocketRef.current.send(JSON.stringify(payload));
-      setMessages((prev) => [...prev, `You: ${input}`]);
+      setMessages((prev) => [...prev, { sender: 'You', content: input }]);
       setInput('');
-    } else if (!isConnected) {
-      console.log("WebSocket is not connected. Please wait and try again.");
-    } else {
-      console.log("Cannot send message. Input:", input, "WebSocket:", !!websocketRef.current, "Connected:", isConnected, "SessionId:", sessionId);
     }
-  }, [input, isConnected, sessionId]);
+  }, [input, isConnected]);
+
+  const handleTurnOff = () => {
+    if (websocketRef.current) {
+      websocketRef.current.close();
+      console.log("WebSocket connection closed.");
+    }
+  };
+
+  const toggleMinimize = () => {
+    setIsMinimized(!isMinimized);
+  };
 
   return (
-    <div className="fixed bottom-0 right-0 m-4 w-80 bg-white shadow-lg rounded-lg">
-      <div className="p-4 border-b">
-        <h2 className="font-bold">Chat</h2>
-        <p className={`text-sm ${isConnected ? 'text-green-500' : 'text-red-500'}`}>
-          {isConnected ? 'Connected' : 'Disconnected'}
-        </p>
-        <p className="text-sm">Session ID: {sessionId || 'Not set'}</p>
+    <div className={`fixed bottom-0 right-0 m-4 w-80 bg-white shadow-lg rounded-lg overflow-hidden transition-transform ${isMinimized ? 'transform translate-y-[calc(100%-2.5rem)]' : ''}`}>
+      <div className="bg-black text-white p-2 flex justify-between items-center">
+        <h2 className="font-bold">Customer service</h2>
+        <div className="flex space-x-2">
+          <button onClick={toggleMinimize} className="text-gray-400 hover:text-gray-200">
+            <MinusIcon className="h-5 w-5" />
+          </button>
+          <button onClick={handleTurnOff} className="text-red-500 hover:text-red-700">
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
       </div>
-      <div className="p-4 h-60 overflow-y-auto">
-        {messages.length === 0 ? (
-          <p>No messages yet.</p>
-        ) : (
-          messages.map((msg, index) => (
-            <div key={index} className="my-2 p-2 bg-gray-100 rounded">
-              {msg}
-            </div>
-          ))
-        )}
-      </div>
-      <div className="p-4 border-t flex">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          className="flex-grow border rounded p-2"
-          placeholder="Type a message..."
-        />
-        <button
-          onClick={handleSendMessage}
-          className={`ml-2 text-white rounded p-2 ${
-            isConnected ? 'bg-blue-500' : 'bg-gray-400'
-          }`}
-          disabled={!isConnected}
-        >
-          Send
-        </button>
-      </div>
+      {!isMinimized && (
+        <>
+          <div className="p-4 h-60 overflow-y-auto flex flex-col bg-white">
+            {messages.length === 0 ? (
+              <p className="text-gray-500">No messages yet.</p>
+            ) : (
+              messages.map((msg, index) => (
+                <div key={index} className={`my-2 p-2 rounded ${msg.sender === 'You' ? 'bg-blue-600 text-white self-end' : 'bg-gray-200 text-black self-start'}`}>
+                  {msg.sender === 'Chatbot' && (
+                    <Image src={chatIcon} alt="Chatbot" width={24} height={24} className="mb-1" />
+                  )}
+                  <div>{msg.content}</div>
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+          <div className="p-4 border-t flex bg-white">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              className="flex-grow border rounded p-2 bg-gray-100 text-black"
+              placeholder="Type a message..."
+            />
+            <button
+              onClick={handleSendMessage}
+              className={`ml-2 text-white rounded p-2 ${isConnected ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-400'}`}
+              disabled={!isConnected}
+            >
+              Send
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
