@@ -11,6 +11,7 @@ from controllers.ChatBotController import ChatBotController
 from managers.WebSocketManagers import WebSocketManager
 import logging
 import uuid
+import json
 from transformers import pipeline
 from middlewares import token_config
 
@@ -37,7 +38,11 @@ async def websocket_endpoint(
         current_user, websocket, ChatBotController("llama3.1")
     )
 
-    await websocket.send_text(f"SESSION_ID:{session_id}")
+    payload = {
+        "session_id": session_id,
+    }
+
+    await websocket.send_json(json.dumps(payload))
 
     try:
         while True:
