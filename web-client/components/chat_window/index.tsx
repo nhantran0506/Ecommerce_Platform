@@ -17,9 +17,9 @@ export default function ChatWindow() {
   const [isTyping, setIsTyping] = useState(false); // Typing state
   const websocketRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const path_name = usePathname();
+  const pathName = usePathname();
 
-  if (hideChatIconPaths.includes(path_name)) {
+  if (hideChatIconPaths.includes(pathName)) {
     return null;
   }
 
