@@ -1,3 +1,75 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom scrollbar for webkit-based browsers (Chrome, Safari, etc.) */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Light grey background */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #888; /* Darker grey thumb */
+  border-radius: 10px;
+  border: none; /* No border */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #555; /* Darker grey on hover */
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1; /* Thumb color and background */
+}
+
+
+.dot-flashing {
+    position: relative;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #000;
+    color: #000;
+    animation: dotFlashing 1s infinite linear alternate;
+    animation-delay: .5s;
+  }
+  .dot-flashing::before, .dot-flashing::after {
+    content: '';
+    display: inline-block;
+    position: absolute;
+    top: 0;
+  }
+  .dot-flashing::before {
+    left: -10px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #000;
+    color: #000;
+    animation: dotFlashing 1s infinite alternate;
+    animation-delay: 0s;
+  }
+  .dot-flashing::after {
+    left: 10px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #000;
+    color: #000;
+    animation: dotFlashing 1s infinite alternate;
+    animation-delay: 1s;
+  }
+  @keyframes dotFlashing {
+    0% {
+      background-color: #000;
+    }
+    50%, 100% {
+      background-color: #fff;
+    }
+  }
+  
