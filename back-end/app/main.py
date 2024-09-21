@@ -4,7 +4,8 @@ from middlewares.routing_config import RouteConfig
 import views
 import views.AIViews
 import views.UserViews
-import views.products
+import views.ProductViews
+import views.ShopViews
 import uvicorn
 from tasks.UserTasks import UserTasks
 
@@ -21,8 +22,9 @@ routing.configure_fe_policy(app)
 routing.routing_config(
     app,
     list_routing=[
-        views.products.router,
+        views.ProductViews.router,
         views.UserViews.router,
+        views.ShopViews.router,
         views.AIViews.router,
     ],
 )

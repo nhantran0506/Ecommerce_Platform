@@ -35,6 +35,7 @@ class User(Base):
     chat_history = relationship(
         "ChatHistory", back_populates="user", foreign_keys="[ChatHistory.user_id]"
     )
+    shops = relationship("Shop", back_populates="owner")
 
     def __init__(self, first_name, last_name, phone_number, address, dob, email=None):
         self.first_name = first_name
