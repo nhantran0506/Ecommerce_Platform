@@ -10,3 +10,6 @@ class EmbeddingController:
         doc = BeautifulSoup(url, "html.parser")
         return doc.get_text()
 
+    async def embedding(self, embedding_request):
+        pass
+

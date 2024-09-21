@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from middlewares import token_config
 from db_connector import get_db
 from controllers.ChatBotController import ChatBotController
+from controllers.EmbeddingController import EmbeddingController
 from managers.WebSocketManagers import WebSocketManager
 import logging
 import uuid
@@ -30,9 +31,13 @@ async def login(image, user):
     pass
 
 @router.post("/embedding")
-async def embedding(request : EmbeddingPayload ,ai_controller : ,current_user = Depends(token_config.get_current_user)):
+async def embedding(embedding_request : EmbeddingPayload ,embedding_controller : EmbeddingController = Depends()
+,current_user = Depends(token_config.get_current_user)):
     try:
-    except Exception as e:
+        embedding_controller.embedding(embedding_request)
+    except Exception:
+
+
 
 
 @router.websocket("/chatbot")
