@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../styles/globals.css";
 import NavigationBar from "@/components/navigation_bar";
+import ChatWindow from "@/components/chat_window";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,6 +21,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <NavigationBar />
         {children}
+        <ChatWindow />
       </body>
     </html>
   );
