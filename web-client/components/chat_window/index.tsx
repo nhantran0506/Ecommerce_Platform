@@ -5,7 +5,7 @@ import { MinusIcon } from '@heroicons/react/24/solid';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import chatIcon from '@/assets/chatbot.png';
-import { CSSTransition } from 'react-transition-group'; // For animation
+import { CSSTransition } from 'react-transition-group'; 
 
 const hideChatIconPaths = ['/login', '/sign-up'];
 
@@ -14,7 +14,7 @@ export default function ChatWindow() {
   const [input, setInput] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [isMinimized, setIsMinimized] = useState(true);
-  const [isTyping, setIsTyping] = useState(false); // Typing state
+  const [isTyping, setIsTyping] = useState(false);
   const websocketRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pathName = usePathname();
