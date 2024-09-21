@@ -3,6 +3,7 @@ from starlette.websockets import WebSocketState
 from controllers.ChatBotController import ChatBotController
 from models.Users import User
 from models.ChatHistory import ChatHistory
+import json
 
 
 class WebSocketManager:
@@ -26,10 +27,15 @@ class WebSocketManager:
         return str(session_id)
 
     async def llm_answer(self, query: str, session_id: str):
-        print(self.activate_websocket)
         llm = self.activate_websocket[session_id]["llm"]
         response = await llm.answer(query, session_id)
-        await self.activate_websocket[session_id]["websocket"].send_text(response)
+
+        payload = {
+            "session_id": session_id,
+            "message": response,
+        }
+        
+        await self.activate_websocket[session_id]["websocket"].send_json(json.dumps(payload))
 
     def broadcast_message(self, message: str):
         try:
