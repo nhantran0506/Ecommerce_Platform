@@ -2,6 +2,7 @@ from fastapi import APIRouter, status, Request, Depends, WebSocket, WebSocketDis
 from controllers.UserController import UserController
 from fastapi.responses import JSONResponse
 from models.Users import User
+from serializers.AISerializer import *
 from serializers.UserSearializers import *
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Session
@@ -27,6 +28,11 @@ ws_manager = WebSocketManager()
 @router.post("/body_estimate")
 async def login(image, user):
     pass
+
+@router.post("/embedding")
+async def embedding(request : EmbeddingPayload ,ai_controller : ,current_user = Depends(token_config.get_current_user)):
+    try:
+    except Exception as e:
 
 
 @router.websocket("/chatbot")
