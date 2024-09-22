@@ -26,16 +26,19 @@ class WebSocketManager:
 
         return str(session_id)
 
-    async def llm_answer(self, query: str, session_id: str):
+    async def llm_answer(self, query: str, session_id: str, current_user):
         llm = self.activate_websocket[session_id]["llm"]
-        response = await llm.answer(query, session_id)
+        response, purpose = await llm.answer(query, session_id, current_user)
 
         payload = {
             "session_id": session_id,
+            "purpose": purpose,
             "message": response,
         }
-        
-        await self.activate_websocket[session_id]["websocket"].send_json(json.dumps(payload))
+
+        await self.activate_websocket[session_id]["websocket"].send_json(
+            json.dumps(payload)
+        )
 
     def broadcast_message(self, message: str):
         try:

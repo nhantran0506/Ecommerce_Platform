@@ -36,7 +36,9 @@ class User(Base):
         "ChatHistory", back_populates="user", foreign_keys="[ChatHistory.user_id]"
     )
     shops = relationship("Shop", back_populates="owner")
-
+    
+    
+    
     def __init__(self, first_name, last_name, phone_number, address, dob, email=None):
         self.first_name = first_name
         self.last_name = last_name
@@ -51,4 +53,8 @@ class User(Base):
             uselist=False,
             foreign_keys="[Authentication.user_id]",
         )
+        self.shop_ratings = relationship("ShopRating", back_populates="user", foreign_keys="[ShopRating.user_id]") 
+        self.product_ratings = relationship("ProductRating", back_populates="user", foreign_keys="[ProductRating.user_id]")
         # self.chat_history = relationship("ChatHistory", back_populates="user", uselist=False, foreign_keys="[ChatHistory.user_id]")
+
+    
