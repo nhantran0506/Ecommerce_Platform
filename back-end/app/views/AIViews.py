@@ -31,11 +31,17 @@ async def login(image, user):
     pass
 
 @router.post("/embedding")
-async def embedding(embedding_request : EmbeddingPayload ,embedding_controller : EmbeddingController = Depends()
-,current_user = Depends(token_config.get_current_user)):
+async def embedding(embedding_request : EmbeddingPayload ,
+                    embedding_controller : EmbeddingController = Depends(),
+                    current_user = Depends(token_config.get_current_user)
+):
     try:
-        embedding_controller.embedding(embedding_request)
+        await embedding_controller.embedding(embedding_request)
     except Exception:
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 
@@ -61,8 +67,8 @@ async def websocket_endpoint(
             query = message.get("message")
 
             client_session_id = message.get("session_id")
-            await ws_manager.llm_answer(query, client_session_id)
+            await ws_manager.llm_answer(query, client_session_id, current_user)
 
     except WebSocketDisconnect:
-        print(f"WebSocket connection closed for session: {session_id}")
+        logger.info(f"WebSocket connection closed for session: {session_id}")
         ws_manager.remove_websocket(session_id)

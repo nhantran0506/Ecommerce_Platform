@@ -1,4 +1,3 @@
-from models_collection import MODELS
 from models.MessageHistory import MessageHistory
 from llama_index.core.llms import ChatMessage
 from llama_index.llms.ollama import Ollama
@@ -7,16 +6,21 @@ from models.Users import User
 from sqlalchemy.orm import Session
 from models.ChatHistory import ChatHistory
 from models.MessageHistory import MessageRole
+from .EmbeddingController import EmbeddingController
+from llama_index.core import PromptTemplate
+from helper_collections.PROMPTs import *
+from typing import List
+from .EmbeddingController import EmbeddingController
 from fastapi import Depends
 
+embedding_engine = EmbeddingController()
 
 
 class ChatBotController:
     def __init__(self, model_name: str, db: Session = Depends(get_db)):
-        self.llm = Ollama(
-            model_name, request_timeout=500
-        ) 
+        self.llm = Ollama(model_name, request_timeout=500)
         self.db = db
+
     async def add_user(self, user: User):
         self.db = SessionLocal()
         try:
@@ -55,22 +59,49 @@ class ChatBotController:
             self.db.rollback()
             raise e
 
-    async def answer(self, query: str, session_id: str):
+    def intent_detection(self, query):
+        intent_prompt = PromptTemplate(INTENT_DETECTION).format(query=query)
+        intent_output = self.llm.complete(prompt=intent_prompt).text
 
-        await self.add_message(
-            role=MessageRole.USER, content=query, session_id=session_id
-        )
+        if "query" in intent_output.lower():
+            return "query"
 
-        chat_hisory = await self.get_history(session_id)
+        return intent_output
 
-        # chat_hisory += [ChatMessage(role="user", content=query)]
+    async def answer(self, query: str, session_id: str, current_user: User):
 
-        reponse = self.llm.chat(chat_hisory)
+        intent = self.intent_detection(query)
 
-        await self.add_message(
-            role=MessageRole.ASSISTANT,
-            content=reponse.message.content,
-            session_id=session_id,
-        )
+        # query
+        if intent == "query":
+            nodes = embedding_engine.query(query)
 
-        return reponse.message.content
+            context = ""
+            for node in nodes:
+                context += node["text"]
+
+            system_prompt = PromptTemplate(SYSTEM_PROMPT).format(
+                customer_name=f"{current_user.first_name} {current_user.last_name}",
+                customer_phone=current_user.phone_number,
+                customer_address=current_user.address,
+            )
+
+            default_prompt = PromptTemplate(DEFAULT_PROMPT).format(context=context)
+
+            await self.add_message(
+                role=MessageRole.USER, content=default_prompt, session_id=session_id
+            )
+
+            system_msg = [ChatMessage(role=MessageRole.SYSTEM, content=system_prompt)]
+            chat_hisory = await self.get_history(session_id)
+            reponse = self.llm.chat(system_msg + chat_hisory)
+
+            await self.add_message(
+                role=MessageRole.ASSISTANT,
+                content=reponse.message.content,
+                session_id=session_id,
+            )
+
+            return reponse.message.content, intent
+
+        return intent, "search"

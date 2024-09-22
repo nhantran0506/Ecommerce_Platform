@@ -11,7 +11,7 @@ class RouteConfig:
     def configure_fe_policy(self, app: FastAPI) -> None:
         app.add_middleware(
             CORSMiddleware,
-            allow_origins=[f"http://{self.address}:{self.port}/"],
+            allow_origins=["*"], #allow_origins=[f"http://{self.address}:{self.port}/"],
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],

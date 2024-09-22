@@ -16,6 +16,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 @router.post("/login")
 async def login(user: UserLogin, user_controller : UserController = Depends()):
     try:
+        print(user)
         return await user_controller.login(user)
     except Exception as e:
         logger.error(str(e))
