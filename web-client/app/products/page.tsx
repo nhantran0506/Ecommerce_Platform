@@ -1,15 +1,15 @@
 "use client";
-import FilterMenu from "@/components/filter_menu";
+import SingleComboBoxItem from "@/components/single_combo_box_item";
 import {
   IFilterMenu,
   IOptionMenuFilter,
-} from "@/components/filter_menu/interface";
+} from "@/components/single_combo_box_item/interface";
 import ProductCard from "@/components/product_card";
 import SearchBar from "@/components/search";
 import SectionHeader from "@/components/section_header";
-import { Button } from "@nextui-org/react";
-import { DollarSign, Filter, MapPin } from "react-feather";
+import { DollarSign, MapPin } from "react-feather";
 import { productlist, recommendProductlist } from "./data";
+import FilterMenu from "@/components/filter_menu";
 
 const ProductPage = () => {
   const listFilterOptionForPrice: IOptionMenuFilter[] = [
@@ -40,10 +40,11 @@ const ProductPage = () => {
   return (
     <div className="flex justify-center my-8">
       <div className="flex flex-col">
+        {/* Filter and search bar */}
         <div className="mb-8 flex">
           <div className="w-1/2 flex justify-start gap-4 pr-4">
             {listFilterMenu.map((item, index) => (
-              <FilterMenu
+              <SingleComboBoxItem
                 key={index}
                 prefix={item.prefix}
                 listFilterOption={item.listFilterOption}
@@ -53,17 +54,11 @@ const ProductPage = () => {
           <div className="w-1/2 flex justify-between">
             <SearchBar />
 
-            <Button
-              isIconOnly
-              aria-label="Filter"
-              radius="sm"
-              className="w-10 h-10 bg-black"
-            >
-              <Filter className="text-white" />
-            </Button>
+            <FilterMenu />
           </div>
         </div>
 
+        {/* Products */}
         <SectionHeader
           title={"Recommended"}
           content={
