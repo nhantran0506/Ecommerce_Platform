@@ -1,5 +1,6 @@
 from datetime import datetime
 from sqlalchemy import Boolean, String, Integer, Column, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
 from db_connector import Base
 
 class Product(Base):
@@ -9,3 +10,8 @@ class Product(Base):
     product_description = Column(String)
     create_at_datetime = Column(DateTime, default=datetime.now)
     price = Column(Integer)
+
+    
+
+    def __init__(self):
+        self.ratings = relationship("ProductRating", back_populates="product")
