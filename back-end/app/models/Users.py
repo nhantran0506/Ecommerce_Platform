@@ -9,6 +9,7 @@ from sqlalchemy.orm import relationship
 import enum
 from db_connector import Base
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import mapped_column, Mapped
 import uuid
 
 
@@ -21,23 +22,25 @@ class UserRoles(enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    first_name = Column(String, nullable=False)
-    last_name = Column(String, nullable=False)
-    phone_number = Column(String, nullable=False, unique=True)
-    address = Column(String, nullable=False)
-    dob = Column(DateTime, nullable=False)
-    email = Column(String, nullable=True)
-    role = Column(Enum(UserRoles), nullable=False, default=UserRoles.USER)
-    is_deleted = Column(Boolean, default=False)
-    deleted_date = Column(DateTime, nullable=True)
+    user_id : Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    first_name : Mapped[str] = mapped_column(String, nullable=False)
+    last_name: Mapped[str] = mapped_column(String, nullable=False)
+    phone_number: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    address: Mapped[str] = mapped_column(String, nullable=False)
+    dob: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
+    email: Mapped[str] = mapped_column(String, nullable=True)
+    role: Mapped[str] = mapped_column(Enum(UserRoles), nullable=False, default=UserRoles.USER)
+    is_deleted : Mapped[Boolean]= mapped_column(Boolean, default=False)
+    deleted_date : Mapped[DateTime]= mapped_column(DateTime, nullable=True)
+    
+    
+    
 
-    chat_history = relationship("ChatHistory", back_populates="user")
-    shops = relationship("Shop", back_populates="owner")
-
-    shop_ratings = relationship("ShopRating", back_populates="user")
-    product_ratings = relationship("ProductRating", back_populates="user")
-    authenticate = relationship("Authentication", back_populates="user")
+    chat_history : Mapped["ChatHistory"] = relationship("ChatHistory", back_populates="user")
+    shops : Mapped["Shop"] = relationship("Shop", back_populates="owner")
+    shop_ratings : Mapped["ShopRating"] = relationship("ShopRating", back_populates="user")
+    product_ratings : Mapped["ProductRating"] = relationship("ProductRating", back_populates="user")
+    authenticate : Mapped["Authentication"] = relationship("Authentication", back_populates="user")
 
     def __init__(self, first_name, last_name, phone_number, address, dob, email=None):
         self.first_name = first_name

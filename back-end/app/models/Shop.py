@@ -15,8 +15,5 @@ class Shop(Base):
     owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
 
     owner = relationship("User", back_populates="shops")
+    ratings = relationship("ShopRating", back_populates="shop")
 
-
-    def __init__(self):
-        
-        self.ratings = relationship("ShopRating", back_populates="shop")
