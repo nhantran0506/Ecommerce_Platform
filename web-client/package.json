@@ -9,15 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@heroicons/react": "^2.1.5",
     "@nextui-org/navbar": "^2.0.36",
     "@nextui-org/react": "^2.4.8",
     "next": "^14.2.13",
     "react": "^18",
     "react-dom": "^18",
     "react-feather": "^2.0.10",
-    "web-client": "file:",
-    "react-transition-group": "^4.4.5"
+    "react-transition-group": "^4.4.5",
+    "web-client": "file:"
   },
   "devDependencies": {
     "@types/node": "^20",
