@@ -25,14 +25,12 @@ class Authentication(Base):
     hash_pwd = Column(String, nullable=False)
     is_deleted = Column(Boolean, default=False)
 
+    user = relationship("User", back_populates="authenticate", foreign_keys=[user_id])
+
     def __init__(self, user_id: uuid, user_name: str, hash_pwd: str):
         self.user_id = user_id
         self.user_name = user_name
         self.hash_pwd = self.hash_password(hash_pwd)
-
-        self.user = relationship(
-            "User", back_populates="authenticate", foreign_keys=[user_id]
-        )
 
     @abstractmethod
     def get_user_by_username(db_connector: Session, user_name: str):

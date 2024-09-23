@@ -11,7 +11,4 @@ class Product(Base):
     create_at_datetime = Column(DateTime, default=datetime.now)
     price = Column(Integer)
 
-    
-
-    def __init__(self):
-        self.ratings = relationship("ProductRating", back_populates="product")
+    ratings = relationship("ProductRating", back_populates="product")

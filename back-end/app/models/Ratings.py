@@ -14,8 +14,8 @@ class ShopRating(Base):
     rating_stars = Column(Integer, nullable=False) 
     created_at = Column(DateTime, default=datetime.now())  
 
-    shop = relationship("Shop", back_populates="ratings", foreign_keys=[shop_id]) 
-    user = relationship("User", back_populates="shop_ratings", foreign_keys=[user_id])  
+    shop = relationship("Shop", back_populates="ratings") 
+    user = relationship("User", back_populates="shop_ratings")  
         
 
     

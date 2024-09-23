@@ -32,13 +32,13 @@ class User(Base):
     is_deleted = Column(Boolean, default=False)
     deleted_date = Column(DateTime, nullable=True)
 
-    chat_history = relationship(
-        "ChatHistory", back_populates="user", foreign_keys="[ChatHistory.user_id]"
-    )
+    chat_history = relationship("ChatHistory", back_populates="user")
     shops = relationship("Shop", back_populates="owner")
-    
-    
-    
+
+    shop_ratings = relationship("ShopRating", back_populates="user")
+    product_ratings = relationship("ProductRating", back_populates="user")
+    authenticate = relationship("Authentication", back_populates="user")
+
     def __init__(self, first_name, last_name, phone_number, address, dob, email=None):
         self.first_name = first_name
         self.last_name = last_name
@@ -46,15 +46,3 @@ class User(Base):
         self.address = address
         self.dob = dob
         self.email = email
-
-        self.authenticate = relationship(
-            "Authentication",
-            back_populates="user",
-            uselist=False,
-            foreign_keys="[Authentication.user_id]",
-        )
-        self.shop_ratings = relationship("ShopRating", back_populates="user", foreign_keys="[ShopRating.user_id]") 
-        self.product_ratings = relationship("ProductRating", back_populates="user", foreign_keys="[ProductRating.user_id]")
-        # self.chat_history = relationship("ChatHistory", back_populates="user", uselist=False, foreign_keys="[ChatHistory.user_id]")
-
-    

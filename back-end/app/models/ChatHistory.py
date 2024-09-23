@@ -18,7 +18,7 @@ class ChatHistory(Base):
     )
     model_name = Column(String)
 
-    user = relationship("User", back_populates="chat_history", foreign_keys=[user_id])
+    user = relationship("User", back_populates="chat_history")
     message_history = relationship("MessageHistory", back_populates="chat_history")
 
     def __init__(self, user_id: str, model_name: str):
