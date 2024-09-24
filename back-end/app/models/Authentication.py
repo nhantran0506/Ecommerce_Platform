@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, UUID, Column, String, ForeignKey, Boolean, PrimaryKeyConstraint
+from sqlalchemy import ForeignKey, UUID, Column, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 import uuid
 from abc import abstractmethod

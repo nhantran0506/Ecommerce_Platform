@@ -24,7 +24,7 @@ class ChatBotController:
     async def add_user(self, user: User):
         self.db = SessionLocal()
         try:
-            chat_history = ChatHistory(user.id, "llama3.1")
+            chat_history = ChatHistory(user.user_id, "llama3.1")
             self.db.add(chat_history)
             self.db.commit()
             self.db.refresh(chat_history)
