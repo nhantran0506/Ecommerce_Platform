@@ -5,7 +5,6 @@ import { Minus } from "react-feather";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import chatIcon from "@/assets/chatbot.png";
-// import { CSSTransition } from "react-transition-group";
 
 const hideChatIconPaths = ["/login", "/sign-up"];
 
@@ -66,7 +65,11 @@ export default function ChatWindow() {
   useEffect(() => {
     connectWebSocket();
 
-    return () => {};
+    return () => {
+      if (websocketRef.current) {
+        websocketRef.current.close();
+      }
+    };
   }, [connectWebSocket]);
 
   useEffect(() => {
