@@ -1,5 +1,5 @@
-from sqlalchemy import ForeignKey, UUID, Column, String, ForeignKey, Boolean
-from sqlalchemy.orm import relationship
+from sqlalchemy import ForeignKey, UUID, Column, String, ForeignKey, Boolean, PrimaryKeyConstraint
+from sqlalchemy.orm import relationship, mapped_column, Mapped
 import uuid
 from abc import abstractmethod
 from passlib.context import CryptContext
@@ -13,26 +13,29 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class Authentication(Base):
     __tablename__ = "authentication"
 
-    user_id = Column(
+    user_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("users.id"),
         primary_key=True,
-        default=uuid.uuid4(),
+        default=uuid.uuid4,
     )
-    user_name = Column(
-        String, ForeignKey("users.phone_number"), nullable=False, unique=True
+    user_name: Mapped[UUID] = mapped_column(
+        String,
+        ForeignKey("users.phone_number"),
+        nullable=False,
+        unique=True,
+        index=True,
     )
-    hash_pwd = Column(String, nullable=False)
-    is_deleted = Column(Boolean, default=False)
+    hash_pwd: Mapped[String] = Column(String, nullable=False)
+    is_deleted: Mapped[Boolean] = Column(Boolean, default=False)
+
+    user: Mapped["User"] = relationship(
+        "User", back_populates="authenticate"
+    )
 
     def __init__(self, user_id: uuid, user_name: str, hash_pwd: str):
         self.user_id = user_id
         self.user_name = user_name
         self.hash_pwd = self.hash_password(hash_pwd)
-
-        self.user = relationship(
-            "User", back_populates="authenticate", foreign_keys=[user_id]
-        )
 
     @abstractmethod
     def get_user_by_username(db_connector: Session, user_name: str):
@@ -45,7 +48,7 @@ class Authentication(Base):
             if user.is_deleted:
                 return None
 
-            user = db_connector.query(User).filter(User.id == user.user_id).first()
+            user = db_connector.query(User).filter(User.user_id == user.user_id).first()
             return user
         except Exception as e:
             raise e

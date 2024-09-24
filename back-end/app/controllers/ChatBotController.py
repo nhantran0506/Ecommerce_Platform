@@ -13,10 +13,10 @@ from typing import List
 from .EmbeddingController import EmbeddingController
 from fastapi import Depends
 
-embedding_engine = EmbeddingController()
-
-
 class ChatBotController:
+    embedding_engine = EmbeddingController()
+    
+    
     def __init__(self, model_name: str, db: Session = Depends(get_db)):
         self.llm = Ollama(model_name, request_timeout=500)
         self.db = db
@@ -74,7 +74,7 @@ class ChatBotController:
 
         # query
         if intent == "query":
-            nodes = embedding_engine.query(query)
+            nodes = self.embedding_engine.query(query)
 
             context = ""
             for node in nodes:

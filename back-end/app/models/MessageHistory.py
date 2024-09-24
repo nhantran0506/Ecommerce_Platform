@@ -1,33 +1,30 @@
-from sqlalchemy import String, Column, DateTime, Enum, ForeignKey
-from sqlalchemy.orm import relationship
-import enum
+from sqlalchemy import String, DateTime, Enum, ForeignKey
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from db_connector import Base
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID
-from models.ChatHistory import ChatHistory
+from llama_index.core.llms import MessageRole
 import uuid
 from sqlalchemy.sql import func
-
-
-class MessageRole(enum.Enum):
-    USER = "user"
-    ASSISTANT = "assistant"
-    SYSTEM = "system"
 
 
 class MessageHistory(Base):
     __tablename__ = "message_history"
 
-    message_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    session_id = Column(
+    message_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    session_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("chat_history.session_id"), nullable=False
     )
-    content = Column(String)
-    role = Column(Enum(MessageRole), nullable=False, default=MessageRole.ASSISTANT)
-    timestamp = Column(DateTime, default=datetime.now())
+    content: Mapped[String] = mapped_column(String)
+    role: Mapped[String] = mapped_column(
+        Enum(MessageRole), nullable=False, default=MessageRole.ASSISTANT
+    )
+    timestamp: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now())
 
-    chat_history = relationship(
-        "ChatHistory", back_populates="message_history", foreign_keys=[session_id]
+    chat_history: Mapped["ChatHistory"] = relationship(
+        "ChatHistory", back_populates="message_history"
     )
 
     def __init__(self, role: str, content: str, session_id: str):
