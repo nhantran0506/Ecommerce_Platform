@@ -4,7 +4,7 @@ from jose import JWSError, jwt
 from fastapi import HTTPException, status, Depends, WebSocket
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
-
+from sqlalchemy import select
 from db_connector import get_db
 from models.Authentication import Authentication
 from config import ALGORITHM, SERECT_KEY, EXPIRE_TOKEN_TIME
@@ -47,7 +47,9 @@ async def get_current_user(
 
 
 async def authenticate_user(db: Session, user_name: str, password: str):
-    user_auth = db.query(Authentication).filter(Authentication.user_name == user_name).first()
+    query = select(Authentication).where(Authentication.user_name == user_name)
+    result = db.execute(query)
+    user_auth = result.scalar_one_or_none()
     if not user_auth or not user_auth.verify_password(password):
         return False
     return user_auth
@@ -57,7 +59,7 @@ async def get_user_role(
     db: Session = Depends(get_db),
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
-    user = await get_current_user(db=db, credentials = credentials)
+    user = get_current_user(db=db, credentials = credentials)
     if user:
         return user.role
     else:

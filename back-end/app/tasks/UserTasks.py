@@ -4,6 +4,10 @@ from models.Users import User
 from models.Authentication import Authentication
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from db_connector import SessionLocal
+from sqlalchemy import select, delete
+import logging
+
+logger = logging.getLogger(__name__)
 
 class UserTasks:
     def __init__(self) -> None:
@@ -12,20 +16,24 @@ class UserTasks:
         self.scheduler.start()
 
     async def delete_inactive_users(self):
-        db = SessionLocal()
-        try:
-            fourteen_days_ago = datetime.now() - timedelta(days=14)
-            inactive_users = db.query(User).filter(
-                User.is_deleted == True,
-                User.deleted_date <= fourteen_days_ago
-            ).all()
+        async with SessionLocal() as db:
+            try:
+                fourteen_days_ago = datetime.now() - timedelta(days=14)
+                
+                query = select(User).where(
+                    User.is_deleted == True,
+                    User.deleted_date <= fourteen_days_ago
+                )
+                result = await db.execute(query)
+                inactive_users = result.scalars().all()
 
-            for user in inactive_users:
-                db.query(Authentication).filter(Authentication.user_id == user.id).delete()
-                db.delete(user)
+                for user in inactive_users:
+                    auth_delete_query = delete(Authentication).where(Authentication.user_id == user.user_id)
+                    await db.execute(auth_delete_query)
+                    user_delete_query = delete(User).where(User.user_id == user.user_id)
+                    await db.execute(user_delete_query)
 
-            db.commit()
-        except Exception as e:
-            db.rollback()
-        finally:
-            db.close()
+                await db.commit()
+            except Exception as e:
+                await db.rollback()
+                logger.error(str(e))

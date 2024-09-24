@@ -33,11 +33,11 @@ class User(Base):
     is_deleted : Mapped[Boolean]= mapped_column(Boolean, default=False)
     deleted_date : Mapped[UUID]= mapped_column(DateTime, nullable=True)
 
-    chat_history: Mapped["ChatHistory"] = relationship("ChatHistory", back_populates="user")
-    shops : Mapped["Shop"]= relationship("Shop", back_populates="owner", uselist=False)
+    chat_history: Mapped[list["ChatHistory"]] = relationship("ChatHistory", back_populates="user")
+    shops : Mapped["Shop"]= relationship("Shop", back_populates="owner")
     authenticate: Mapped["Authentication"] = relationship("Authentication", back_populates="user")
-    product_ratings : Mapped["ProductRating"]= relationship("ProductRating", back_populates="user", foreign_keys="[ProductRating.user_id]") 
-    shop_ratings : Mapped["ShopRating"]= relationship("ShopRating", back_populates="user", foreign_keys="[ShopRating.user_id]")
+    product_ratings : Mapped[list["ProductRating"]]= relationship("ProductRating", back_populates="user") 
+    shop_ratings : Mapped[list["ShopRating"]]= relationship("ShopRating", back_populates="user")
 
     def __init__(self, first_name, last_name, phone_number, address, dob, email=None):
         self.first_name = first_name

@@ -32,11 +32,6 @@ class Authentication(Base):
         "User", back_populates="authenticate"
     )
 
-    def __init__(self, user_id: uuid, user_name: str, hash_pwd: str):
-        self.user_id = user_id
-        self.user_name = user_name
-        self.hash_pwd = self.hash_password(hash_pwd)
-
     @abstractmethod
     def get_user_by_username(db_connector: Session, user_name: str):
         try:
@@ -53,8 +48,8 @@ class Authentication(Base):
         except Exception as e:
             raise e
 
-    @abstractmethod
-    def hash_password(self, password: str) -> str:
+    @staticmethod
+    def hash_password(password: str) -> str:
         return pwd_context.hash(password)
 
     def verify_password(self, password: str) -> bool:

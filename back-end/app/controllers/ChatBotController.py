@@ -1,3 +1,4 @@
+from sqlalchemy import insert, select
 from models.MessageHistory import MessageHistory
 from llama_index.core.llms import ChatMessage
 from llama_index.llms.ollama import Ollama
@@ -10,51 +11,49 @@ from .EmbeddingController import EmbeddingController
 from llama_index.core import PromptTemplate
 from helper_collections.PROMPTs import *
 from typing import List
-from .EmbeddingController import EmbeddingController
 from fastapi import Depends
+from sqlalchemy import func
 
 class ChatBotController:
     embedding_engine = EmbeddingController()
     
-    
-    def __init__(self, model_name: str, db: Session = Depends(get_db)):
+    def __init__(self, model_name: str, db: Session):
         self.llm = Ollama(model_name, request_timeout=500)
         self.db = db
 
     async def add_user(self, user: User):
-        self.db = SessionLocal()
         try:
-            chat_history = ChatHistory(user.user_id, "llama3.1")
-            self.db.add(chat_history)
+            insert_stmt = insert(ChatHistory).values(
+                user_id=user.user_id, 
+                model_name="llama3.1")
+            result = self.db.execute(insert_stmt)
             self.db.commit()
-            self.db.refresh(chat_history)
-            return str(chat_history.session_id)
+            return str(result.inserted_primary_key[0])
         except Exception as e:
             self.db.rollback()
             raise e
 
     async def get_history(self, session_id: str):
-        self.db = SessionLocal()
-        history = (
-            self.db.query(MessageHistory)
-            .filter(MessageHistory.session_id == session_id)
+        query = (
+            select(MessageHistory)
+            .where(MessageHistory.session_id == session_id)
             .order_by(MessageHistory.timestamp.desc())
-            .all()
         )
+        result = self.db.execute(query)
+        history = result.scalars()
 
-        result = []
-        for message in history or []:
-            result.append(ChatMessage(role=message.role, content=message.content))
-
-        return result
+        return [
+            ChatMessage(role=message.role, content=message.content)
+            for message in history
+        ]
 
     async def add_message(self, role: str, content: str, session_id: str):
-        self.db = SessionLocal()
         try:
-            message = MessageHistory(role=role, content=content, session_id=session_id)
-            self.db.add(message)
+            insert_stmt = insert(MessageHistory).values(
+                role=role, content=content, session_id=session_id
+            )
+            self.db.execute(insert_stmt)
             self.db.commit()
-            self.db.refresh(message)
         except Exception as e:
             self.db.rollback()
             raise e
@@ -63,22 +62,14 @@ class ChatBotController:
         intent_prompt = PromptTemplate(INTENT_DETECTION).format(query=query)
         intent_output = self.llm.complete(prompt=intent_prompt).text
 
-        if "query" in intent_output.lower():
-            return "query"
-
-        return intent_output
+        return "query" if "query" in intent_output.lower() else intent_output
 
     async def answer(self, query: str, session_id: str, current_user: User):
-
         intent = self.intent_detection(query)
 
-        # query
         if intent == "query":
             nodes = self.embedding_engine.query(query)
-
-            context = ""
-            for node in nodes:
-                context += node["text"]
+            context = "".join(node["text"] for node in nodes)
 
             system_prompt = PromptTemplate(SYSTEM_PROMPT).format(
                 customer_name=f"{current_user.first_name} {current_user.last_name}",
@@ -93,15 +84,15 @@ class ChatBotController:
             )
 
             system_msg = [ChatMessage(role=MessageRole.SYSTEM, content=system_prompt)]
-            chat_hisory = await self.get_history(session_id)
-            reponse = self.llm.chat(system_msg + chat_hisory)
+            chat_history = await self.get_history(session_id)
+            response = self.llm.chat(system_msg + chat_history)
 
             await self.add_message(
                 role=MessageRole.ASSISTANT,
-                content=reponse.message.content,
+                content=response.message.content,
                 session_id=session_id,
             )
 
-            return reponse.message.content, intent
+            return response.message.content, intent
 
         return intent, "search"

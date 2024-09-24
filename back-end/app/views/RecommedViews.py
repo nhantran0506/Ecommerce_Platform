@@ -15,7 +15,7 @@ router = APIRouter(prefix="/recommed", tags=["recommed"])
 
 
 @router.post("/get_recommed/")
-async def get_recommed(recommed_controller : RecommendedController = Depends(), current_user : User = Depends(token_config.get_current_user())):
+async def get_recommed(recommed_controller : RecommendedController = Depends(), current_user : User = Depends(token_config.get_current_user)):
     try:
         return await recommed_controller.get_recommed(current_user)
     except Exception as e:
