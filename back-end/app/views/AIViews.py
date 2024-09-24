@@ -48,11 +48,11 @@ async def embedding(embedding_request : EmbeddingPayload ,
 
 @router.websocket("/chatbot")
 async def websocket_endpoint(
-    websocket: WebSocket, current_user=Depends(token_config.get_current_user_ws)
+    websocket: WebSocket, current_user=Depends(token_config.get_current_user_ws), db = Depends(get_db)
 ):
     await websocket.accept()
     session_id = await ws_manager.add_websocket(
-        current_user, websocket, ChatBotController("llama3.1")
+        current_user, websocket, ChatBotController("llama3.1", db)
     )
 
     payload = {

@@ -6,6 +6,7 @@ import views.AIViews
 import views.UserViews
 import views.ProductViews
 import views.ShopViews
+import views.RecommedViews
 import uvicorn
 from tasks.UserTasks import UserTasks
 
@@ -26,6 +27,7 @@ routing.routing_config(
         views.UserViews.router,
         views.ShopViews.router,
         views.AIViews.router,
+        views.RecommedViews.router,
     ],
 )
 
