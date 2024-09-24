@@ -24,7 +24,7 @@ class ShopController:
 
 
     def create_new_shop(self, shop: ShopCreate, current_user):
-        exist_shop = self.db.query(Shop).filter(Shop.owner_id == current_user.id).first()
+        exist_shop = self.db.query(Shop).filter(Shop.owner_id == current_user.user_id).first()
         if exist_shop:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -32,7 +32,7 @@ class ShopController:
             )
         
         # Create new shop if no existing shop is found
-        db_shop = Shop(**shop.model_dump(), owner_id=current_user.id)
+        db_shop = Shop(**shop.model_dump(), owner_id=current_user.user_id)
         self.db.add(db_shop)
         self.db.commit()
         self.db.refresh(db_shop)

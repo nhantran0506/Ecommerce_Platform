@@ -22,7 +22,7 @@ class UserController:
                 content={"Message": "Invalid username or password."},
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
-        user = self.db.query(User).filter(User.id == auth.user_id).first()
+        user = self.db.query(User).filter(User.user_id == auth.user_id).first()
 
         user.is_deleted = False
         self.db.commit()
@@ -33,7 +33,7 @@ class UserController:
 
     async def get_user_by_id(self, user_id: str):
         try:
-            user = self.db.query(User).filter(User.id == user_id).first()
+            user = self.db.query(User).filter(User.user_id == user_id).first()
             if user:
                 return JSONResponse(
                     content=user.to_dict(), status_code=status.HTTP_200_OK
@@ -69,7 +69,7 @@ class UserController:
 
 
         auth = Authentication(
-            user_id = user_parse.id,
+            user_id = user_parse.user_id,
             user_name = user_parse.phone_number,
             hash_pwd = data["password"]
         )
