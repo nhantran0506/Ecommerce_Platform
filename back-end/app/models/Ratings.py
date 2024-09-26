@@ -9,8 +9,8 @@ class ShopRating(Base):
     __tablename__ = "shop_rating"
 
     id: Mapped[UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
-    shop_id: Mapped[Integer] = mapped_column(
-        Integer, ForeignKey("shop.shop_id"), nullable=False
+    shop_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("shop.shop_id"), nullable=False
     )
     user_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False

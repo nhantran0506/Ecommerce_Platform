@@ -14,9 +14,9 @@ class WebSocketManager:
     async def add_websocket(
         self, current_user: User, websocket: WebSocket, llm: ChatBotController
     ):
-        session_id = await llm.add_user(current_user)
         if len(self.activate_websocket) >= self.MAX_CLIENTS:
             raise Exception("Use queues are full.")
+        session_id = await llm.add_user(current_user)
 
         if session_id not in self.activate_websocket.keys():
             self.activate_websocket[session_id] = {

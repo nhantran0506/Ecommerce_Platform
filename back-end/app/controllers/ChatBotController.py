@@ -17,9 +17,9 @@ from sqlalchemy import func
 class ChatBotController:
     embedding_engine = EmbeddingController()
     
-    def __init__(self, model_name: str, db: Session):
+    def __init__(self, model_name: str):
         self.llm = Ollama(model_name, request_timeout=500)
-        self.db = db
+        self.db : Session = SessionLocal()
 
     async def add_user(self, user: User):
         try:
@@ -68,7 +68,7 @@ class ChatBotController:
         intent = self.intent_detection(query)
 
         if intent == "query":
-            nodes = self.embedding_engine.query(query)
+            nodes = self.embedding_engine.query(query, top_k=5, min_similarity=0.7)
             context = "".join(node["text"] for node in nodes)
 
             system_prompt = PromptTemplate(SYSTEM_PROMPT).format(

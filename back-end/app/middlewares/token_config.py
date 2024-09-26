@@ -55,18 +55,18 @@ async def authenticate_user(db: Session, user_name: str, password: str):
     return user_auth
 
 
-async def get_user_role(
-    db: Session = Depends(get_db),
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-):
-    user = get_current_user(db=db, credentials = credentials)
-    if user:
-        return user.role
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, 
-            detail="Could not determine user role"
-        )
+# async def get_user_role(
+#     db: Session = Depends(get_db),
+#     credentials: HTTPAuthorizationCredentials = Depends(security)
+# ):
+#     user = get_current_user(db=db, credentials = credentials)
+#     if user:
+#         return user.role
+#     else:
+#         raise HTTPException(
+#             status_code=status.HTTP_403_FORBIDDEN, 
+#             detail="Could not determine user role"
+#         )
 
 
 async def get_current_user_ws(
