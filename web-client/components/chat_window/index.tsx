@@ -20,11 +20,10 @@ export default function ChatWindow() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pathName = usePathname();
 
-  if (hideChatIconPaths.includes(pathName)) {
-    return null;
-  }
+
 
   const connectWebSocket = useCallback(() => {
+    console.log("hehe")
     const token = localStorage.getItem("token");
     const uri = `ws://localhost:8000/ai/chatbot?token=${token}`;
 
@@ -94,6 +93,10 @@ export default function ChatWindow() {
     setIsMinimized(!isMinimized);
   };
 
+  if (hideChatIconPaths.includes(pathName)) {
+    return null;
+  }
+
   return (
     <div>
       <div
@@ -110,9 +113,8 @@ export default function ChatWindow() {
       </div>
       {!isMinimized && (
         <div
-          className={`fixed bottom-0 right-0 m-4 w-80 bg-white shadow-lg rounded-lg overflow-hidden transition-transform ${
-            isMinimized ? "transform translate-y-[calc(100%-2.5rem)]" : ""
-          }`}
+          className={`fixed bottom-0 right-0 m-4 w-80 bg-white shadow-lg rounded-lg overflow-hidden transition-transform ${isMinimized ? "transform translate-y-[calc(100%-2.5rem)]" : ""
+            }`}
         >
           <div className="bg-black text-white p-2 flex justify-between items-center">
             <h2 className="font-bold">Customer service</h2>
@@ -132,9 +134,8 @@ export default function ChatWindow() {
               messages.map((msg, index) => (
                 <div
                   key={index}
-                  className={`my-2 p-2 rounded flex items-start ${
-                    msg.sender === "You" ? "justify-end" : "justify-start"
-                  }`}
+                  className={`my-2 p-2 rounded flex items-start ${msg.sender === "You" ? "justify-end" : "justify-start"
+                    }`}
                 >
                   {msg.sender === "Chatbot" && (
                     <div className="mr-2 flex-shrink-0">
@@ -148,11 +149,10 @@ export default function ChatWindow() {
                     </div>
                   )}
                   <div
-                    className={`p-2 rounded max-w-xs ${
-                      msg.sender === "You"
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 text-black"
-                    }`}
+                    className={`p-2 rounded max-w-xs ${msg.sender === "You"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-black"
+                      }`}
                   >
                     {msg.content}
                   </div>
@@ -191,9 +191,8 @@ export default function ChatWindow() {
             />
             <button
               onClick={handleSendMessage}
-              className={`ml-2 text-white rounded p-2 ${
-                isConnected ? "bg-blue-500 hover:bg-blue-600" : "bg-gray-400"
-              }`}
+              className={`ml-2 text-white rounded p-2 ${isConnected ? "bg-blue-500 hover:bg-blue-600" : "bg-gray-400"
+                }`}
               disabled={!isConnected}
             >
               Send
