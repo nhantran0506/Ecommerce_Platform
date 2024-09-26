@@ -63,8 +63,8 @@ const ProductPage = () => {
           title={"Recommended"}
           content={
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {recommendProductlist.map((item) => (
-                <ProductCard key={item.id} product={item} />
+              {recommendProductlist.map((item, index) => (
+                <ProductCard key={index} product={item} />
               ))}
             </div>
           }
@@ -74,8 +74,8 @@ const ProductPage = () => {
           title={"All Products"}
           content={
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {productlist.map((item) => (
-                <ProductCard key={item.id} product={item} />
+              {productlist.map((item, index) => (
+                <ProductCard key={index} product={item} />
               ))}
             </div>
           }

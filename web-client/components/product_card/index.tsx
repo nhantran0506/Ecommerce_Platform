@@ -25,7 +25,7 @@ const ProductCard: React.FC<IProductCard> = ({ product }) => {
             shadow="sm"
             radius="lg"
             width="100%"
-            alt={product.name}
+            alt={product.product_name}
             className="w-full h-[180px] object-cover"
             src={product.image}
             style={{
@@ -38,7 +38,7 @@ const ProductCard: React.FC<IProductCard> = ({ product }) => {
       <CardFooter>
         <div className="flex flex-col w-full h-full">
           <p className="text-md line-clamp-1 text-start">
-            {truncateText(product.name)}
+            {truncateText(product.product_name)}
           </p>
 
           <div className="flex justify-between">
