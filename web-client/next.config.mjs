@@ -1,4 +1,8 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  images: {
+    domains: ["letsenhance.io"], // Add the required domain
+  },
+};
 
 export default nextConfig;

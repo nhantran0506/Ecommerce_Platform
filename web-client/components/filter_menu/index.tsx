@@ -32,6 +32,7 @@ const FilterMenu = () => {
             type="number"
             placeholder="0.00"
             labelPlacement="outside"
+            aria-label="Filter price input"
             startContent={
               <div className="pointer-events-none flex items-center">
                 <span className="text-default-400 text-small">$</span>
@@ -43,6 +44,7 @@ const FilterMenu = () => {
             type="number"
             placeholder="0.00"
             labelPlacement="outside"
+            aria-label="Filter price input"
             startContent={
               <div className="pointer-events-none flex items-center">
                 <span className="text-default-400 text-small">$</span>
@@ -58,12 +60,12 @@ const FilterMenu = () => {
     <div className="relative">
       <Button
         isIconOnly
-        aria-label="Filter"
+        aria-label="Filter button"
         radius="sm"
         className="w-10 h-10 bg-black"
         onClick={togglePopup}
       >
-        <Filter className="text-white" />
+        <Filter className="text-white" aria-label="Filter icon" />
       </Button>
 
       {/* Filter pop-up */}
@@ -78,6 +80,7 @@ const FilterMenu = () => {
             <Button
               className="mt-2 w-full text-white"
               color="primary"
+              aria-label="Apply button"
               onClick={() => {}}
             >
               Apply
@@ -86,6 +89,7 @@ const FilterMenu = () => {
               className="mt-2"
               color="default"
               isIconOnly
+              aria-label="Close button"
               onClick={togglePopup}
             >
               <X />
