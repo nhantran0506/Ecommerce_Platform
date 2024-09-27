@@ -25,7 +25,7 @@ class EmbeddingController:
         self._index = VectorStoreIndex.from_vector_store(
             self._vector_store,
             embed_model=self.embed_model,
-        )
+        ).as_retriever()
 
     def load_faq(self):
         docs = []
@@ -50,22 +50,18 @@ class EmbeddingController:
             embed_model=self.embed_model,
         )
 
-    def query(self, query: str, top_k: int = 5):
-        query_embedding = self.embed_model.get_text_embedding(query)
+    def query(self, query: str, top_k: int = 5, min_similarity : float = 0.6):
         
-        results = self._chroma_collection.query(
-            query_embeddings=[query_embedding],
-            n_results=top_k
+        results = self._index.retrieve(
+            query
         )
+        responses = []
+        for node in results[:top_k] or []:
+            if node.score >= min_similarity:
+                responses.append({
+                    'text' : node.text,
+                    'score' : node.score
+                })
+            
+        return responses
         
-        if results['ids']:
-            responses = []
-            for i in range(len(results['ids'][0])):
-                response = {
-                    'text': results['documents'][0][i],
-                    'distance': results['distances'][0][i] if results['distances'] else None
-                }
-                responses.append(response)
-            return responses
-        else:
-            return []

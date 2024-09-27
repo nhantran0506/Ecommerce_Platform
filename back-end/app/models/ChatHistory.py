@@ -21,7 +21,7 @@ class ChatHistory(Base):
     model_name: Mapped[String] = mapped_column(String)
 
     user: Mapped["User"] = relationship("User", back_populates="chat_history")
-    message_history: Mapped["MessageHistory"] = relationship(
+    message_history: Mapped[list["MessageHistory"]] = relationship(
         "MessageHistory", back_populates="chat_history"
     )
 
