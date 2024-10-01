@@ -3,11 +3,11 @@ from sqlalchemy import Boolean, String, Integer, Column, ForeignKey, DateTime, F
 from db_connector import Base
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, mapped_column, Mapped
-
+import uuid
 
 class Shop(Base):
     __tablename__ = "shop"
-    shop_id: Mapped[Integer] = mapped_column(Integer, primary_key=True, index=True)
+    shop_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     shop_name: Mapped[String] = mapped_column(String, nullable=False)
     shop_address: Mapped[String] = mapped_column(String, nullable=False)
     shop_phone_number: Mapped[String] = mapped_column(String, nullable=False)
