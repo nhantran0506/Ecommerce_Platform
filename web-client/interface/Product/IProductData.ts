@@ -1,4 +1,5 @@
-export interface IProduct {
+export interface IProductData {
+  id: string;
   product_name: string;
   product_description: string;
   price: number;

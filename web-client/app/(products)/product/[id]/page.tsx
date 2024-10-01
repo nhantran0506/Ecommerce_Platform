@@ -1,6 +1,5 @@
 "use client";
 
-import { IProduct } from "@/interface/IProduct";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { productlist } from "../../products/data";
@@ -15,12 +14,16 @@ import {
   Home,
   Tag,
 } from "react-feather";
-import { IProductIconDataSection } from "@/interface/Product/IProductUI";
+import {
+  ImageSizeEnum,
+  IProductIconDataSection,
+} from "@/interface/Product/IProductUI";
 import { Button } from "@nextui-org/react";
+import { IProductData } from "@/interface/Product/IProductData";
 
 const ProductDetailPage = ({ params }: { params: { id: string } }) => {
   const maxNumberOfProduct = 10;
-  const [product, setProduct] = useState<IProduct | null>(null);
+  const [product, setProduct] = useState<IProductData | null>(null);
   const [loading, setLoading] = useState(false);
   const [numberOfProduct, setNumberOfProduct] = useState<number>(1);
 
@@ -134,7 +137,7 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
             priority={true}
           />
         ) : (
-          <DefaultImage />
+          <DefaultImage imgSize={ImageSizeEnum.lg} />
         )}
       </div>
 

@@ -8,7 +8,7 @@ interface ISectionHeader {
 const SectionHeader: React.FC<ISectionHeader> = ({ title, content }) => {
   return (
     <div className="mb-8">
-      <p className="text-xl font-bold mb-8">{title}</p>
+      <p className="text-xl font-semibold mb-8">{title}</p>
       {content}
     </div>
   );
