@@ -11,23 +11,28 @@ import {
   NavbarItem,
   Link,
   Button,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
 } from "@nextui-org/react";
-import { ShoppingCart, User } from "react-feather";
-import { usePathname } from "next/navigation";
-import { IHomePageOption } from "./interface";
+import { LogOut, Settings, ShoppingCart, User } from "react-feather";
+import { usePathname, useRouter } from "next/navigation";
+import { IHomePageOption } from "../../interface/NavigationBar/interface";
+import { MenuEnum } from "./enum";
 
 const pageNavigation: IHomePageOption[] = [
   {
-    name: "Products",
-    link: "#",
+    name: "Home",
+    link: MenuEnum.Home,
   },
   {
-    name: "Profile",
-    link: "#",
+    name: "Products",
+    link: MenuEnum.Product,
   },
   {
     name: "Shop",
-    link: "#",
+    link: MenuEnum.Shop,
   },
 ];
 
@@ -48,7 +53,28 @@ const pageMenu: IHomePageOption[] = [
 ];
 
 export default function NavigationBar() {
+  const router = useRouter();
   const pathname = usePathname();
+
+  const handleNavigate = (key: string) => {
+    switch (key) {
+      case MenuEnum.UserProfile:
+        router.push(MenuEnum.UserProfile);
+        break;
+      case MenuEnum.Settings:
+        router.push(MenuEnum.Settings);
+        break;
+      case MenuEnum.Cart:
+        router.push(MenuEnum.Cart);
+        break;
+      case MenuEnum.Logout:
+        // Handle logout logic (e.g., clearing tokens) before navigating
+        router.push(MenuEnum.Logout);
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <Navbar disableAnimation isBordered>
@@ -62,7 +88,7 @@ export default function NavigationBar() {
         </NavbarBrand>
       </NavbarContent>
 
-      <NavbarContent className="hidden sm:flex gap-4" justify="center">
+      <NavbarContent className="hidden sm:flex gap-8" justify="center">
         <NavbarBrand>
           <p className="font-bold text-inherit">LOGO</p>
         </NavbarBrand>
@@ -80,12 +106,41 @@ export default function NavigationBar() {
         })}
       </NavbarContent>
 
-      <NavbarContent justify="end">
+      <NavbarContent justify="end" className="gap-8">
         <NavbarItem>
-          <ShoppingCart />
+          <ShoppingCart onClick={() => handleNavigate(MenuEnum.Cart)} />
         </NavbarItem>
+
         <NavbarItem>
-          <User />
+          <Dropdown placement="bottom-end">
+            <DropdownTrigger>
+              <User />
+            </DropdownTrigger>
+            <DropdownMenu
+              aria-label="Profile Actions"
+              variant="flat"
+              onAction={(key) => handleNavigate(key as string)}
+            >
+              <DropdownItem key={MenuEnum.UserProfile}>
+                <div className="flex items-center gap-3">
+                  <User />
+                  <p>Profile</p>
+                </div>
+              </DropdownItem>
+              <DropdownItem key={MenuEnum.Settings}>
+                <div className="flex items-center gap-3">
+                  <Settings />
+                  <p>Settings</p>
+                </div>
+              </DropdownItem>
+              <DropdownItem key={MenuEnum.Logout} color="danger">
+                <div className="flex items-center gap-3">
+                  <LogOut />
+                  <p> Log Out</p>
+                </div>
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
         </NavbarItem>
       </NavbarContent>
 

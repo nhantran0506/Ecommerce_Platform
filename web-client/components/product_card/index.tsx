@@ -3,23 +3,27 @@ import { truncateText } from "@/libraries/helpers";
 import { Card, CardBody, CardFooter, Image } from "@nextui-org/react";
 import { ShoppingCart } from "react-feather";
 import StarRating from "../start_rating";
-import { IProduct } from "@/interface/IProduct";
 import DefaultImage from "./default_image";
+import { ImageSizeEnum } from "@/interface/Product/IProductUI";
+import { IProductData } from "@/interface/Product/IProductData";
 
 interface IProductCard {
-  product: IProduct;
+  product: IProductData;
+  onClick: () => void;
 }
 
-const ProductCard: React.FC<IProductCard> = ({ product }) => {
+const ProductCard: React.FC<IProductCard> = ({ product, onClick }) => {
   return (
     <Card
       className="border-2 rounded-xl w-[220px] h-[280px]"
       isPressable
-      onPress={() => console.log("item pressed")}
+      onPress={() => onClick()}
     >
       <CardBody className="overflow-visible p-0">
         {!product.image ? (
-          <DefaultImage />
+          <div className="h-full w-full">
+            <DefaultImage imgSize={ImageSizeEnum.sm} />
+          </div>
         ) : (
           <Image
             shadow="sm"

@@ -1,4 +1,5 @@
 "use client";
+import { useRouter } from "next/navigation";
 import SingleComboBoxItem from "@/components/single_combo_box_item";
 import {
   IFilterMenu,
@@ -12,6 +13,8 @@ import { productlist, recommendProductlist } from "./data";
 import FilterMenu from "@/components/filter_menu";
 
 const ProductPage = () => {
+  const router = useRouter();
+
   const listFilterOptionForPrice: IOptionMenuFilter[] = [
     { key: "ascending", label: "Ascending" },
     { key: "descending", label: "Descending" },
@@ -64,7 +67,11 @@ const ProductPage = () => {
           content={
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {recommendProductlist.map((item, index) => (
-                <ProductCard key={index} product={item} />
+                <ProductCard
+                  key={index}
+                  product={item}
+                  onClick={() => router.push("/product/" + item.id)}
+                />
               ))}
             </div>
           }
@@ -75,7 +82,11 @@ const ProductPage = () => {
           content={
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {productlist.map((item, index) => (
-                <ProductCard key={index} product={item} />
+                <ProductCard
+                  key={index}
+                  product={item}
+                  onClick={() => router.push("/product/" + item.id)}
+                />
               ))}
             </div>
           }

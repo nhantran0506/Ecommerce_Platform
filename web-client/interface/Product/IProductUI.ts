@@ -6,3 +6,12 @@ export interface IProductIconDataSection {
   subText?: string;
   isHightlight?: boolean;
 }
+
+export enum ImageSizeEnum {
+  sm,
+  lg,
+}
+
+export interface IProductDefaultImage {
+  imgSize: ImageSizeEnum;
+}
