@@ -22,3 +22,4 @@ class Product(Base):
     cart_products: Mapped[list["CartProduct"]] = relationship(
         "CartProduct", back_populates="product"
     )
+    cat_products : Mapped["CategoryProduct"] = relationship("CategoryProduct",back_populates="product")

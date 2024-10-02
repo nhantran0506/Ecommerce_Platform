@@ -38,6 +38,7 @@ class User(Base):
     authenticate: Mapped["Authentication"] = relationship("Authentication", back_populates="user")
     product_ratings : Mapped[list["ProductRating"]]= relationship("ProductRating", back_populates="user") 
     shop_ratings : Mapped[list["ShopRating"]]= relationship("ShopRating", back_populates="user")
+    user_interest: Mapped["UserInterest"] = relationship("UserInterest", back_populates="user")
 
     def __init__(self, first_name, last_name, phone_number, address, dob, email=None):
         self.first_name = first_name
