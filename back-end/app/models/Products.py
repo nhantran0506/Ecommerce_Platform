@@ -16,6 +16,7 @@ class Product(Base):
     create_at_datetime: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     price: Mapped[Float] = mapped_column(Float)
 
+
     ratings: Mapped["ProductRating"] = relationship(
         "ProductRating", back_populates="product"
     )
@@ -23,3 +24,5 @@ class Product(Base):
         "CartProduct", back_populates="product"
     )
     cat_products : Mapped["CategoryProduct"] = relationship("CategoryProduct",back_populates="product")
+    order_product : Mapped["OrderItem"] = relationship("OrderItem",back_populates="product")
+    order_items : Mapped["OrderItem"] = relationship("OrderItem",back_populates="product")
