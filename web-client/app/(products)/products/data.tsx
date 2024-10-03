@@ -1,7 +1,7 @@
-import { IProduct } from "@/interface/IProduct";
+import { IProductData } from "@/interface/Product/IProductData";
 
 // Fake data
-export const productlist: IProduct[] = [
+export const productlist: IProductData[] = [
   {
     id: "0",
     product_name: "Wireless Headphones",
@@ -49,7 +49,7 @@ export const productlist: IProduct[] = [
   },
 ];
 
-export const recommendProductlist: IProduct[] = [
+export const recommendProductlist: IProductData[] = [
   {
     id: "0",
     product_name: "Wireless Headphones",

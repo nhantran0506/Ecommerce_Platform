@@ -9,6 +9,7 @@ export interface IProductIconDataSection {
 
 export enum ImageSizeEnum {
   sm,
+  md,
   lg,
 }
 

@@ -15,10 +15,15 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
+  Divider,
+  DropdownSection,
 } from "@nextui-org/react";
 import { LogOut, Settings, ShoppingCart, User } from "react-feather";
 import { usePathname, useRouter } from "next/navigation";
-import { IHomePageOption } from "../../interface/NavigationBar/interface";
+import {
+  IDropDownOption,
+  IHomePageOption,
+} from "../../interface/NavigationBar/interface";
 import { MenuEnum } from "./enum";
 
 const pageNavigation: IHomePageOption[] = [
@@ -49,6 +54,25 @@ const pageMenu: IHomePageOption[] = [
   {
     name: "Log Out",
     link: "#",
+  },
+];
+
+const userDropdownOption: IDropDownOption[] = [
+  {
+    key: MenuEnum.UserProfile,
+    prefix: <User />,
+    name: "Profile",
+  },
+  {
+    key: MenuEnum.Settings,
+    prefix: <Settings />,
+    name: "Settings",
+  },
+  {
+    key: MenuEnum.Logout,
+    prefix: <LogOut />,
+    name: "Log Out",
+    color: "danger",
   },
 ];
 
@@ -106,39 +130,38 @@ export default function NavigationBar() {
         })}
       </NavbarContent>
 
-      <NavbarContent justify="end" className="gap-8">
+      <NavbarContent justify="end" className="gap-4">
         <NavbarItem>
-          <ShoppingCart onClick={() => handleNavigate(MenuEnum.Cart)} />
+          <Button isIconOnly className="bg-transparent">
+            <ShoppingCart onClick={() => handleNavigate(MenuEnum.Cart)} />{" "}
+          </Button>
         </NavbarItem>
 
         <NavbarItem>
           <Dropdown placement="bottom-end">
             <DropdownTrigger>
-              <User />
+              <Button isIconOnly className="bg-transparent">
+                <User />
+              </Button>
             </DropdownTrigger>
             <DropdownMenu
               aria-label="Profile Actions"
               variant="flat"
               onAction={(key) => handleNavigate(key as string)}
             >
-              <DropdownItem key={MenuEnum.UserProfile}>
-                <div className="flex items-center gap-3">
-                  <User />
-                  <p>Profile</p>
-                </div>
+              <DropdownItem key="name">
+                <p className="text-lg text-black font-bold">Phuoc Truong</p>
               </DropdownItem>
-              <DropdownItem key={MenuEnum.Settings}>
-                <div className="flex items-center gap-3">
-                  <Settings />
-                  <p>Settings</p>
-                </div>
-              </DropdownItem>
-              <DropdownItem key={MenuEnum.Logout} color="danger">
-                <div className="flex items-center gap-3">
-                  <LogOut />
-                  <p> Log Out</p>
-                </div>
-              </DropdownItem>
+              <DropdownSection>
+                {userDropdownOption.map((item, index) => (
+                  <DropdownItem key={item.key} color={item.color}>
+                    <div className="flex items-center gap-3">
+                      {item.prefix}
+                      <p>{item.name}</p>
+                    </div>
+                  </DropdownItem>
+                ))}
+              </DropdownSection>
             </DropdownMenu>
           </Dropdown>
         </NavbarItem>
