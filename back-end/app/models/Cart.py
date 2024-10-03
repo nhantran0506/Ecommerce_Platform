@@ -12,9 +12,6 @@ class Cart(Base):
 
     cart_products : Mapped[list["CartProduct"]] = relationship("CartProduct", back_populates="cart")
 
-    def add_product(self, product: "Product", quantity: int = 1):
-        cart_product = CartProduct(cart=self, product=product, quantity=quantity)
-        self.cart_products.append(cart_product)
 
 
 

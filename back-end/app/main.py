@@ -3,6 +3,7 @@ from db_connector import engine, Base, SessionLocal
 from middlewares.routing_config import RouteConfig
 import views
 import views.AIViews
+import views.CartViews
 import views.UserViews
 import views.ProductViews
 import views.ShopViews
@@ -28,6 +29,7 @@ routing.routing_config(
         views.ShopViews.router,
         views.AIViews.router,
         views.RecommedViews.router,
+        views.CartViews.router,
     ],
 )
 
