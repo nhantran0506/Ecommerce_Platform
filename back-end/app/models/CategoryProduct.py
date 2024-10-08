@@ -17,7 +17,7 @@ import uuid
 class CategoryProduct(Base):
     __tablename__ = "category_products"
 
-    cat_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('categories.cart_id'), primary_key=True)
+    cat_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('categories.cat_id'), primary_key=True)
     product_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('products.product_id'), primary_key=True)
 
     product : Mapped["Product"] = relationship("Product",back_populates="cat_products")

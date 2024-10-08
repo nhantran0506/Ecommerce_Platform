@@ -1,18 +1,20 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from models.Shop import Shop
 from serializers.ShopSerializers import *
 from middlewares.token_config import *
 
 class ShopController:
-    def __init__(self, db: Session = Depends(get_db)):
+    def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
 
-    def get_all_shop(self):
-        return self.db.query(Shop).all()
+    async def get_all_shop(self):
+        result = await self.db.execute(select(Shop))
+        return result.scalars().all()
 
-
-    def get_single_shop(self, shop_id: int):
-        exist_shop = self.db.query(Shop).filter(Shop.shop_id == shop_id).first()
+    async def get_single_shop(self, shop_id):
+        result = await self.db.execute(select(Shop).filter(Shop.shop_id == shop_id))
+        exist_shop = result.scalar_one_or_none()
         
         if not exist_shop: 
             raise HTTPException(
@@ -22,26 +24,25 @@ class ShopController:
 
         return exist_shop
 
-
-    def create_new_shop(self, shop: ShopCreate, current_user):
-        exist_shop = self.db.query(Shop).filter(Shop.owner_id == current_user.user_id).first()
+    async def create_new_shop(self, shop: ShopCreate, current_user):
+        result = await self.db.execute(select(Shop).filter(Shop.owner_id == current_user.user_id))
+        exist_shop = result.scalar_one_or_none()
         if exist_shop:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="You already have a shop. Each user can only create one shop."
             )
         
-        # Create new shop if no existing shop is found
         db_shop = Shop(**shop.model_dump(), owner_id=current_user.user_id)
         self.db.add(db_shop)
-        self.db.commit()
-        self.db.refresh(db_shop)
+        await self.db.commit()
+        await self.db.refresh(db_shop)
         return db_shop
 
-
-    def delete_existing_shop(self, shop_id: int, current_user):
-        db_shop = self.db.query(Shop).filter(Shop.shop_id == shop_id).first()
+    async def delete_existing_shop(self, shop_id, current_user):
+        result = await self.db.execute(select(Shop).filter(Shop.shop_id == shop_id))
+        db_shop = result.scalar_one_or_none()
         if db_shop:
-            self.db.delete(db_shop)
-            self.db.commit()
+            await self.db.delete(db_shop)
+            await self.db.commit()
         return db_shop

@@ -11,6 +11,7 @@ class UserGetSerializer(BaseModel):
     class Config:
         arbitrary_types_allowed = True
         from_attributes = True
+        orm_mode = True
 
 
 class UserPostSerializer(UserGetSerializer):

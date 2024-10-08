@@ -5,6 +5,7 @@ import uuid
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 from db_connector import Base
 from models.CartProduct import CartProduct
+from models.OrderItem import *
 
 class Product(Base):
     __tablename__ = "products"
@@ -24,5 +25,4 @@ class Product(Base):
         "CartProduct", back_populates="product"
     )
     cat_products : Mapped["CategoryProduct"] = relationship("CategoryProduct",back_populates="product")
-    order_product : Mapped["OrderItem"] = relationship("OrderItem",back_populates="product")
     order_items : Mapped["OrderItem"] = relationship("OrderItem",back_populates="product")

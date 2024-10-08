@@ -2,7 +2,7 @@ from sqlalchemy import insert, select
 from models.MessageHistory import MessageHistory
 from llama_index.core.llms import ChatMessage
 from llama_index.llms.ollama import Ollama
-from db_connector import SessionLocal, get_db
+from db_connector import get_db
 from models.Users import User
 from sqlalchemy.orm import Session
 from models.ChatHistory import ChatHistory
@@ -19,7 +19,7 @@ class ChatBotController:
     
     def __init__(self, model_name: str):
         self.llm = Ollama(model_name, request_timeout=500)
-        self.db : Session = SessionLocal()
+        self.db : Session 
 
     async def add_user(self, user: User):
         try:

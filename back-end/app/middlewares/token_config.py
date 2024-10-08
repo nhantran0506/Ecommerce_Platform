@@ -54,7 +54,7 @@ async def get_current_user(
 
 async def authenticate_user(db: Session, user_name: str, password: str):
     query = select(Authentication).where(Authentication.user_name == user_name)
-    result = db.execute(query)
+    result = await db.execute(query)
     user_auth = result.scalar_one_or_none()
     if not user_auth or not user_auth.verify_password(password):
         return False

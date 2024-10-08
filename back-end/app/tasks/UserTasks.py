@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 from models.Users import User
 from models.Authentication import Authentication
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from db_connector import SessionLocal
 from sqlalchemy import select, delete
 import logging
 

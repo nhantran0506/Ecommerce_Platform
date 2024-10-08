@@ -12,6 +12,8 @@ from db_connector import Base
 from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy.dialects.postgresql import UUID
 from models.Ratings import *
+from models.Cart import *
+from models.Category import *
 import uuid
 
 
@@ -25,7 +27,7 @@ class UserInterest(Base):
     __tablename__ = "user_interest"
 
     user_id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.cat_id"), primary_key=True
+        UUID(as_uuid=True), ForeignKey("users.user_id"), primary_key=True
     )
     cat_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("categories.cat_id"), primary_key=True

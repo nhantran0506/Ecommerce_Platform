@@ -9,9 +9,10 @@ from sqlalchemy.dialects.postgresql import UUID
 from fastapi import status, Header, HTTPException, Security, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import datetime
+from sqlalchemy.ext.asyncio import AsyncSession
 
 class UserController:
-    def __init__(self, db: Session = Depends(get_db)):
+    def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
 
     async def login(self, user: UserLogin):
@@ -23,13 +24,13 @@ class UserController:
             )
         
         query = select(User).where(User.user_id == auth.user_id)
-        result = self.db.execute(query)
+        result = await self.db.execute(query)
         user = result.scalar_one_or_none()
 
         if user and user.is_deleted:
             update_stmt = update(User).where(User.user_id == auth.user_id).values(is_deleted=False)
-            self.db.execute(update_stmt)
-            self.db.commit()
+            await self.db.execute(update_stmt)
+            await self.db.commit()
 
         access_token = create_access_token(data={"user_name": auth.user_name})
         return {"token": access_token, "type": "bearer"}
@@ -37,7 +38,7 @@ class UserController:
     async def get_user_by_id(self, user_id: str):
         try:
             query = select(User).where(User.user_id == user_id)
-            result = self.db.execute(query)
+            result = await self.db.execute(query)
             user = result.scalar_one_or_none()
             
             if user:
@@ -55,7 +56,7 @@ class UserController:
     async def signup(self, user: UserCreateSerializer):
         
         query = select(Authentication).where(Authentication.user_name == user.phone_number)
-        result = self.db.execute(query)
+        result = await self.db.execute(query)
         check_exist = result.scalar_one_or_none()
         
         if check_exist:
@@ -70,7 +71,7 @@ class UserController:
             address=user.address,
             dob=user.dob,
         )
-        result = self.db.execute(user_insert)
+        result = await self.db.execute(user_insert)
         user_id = result.inserted_primary_key[0]
 
         auth_insert = insert(Authentication).values(
@@ -78,8 +79,8 @@ class UserController:
             user_name=user.phone_number,
             hash_pwd=Authentication.hash_password(user.password)
         )
-        self.db.execute(auth_insert)
-        self.db.commit()
+        await self.db.execute(auth_insert)
+        await self.db.commit()
         
         return JSONResponse(
             content={"Message": "User created successfully."}, status_code=status.HTTP_201_CREATED
@@ -90,8 +91,8 @@ class UserController:
             is_deleted=True,
             deleted_date=datetime.now()
         )
-        self.db.execute(update_stmt)
-        self.db.commit()
+        await self.db.execute(update_stmt)
+        await self.db.commit()
         
         return JSONResponse(
             content="User deleted successfully.",
@@ -109,8 +110,8 @@ class UserController:
 
         if update_values:
             update_stmt = update(User).where(User.user_id == current_user.user_id).values(**update_values)
-            self.db.execute(update_stmt)
-            self.db.commit()
+            await self.db.execute(update_stmt)
+            await self.db.commit()
 
         return JSONResponse(
             content={"Message": "User updated successfully."},

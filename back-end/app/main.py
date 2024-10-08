@@ -1,5 +1,9 @@
+import asyncio
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
 from fastapi import FastAPI, HTTPException, Depends
-from db_connector import engine, Base, SessionLocal
+from db_connector import engine, Base
 from middlewares.routing_config import RouteConfig
 import views
 import views.AIViews
@@ -10,16 +14,23 @@ import views.ShopViews
 import views.RecommedViews
 import uvicorn
 from tasks.UserTasks import UserTasks
+from config import DATABASE_PASS, DATABASE_NAME, PORT
 
-Base.metadata.create_all(bind=engine)  # create all tables in database
+routing = RouteConfig()
+
+async def create_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+async def startup_event():
+    await create_tables()
 
 user_tasks = UserTasks()
 
 app = FastAPI()
 
-routing = RouteConfig()
+app.add_event_handler("startup", startup_event)
 
-# allow NextJS, ReactJS to bypass CORS
 routing.configure_fe_policy(app)
 routing.routing_config(
     app,

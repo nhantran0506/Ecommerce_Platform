@@ -10,6 +10,7 @@ class ShopBase(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+        orm_mode = True
 
 class ShopCreate(ShopBase):
     pass

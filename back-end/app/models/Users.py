@@ -12,6 +12,7 @@ from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy.dialects.postgresql import UUID
 from models.Ratings import *
 import uuid
+from models.UserInterest import *
 
 class UserRoles(enum.Enum):
     USER = "USER"
