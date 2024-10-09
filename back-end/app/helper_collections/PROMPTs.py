@@ -3,6 +3,9 @@ DEFAULT_PROMPT = ("""
 
     Context:
     {context}
+                  
+    User query:
+    {user_query}
     Answer:
 """)
 

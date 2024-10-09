@@ -32,22 +32,6 @@ class Authentication(Base):
         "User", back_populates="authenticate"
     )
 
-    @abstractmethod
-    def get_user_by_username(db_connector: Session, user_name: str):
-        try:
-            user = (
-                db_connector.query(Authentication)
-                .filter(Authentication.user_name == user_name)
-                .first()
-            )
-            if user.is_deleted:
-                return None
-
-            user = db_connector.query(User).filter(User.user_id == user.user_id).first()
-            return user
-        except Exception as e:
-            raise e
-
     @staticmethod
     def hash_password(password: str) -> str:
         return pwd_context.hash(password)

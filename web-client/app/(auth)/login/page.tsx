@@ -38,7 +38,6 @@ export default function LoginPage() {
         },
         body: JSON.stringify(form_data),
       });
-      console.log(response)
       if (!response.ok) {
         throw new Error("Login failed");
       }

@@ -4,7 +4,7 @@ from llama_index.core.llms import ChatMessage
 from llama_index.llms.ollama import Ollama
 from db_connector import get_db
 from models.Users import User
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from models.ChatHistory import ChatHistory
 from models.MessageHistory import MessageRole
 from .EmbeddingController import EmbeddingController
@@ -17,20 +17,21 @@ from sqlalchemy import func
 class ChatBotController:
     embedding_engine = EmbeddingController()
     
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str, db: AsyncSession):
         self.llm = Ollama(model_name, request_timeout=500)
-        self.db : Session 
+        self.db = db
 
     async def add_user(self, user: User):
         try:
             insert_stmt = insert(ChatHistory).values(
                 user_id=user.user_id, 
-                model_name="llama3.1")
-            result = self.db.execute(insert_stmt)
-            self.db.commit()
+                model_name="llama3.1"
+            )
+            result = await self.db.execute(insert_stmt)  
+            await self.db.commit()  
             return str(result.inserted_primary_key[0])
         except Exception as e:
-            self.db.rollback()
+            await self.db.rollback()  
             raise e
 
     async def get_history(self, session_id: str):
@@ -39,8 +40,8 @@ class ChatBotController:
             .where(MessageHistory.session_id == session_id)
             .order_by(MessageHistory.timestamp.desc())
         )
-        result = self.db.execute(query)
-        history = result.scalars()
+        result = await self.db.execute(query)  
+        history = result.scalars().all()  
 
         return [
             ChatMessage(role=message.role, content=message.content)
@@ -52,10 +53,10 @@ class ChatBotController:
             insert_stmt = insert(MessageHistory).values(
                 role=role, content=content, session_id=session_id
             )
-            self.db.execute(insert_stmt)
-            self.db.commit()
+            await self.db.execute(insert_stmt)  
+            await self.db.commit()  
         except Exception as e:
-            self.db.rollback()
+            await self.db.rollback() 
             raise e
 
     def intent_detection(self, query):
@@ -77,7 +78,7 @@ class ChatBotController:
                 customer_address=current_user.address,
             )
 
-            default_prompt = PromptTemplate(DEFAULT_PROMPT).format(context=context)
+            default_prompt = PromptTemplate(DEFAULT_PROMPT).format(context=context, user_query=query)
 
             await self.add_message(
                 role=MessageRole.USER, content=default_prompt, session_id=session_id

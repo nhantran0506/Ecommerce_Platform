@@ -10,6 +10,10 @@ from models.Order import Order
 
 class OrderStatus(enum.Enum):
     PROCESSING = "PROCESSING"
+    TRANSPORTING = "TRANSPORTING"
+    PRODUCT_ACCEPTED = "PRODUCT_ACCEPTED"
+    PRODUCT_PREPARING = "PRODUCT_PREPARING"
+    
 
 
 

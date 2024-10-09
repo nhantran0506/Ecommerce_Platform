@@ -10,7 +10,7 @@ class ProductBase(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
-        orm_mode = True
+        from_attributes = True
 
 class ProductCreate(ProductBase):
     pass
