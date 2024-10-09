@@ -21,17 +21,20 @@ class OrderController:
     
     async def order_product(self, order_items : list[OderItems], current_user : User):
         try:
-            user_order_create_query = insert(Order).values(
-                user_id=current_user.user_id,
-                created_at=datetime.now()
+            user_order_create_query = (
+                insert(Order)
+                .values(
+                    user_id=current_user.user_id,
+                    created_at=datetime.now()
+                )
+                .returning(Order.order_id)  
             )
             result = await self.db.execute(user_order_create_query)
-            await self.db.commit()
-            order = result.scalar_one_or_none()
+            order_id = result.scalar_one()
 
             for order_item in order_items:
                 query = insert(OrderItem).values(
-                    cart_id = order.order_id,
+                    order_id = order_id,
                     product_id = order_item.product_id,
                     quantity = order_item.quantity,
                 )
@@ -45,14 +48,14 @@ class OrderController:
                 await self.db.commit()
             
             return JSONResponse(
-                content={"Order successfully!."},
+                content={"Message" : "Order successfully!."},
                 status_code=status.HTTP_200_OK,
             )
         
         except Exception as e:
             await self.db.rollback()
             return JSONResponse(
-                content={"Message": f"Error : {e}"},
+                content={"Error": str(e)},
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
     

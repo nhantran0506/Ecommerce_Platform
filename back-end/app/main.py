@@ -7,6 +7,7 @@ from db_connector import engine, Base
 from middlewares.routing_config import RouteConfig
 import views
 import views.AIViews
+import views.AdminViews
 import views.CartViews
 import views.OrderViews
 import views.UserViews
@@ -43,6 +44,7 @@ routing.routing_config(
         views.RecommedViews.router,
         views.CartViews.router,
         views.OrderViews.router,
+        views.AdminViews.router,
     ],
 )
 
