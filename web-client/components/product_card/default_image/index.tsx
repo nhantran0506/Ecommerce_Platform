@@ -10,15 +10,17 @@ const DefaultImage: React.FC<IProductDefaultImage> = ({ imgSize }) => {
     switch (size) {
       case ImageSizeEnum.lg:
         return "w-44 h-44";
-      case ImageSizeEnum.sm:
+      case ImageSizeEnum.md:
         return "w-24 h-24";
+      case ImageSizeEnum.sm:
+        return "w-16 h-16";
       default:
         return "w-24 h-24";
     }
   };
 
   return (
-    <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+    <div className="w-full h-full bg-gray-300 flex items-center justify-center rounded-xl">
       <Image
         src={defaultImage}
         alt="default_image"
