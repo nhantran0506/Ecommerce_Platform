@@ -11,6 +11,8 @@ import {
   getKeyValue,
   Button,
   Divider,
+  Card,
+  CardBody,
 } from "@nextui-org/react";
 import { productlist } from "../(products)/products/data";
 import { ChevronLeft, X } from "react-feather";

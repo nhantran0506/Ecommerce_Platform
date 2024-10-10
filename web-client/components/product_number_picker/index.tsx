@@ -17,8 +17,8 @@ const ProductNumberPicker = () => {
     <div className="flex items-center border-1 px-2 py-1 rounded-full">
       <Button
         isIconOnly
-        radius="lg"
-        className="bg-transparent"
+        radius="full"
+        variant="light"
         onClick={() =>
           setNumberOfProduct((numberOfProduct) =>
             numberOfProduct > 1 ? numberOfProduct - 1 : 1
@@ -38,8 +38,8 @@ const ProductNumberPicker = () => {
 
       <Button
         isIconOnly
-        radius="lg"
-        className="bg-transparent"
+        radius="full"
+        variant="light"
         onClick={() =>
           setNumberOfProduct((numberOfProduct) =>
             numberOfProduct < maxNumberOfProduct

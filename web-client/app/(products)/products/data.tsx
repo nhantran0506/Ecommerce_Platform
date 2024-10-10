@@ -4,9 +4,9 @@ import { IProductData } from "@/interface/Product/IProductData";
 export const productlist: IProductData[] = [
   {
     id: "0",
-    product_name: "Wireless Headphones",
+    product_name: "Colorful true-beauty natural wild iguana",
     product_description:
-      "High-quality wireless headphones with noise-canceling feature.",
+      "High-quality wireless headphones with noise-canceling feature. High-quality wireless headphones with noise-canceling feature. High-quality wireless headphones with noise-canceling feature.",
     price: 99.99,
     image:
       "https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/1015f/MainAfter.jpg",
