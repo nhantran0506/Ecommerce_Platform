@@ -127,7 +127,7 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
 
   return (
     <div className="mx-64 grid grid-cols-2 mt-20">
-      <div className="rounded-lg bg-black overflow-hidden w-[450px] h-[400px] relative">
+      <div className="rounded-lg bg-transparent overflow-hidden w-[450px] h-[400px] relative">
         {product.image ? (
           <Image
             src={product.image}

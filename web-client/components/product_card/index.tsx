@@ -22,7 +22,7 @@ const ProductCard: React.FC<IProductCard> = ({ product, onClick }) => {
       <CardBody className="overflow-visible p-0">
         {!product.image ? (
           <div className="h-full w-full">
-            <DefaultImage imgSize={ImageSizeEnum.sm} />
+            <DefaultImage imgSize={ImageSizeEnum.md} />
           </div>
         ) : (
           <Image
