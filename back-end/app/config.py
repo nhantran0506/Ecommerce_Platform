@@ -14,3 +14,7 @@ EXPIRE_TOKEN_TIME=int(str(os.getenv('EXPIRE_TOKEN_TIME')))
 
 PORT_FE=str(os.getenv('PORT_FE'))
 ADDRESS_FE=str(os.getenv('ADDRESS_FE'))
+
+
+GMAIL_APP_PASSWORD = str(os.getenv('GMAIL_APP_PASS'))
+SENDER_EMAIL = str(os.getenv('SENDER_EMAIL'))

@@ -22,7 +22,7 @@ async def get_products(product_controller: ProductController = Depends()):
 @router.get("/{product_id}")
 async def get_product(product_id: int, product_controller: ProductController = Depends()):
     try:
-        return await product_controller.get_single_product(product_id=product_id)
+        return await product_controller.get_single_product(product_id=product_id)   # Need to add interest score on view, add cart, buy for product
     except Exception as e:
         logger.error(str(e))
         return JSONResponse(

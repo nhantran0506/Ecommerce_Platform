@@ -18,7 +18,6 @@ class AdminController:
         self.db = db
 
     async def get_revenue(self, admin_data: AdminGetData, current_user: User):
-        # If role check is needed, uncomment the below section.
         # if current_user.role != UserRoles.ADMIN:
         #     return JSONResponse(
         #         content={"Message": "Invalid credentials."},

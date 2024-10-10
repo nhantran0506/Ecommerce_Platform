@@ -7,7 +7,7 @@ from middlewares.token_config import *
 from fastapi.responses import JSONResponse
 from sqlalchemy.dialects.postgresql import UUID
 from fastapi import status, Header, HTTPException, Security, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from helper_collections import UTILS, EMAIL_TEMPLATE
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,24 +16,28 @@ class UserController:
         self.db = db
 
     async def login(self, user: UserLogin):
-        auth = await authenticate_user(self.db, user.user_name, user.password)
-        if not auth:
-            return JSONResponse(
-                content={"Message": "Invalid username or password."},
-                status_code=status.HTTP_401_UNAUTHORIZED,
-            )
-        
-        query = select(User).where(User.user_id == auth.user_id)
-        result = await self.db.execute(query)
-        user = result.scalar_one_or_none()
+        try:
+            auth = await authenticate_user(self.db, user.user_name, user.password)
+            if not auth:
+                return JSONResponse(
+                    content={"Message": "Invalid username or password."},
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                )
+            
+            query = select(User).where(User.user_id == auth.user_id)
+            result = await self.db.execute(query)
+            user = result.scalar_one_or_none()
 
-        if user and user.is_deleted:
-            update_stmt = update(User).where(User.user_id == auth.user_id).values(is_deleted=False)
-            await self.db.execute(update_stmt)
-            await self.db.commit()
+            if user and user.is_deleted:
+                update_stmt = update(User).where(User.user_id == auth.user_id).values(is_deleted=False)
+                await self.db.execute(update_stmt)
+                await self.db.commit()
 
-        access_token = create_access_token(data={"user_name": auth.user_name})
-        return {"token": access_token, "type": "bearer"}
+            access_token = create_access_token(data={"user_name": auth.user_name})
+            return {"token": access_token, "type": "bearer"}
+        except Exception as e:
+            await self.db.rollback()
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     async def get_user_by_id(self, user_id: str):
         try:
@@ -54,37 +58,75 @@ class UserController:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     async def signup(self, user: UserCreateSerializer):
-        
-        query = select(Authentication).where(Authentication.user_name == user.phone_number)
-        result = await self.db.execute(query)
-        check_exist = result.scalar_one_or_none()
-        
-        if check_exist:
+        try:  
+            query = select(Authentication).where(Authentication.user_name == user.phone_number)
+            result = await self.db.execute(query)
+            check_exist = result.scalar_one_or_none()
+            
+            if check_exist:
+                return JSONResponse(
+                    content={"Message": "Phone number already exists"}, status_code=status.HTTP_409_CONFLICT
+                )
+            
+            user_insert = insert(User).values(
+                first_name=user.first_name,
+                last_name=user.last_name,
+                email = user.email,
+                phone_number=user.phone_number,
+                address=user.address,
+                dob=user.dob,
+            )
+            result = await self.db.execute(user_insert)
+            user_id = result.inserted_primary_key[0]
+
+            auth_insert = insert(Authentication).values(
+                user_id=user_id,
+                user_name=user.phone_number,
+                hash_pwd= await Authentication.hash_password(user.password)
+            )
+            await self.db.execute(auth_insert)
+            await self.db.commit()
+            
             return JSONResponse(
-                content={"Message": "Phone number already exists"}, status_code=status.HTTP_409_CONFLICT
+                content={"Message": "User created successfully."}, status_code=status.HTTP_201_CREATED
+            )
+        except Exception as e:
+                await self.db.rollback()
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+    async def forgot_password(self, user_data: UserForgotPassword):
+        # try:
+        query = select(User).where(User.email == user_data.email)
+        result = await self.db.execute(query)
+        user = result.scalar_one_or_none()
+
+        if user is None:
+            return JSONResponse(
+                content={"Message": "Unable to find any user."},
+                status_code=status.HTTP_404_NOT_FOUND,
             )
         
-        user_insert = insert(User).values(
-            first_name=user.first_name,
-            last_name=user.last_name,
-            phone_number=user.phone_number,
-            address=user.address,
-            dob=user.dob,
-        )
-        result = await self.db.execute(user_insert)
-        user_id = result.inserted_primary_key[0]
+        new_password = await  UTILS.random_password()
 
-        auth_insert = insert(Authentication).values(
-            user_id=user_id,
-            user_name=user.phone_number,
-            hash_pwd=Authentication.hash_password(user.password)
-        )
-        await self.db.execute(auth_insert)
-        await self.db.commit()
+        email_body = EMAIL_TEMPLATE.FORGOT_PASSWORD_EMAIL_TEMPLATE.format(user_name = f"{user.first_name} {user.last_name}", new_password=new_password)
         
-        return JSONResponse(
-            content={"Message": "User created successfully."}, status_code=status.HTTP_201_CREATED
+
+        new_hash_password = await Authentication.hash_password(new_password)
+        user_auth_update_query = update(Authentication).where(Authentication.user_id == user.user_id).values(
+            user_name = user.phone_number,
+            hash_pwd = new_hash_password
         )
+        await self.db.execute(user_auth_update_query)
+        await self.db.commit()
+
+        email_send_check = await UTILS.send_email(recipient_email=user.email, subject="[RESET PASSWORD]", body=email_body)
+        if email_send_check:
+            return JSONResponse(content={"Message" : "Email have been sent successfully!"}, status_code=status.HTTP_200_OK)
+        
+        return JSONResponse(content={"Message" : "Email have not been sent!."}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # except Exception as e:
+        #     await self.db.rollback()
+        #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     async def delete_user(self, current_user: User):
         update_stmt = update(User).where(User.user_id == current_user.user_id).values(

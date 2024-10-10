@@ -3,6 +3,9 @@ from typing import Optional
 from datetime import datetime as DateTime
 import re
 
+class UserForgotPassword(BaseModel):
+    email : str
+    
 
 class UserGetSerializer(BaseModel):
     first_name: str

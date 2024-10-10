@@ -29,7 +29,7 @@ class User(Base):
     phone_number: Mapped[String] = mapped_column(String, nullable=False, unique=True)
     address: Mapped[String] = mapped_column(String, nullable=False)
     dob : Mapped[String]= mapped_column(DateTime, nullable=False)
-    email: Mapped[String] = mapped_column(String, nullable=True)
+    email: Mapped[String] = mapped_column(String, nullable=True, unique=True)
     role : Mapped[String]= mapped_column(Enum(UserRoles), nullable=False, default=UserRoles.USER)
     is_deleted : Mapped[Boolean]= mapped_column(Boolean, default=False)
     deleted_date : Mapped[UUID]= mapped_column(DateTime, nullable=True)

@@ -74,6 +74,7 @@ class OrderController:
                     "product_name" : product.product_name,
                     "product_id" : order_item.product_id,
                     "quantity" : order_item.quantity,
+                    "price" : product.price,
                     "total_price" : order_item.quantity * product.price
                 })
             

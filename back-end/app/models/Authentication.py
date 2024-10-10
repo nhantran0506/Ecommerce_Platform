@@ -33,7 +33,7 @@ class Authentication(Base):
     )
 
     @staticmethod
-    def hash_password(password: str) -> str:
+    async def hash_password(password: str) -> str:
         return pwd_context.hash(password)
 
     def verify_password(self, password: str) -> bool:

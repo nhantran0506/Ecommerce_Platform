@@ -1,18 +1,13 @@
-from fastapi import APIRouter, status, Request, Depends, WebSocket, WebSocketDisconnect
-from controllers.UserController import UserController
+from fastapi import APIRouter, status, Depends, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
-from models.Users import User
 from serializers.AISerializer import *
 from serializers.UserSearializers import *
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Session
 from middlewares import token_config
 from db_connector import get_db
 from controllers.ChatBotController import ChatBotController
 from controllers.EmbeddingController import EmbeddingController
 from managers.WebSocketManagers import WebSocketManager
 import logging
-import uuid
 import json
 from middlewares import token_config
 

@@ -5,6 +5,7 @@ from models.Users import User
 from serializers.UserSearializers import *
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Session
+
 from middlewares import token_config
 from db_connector import get_db
 import logging
@@ -73,3 +74,14 @@ async def delete_user(user_controller : UserController = Depends(), current_user
         )
 
 
+@router.post("/forgot_password")
+async def forgot_password(user_data : UserForgotPassword ,user_controller : UserController = Depends()):
+    try:
+        print(user_data.email)
+        return await user_controller.forgot_password(user_data)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
