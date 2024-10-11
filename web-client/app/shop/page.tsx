@@ -1,9 +1,5 @@
 const ShopPage = () => {
-  return (
-    <div className="flex justify-center">
-      <h1 className="text-center">ShopPage</h1>
-    </div>
-  );
+  return <div>ShopPage</div>;
 };
 
 export default ShopPage;
