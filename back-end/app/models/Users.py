@@ -27,7 +27,7 @@ class User(Base):
     first_name: Mapped[String] = mapped_column(String, nullable=False)
     last_name: Mapped[String] = mapped_column(String, nullable=False)
     phone_number: Mapped[String] = mapped_column(String, nullable=False, unique=True)
-    address: Mapped[String] = mapped_column(String, nullable=False)
+    address: Mapped[String] = mapped_column(String, nullable=True)
     dob : Mapped[String]= mapped_column(DateTime, nullable=False)
     email: Mapped[String] = mapped_column(String, nullable=True, unique=True)
     role : Mapped[String]= mapped_column(Enum(UserRoles), nullable=False, default=UserRoles.USER)
@@ -41,10 +41,4 @@ class User(Base):
     shop_ratings : Mapped[list["ShopRating"]]= relationship("ShopRating", back_populates="user")
     user_interest: Mapped["UserInterest"] = relationship("UserInterest", back_populates="user")
 
-    def __init__(self, first_name, last_name, phone_number, address, dob, email=None):
-        self.first_name = first_name
-        self.last_name = last_name
-        self.phone_number = phone_number
-        self.address = address
-        self.dob = dob
-        self.email = email
+    

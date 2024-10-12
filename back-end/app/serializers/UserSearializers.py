@@ -29,7 +29,7 @@ class UserCreateSerializer(UserPostSerializer):
     password: str = Field(..., alias="password")
     address: str = Field(..., alias="address")
     email: str = Field(..., alias="email")
-    dob: Optional[DateTime] = Field(..., alias="dob")
+    dob: DateTime = Field(..., alias="dob")
 
     @field_validator("email")
     def validate_email(cls, value):

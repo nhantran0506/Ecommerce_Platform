@@ -91,8 +91,8 @@ class UserController:
                 content={"Message": "User created successfully."}, status_code=status.HTTP_201_CREATED
             )
         except Exception as e:
-                await self.db.rollback()
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+            await self.db.rollback()
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     async def forgot_password(self, user_data: UserForgotPassword):
         # try:

@@ -12,6 +12,20 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 
+@router.post('/create_admin')
+async def create_admin(admin_data : AdminCreate, admin_controller : AdminController = Depends(), current_user = Depends(token_config.get_current_user)):
+    try:
+        return await admin_controller.create_admin(admin_data , current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+
+
 @router.post("/get_revenue")
 async def get_revenue(admin_data : AdminGetData,admin_controller : AdminController = Depends(), current_user = Depends(token_config.get_current_user)):
     try:
@@ -22,3 +36,6 @@ async def get_revenue(admin_data : AdminGetData,admin_controller : AdminControll
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+
