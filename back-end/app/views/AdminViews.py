@@ -24,6 +24,42 @@ async def create_admin(admin_data : AdminCreate, admin_controller : AdminControl
         )
 
 
+@router.post('/get_number_user')
+async def get_number_user(admin_controller : AdminController = Depends(), current_user = Depends(token_config.get_current_user)):
+    try:
+        return await admin_controller.get_number_user(current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@router.post('/get_current_revenue')
+async def get_current_revenue(admin_controller : AdminController = Depends(), current_user = Depends(token_config.get_current_user)):
+    try:
+        return await admin_controller.get_current_revenue(current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@router.post('/get_number_shops')
+async def get_number_shops(admin_controller : AdminController = Depends(), current_user = Depends(token_config.get_current_user)):
+    try:
+        return await admin_controller.get_number_shops(current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
 
 
 @router.post("/get_revenue")

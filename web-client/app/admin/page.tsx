@@ -1,89 +1,100 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
+import StatCard from "@/components/stat_card";
+import IframeContainer from "@/components/iframe_container";
 
 export default function AdminPage() {
-  const [iframeSrc, setIframeSrc] = useState<string | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth());
+  const [stats, setStats] = useState({
+    usersOnline: 0,
+    revenue: 0,
+    shopCount: 0,
+  });
+  const [iframeSrcs, setIframeSrcs] = useState<{
+    userActivity: string | null;
+    salesOverview: string | null;
+    productPerformance: string | null;
+  }>({
+    userActivity: null,
+    salesOverview: null,
+    productPerformance: null,
+  });
 
-  function getCurrentMonth() {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  }
-
-  const fetchChart = async (timestamp: string) => {
+  const fetchChart = useCallback(async (endpoint: string) => {
     try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
-      const response = await fetch(
-        `${API_BASE_URL}${API_ROUTES.ADMIN_REVENUE}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({ timestamp : timestamp }),
-        }
-      );
-
-      console.log(JSON.stringify({ timestamp : timestamp }))
       if (!response.ok) {
-        throw new Error("Failed to fetch chart");
+        throw new Error(`Failed to fetch chart from ${endpoint}`);
       }
 
       const chartHtml = await response.text();
       const blob = new Blob([chartHtml], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-
-      setIframeSrc(url);
+      return URL.createObjectURL(blob);
     } catch (error) {
-      console.error("Error fetching chart:", error);
+      console.error(`Error fetching chart from ${endpoint}:`, error);
+      return null;
     }
-  };
-
-  useEffect(() => {
-    fetchChart(getCurrentMonth());
-
-    return () => {
-      if (iframeSrc) {
-        URL.revokeObjectURL(iframeSrc);
-      }
-    };
   }, []);
 
-  const handleReload = () => {
-    if (iframeSrc) {
-      URL.revokeObjectURL(iframeSrc);
-    }
-    fetchChart(selectedMonth);
-  };
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}${API_ROUTES.ADMIN_STATS}`);
+        const data = await response.json();
+        setStats(data);
+      } catch (error) {
+        console.error("Error fetching admin stats:", error);
+      }
+    };
+
+    const fetchAllCharts = async () => {
+      const userActivitySrc = await fetchChart(API_ROUTES.USERS_NUMBER);
+      const salesOverviewSrc = await fetchChart(API_ROUTES.REVENUE_CURRENT);
+      const productPerformanceSrc = await fetchChart(API_ROUTES.SHOPS_NUMBER);
+
+      setIframeSrcs({
+        userActivity: userActivitySrc,
+        salesOverview: salesOverviewSrc,
+        productPerformance: productPerformanceSrc,
+      });
+    };
+
+    fetchStats();
+    fetchAllCharts();
+
+    return () => {
+      // Cleanup function to revoke object URLs
+      Object.values(iframeSrcs).forEach(src => {
+        if (src) URL.revokeObjectURL(src);
+      });
+    };
+  }, [fetchChart]);
 
   return (
-    <div className="p-4">
-      <div className="mb-4 flex items-center">
-        <input
-          type="month"
-          value={selectedMonth}
-          onChange={(e) => setSelectedMonth(e.target.value)}
-          className="mr-2 p-2 border rounded"
-        />
-        <button
-          onClick={handleReload}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Reload
-        </button>
+    <div className="p-8 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <StatCard title="Users Online" value={stats.usersOnline} />
+        <StatCard title="Total Revenue" value={`$${stats.revenue.toLocaleString()}`} />
+        <StatCard title="Shops on Platform" value={stats.shopCount} />
       </div>
-      {iframeSrc ? (
-        <iframe
-          src={iframeSrc}
-          style={{ width: "100%", height: "600px", border: "none" }}
-          title="Revenue Chart"
-        />
-      ) : (
-        <p>Loading chart...</p>
-      )}
+      
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <IframeContainer title="User Activity" src={iframeSrcs.userActivity} />
+          <IframeContainer title="Sales Overview" src={iframeSrcs.salesOverview} />
+        </div>
+        <IframeContainer title="Product Performance" src={iframeSrcs.productPerformance} height="600px" />
+      </div>
     </div>
   );
 }
