@@ -27,6 +27,7 @@ async def order_products(order_items : List[OderItems], order_controller : Order
         return await order_controller.order_product(order_items, current_user)
     except Exception as e:
         logger.error(str(e))
+
         return JSONResponse(
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

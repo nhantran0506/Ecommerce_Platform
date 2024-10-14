@@ -13,9 +13,9 @@ export default function AdminPage() {
   });
 
   const [iframeSrcs, setIframeSrcs] = useState<{
-    userActivity: string ;
-    salesOverview: string ;
-    productPerformance: string ;
+    userActivity: string;
+    salesOverview: string;
+    productPerformance: string;
   }>({
     userActivity: "",
     salesOverview: "",
@@ -26,7 +26,7 @@ export default function AdminPage() {
     async (endpoint: string, field: keyof typeof stats) => {
       try {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-          method: "POST", 
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -38,14 +38,19 @@ export default function AdminPage() {
         }
 
         const data = await response.json();
-
-        const value = data[field];
-
-        if (field === "revenue") {
+        const value = data["results"];
+        if (value) {
           setStats((prevStats) => ({
             ...prevStats,
-            [field]: `$${Number(value).toLocaleString()}`,
+            [field]: String(value),
           }));
+        }
+
+
+
+
+        if (field === "revenue") {
+
         } else {
           setStats((prevStats) => ({
             ...prevStats,
@@ -71,6 +76,7 @@ export default function AdminPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
+        body: JSON.stringify({ "timestamp": Date.now() }),
       });
 
       if (!response.ok) {
@@ -93,7 +99,7 @@ export default function AdminPage() {
 
     const fetchAllCharts = async () => {
       const userActivitySrc = await fetchChart(API_ROUTES.USERS_NUMBER);
-      const salesOverviewSrc = await fetchChart(API_ROUTES.REVENUE_CURRENT);
+      const salesOverviewSrc = await fetchChart(API_ROUTES.REVENUE_STATS);
       const productPerformanceSrc = await fetchChart(API_ROUTES.SHOPS_NUMBER);
 
       setIframeSrcs({
@@ -110,7 +116,7 @@ export default function AdminPage() {
         if (src) URL.revokeObjectURL(src);
       });
     };
-  }, [fetchChart, fetchNumber, iframeSrcs]);
+  }, []);
 
   return (
     <div className="p-8 max-w-7xl mx-auto">

@@ -63,7 +63,7 @@ async def get_number_shops(admin_controller : AdminController = Depends(), curre
 
 
 @router.post("/get_revenue")
-async def get_revenue(admin_data : AdminGetData,admin_controller : AdminController = Depends(), current_user = Depends(token_config.get_current_user)):
+async def get_revenue(admin_data : AdminGetData, admin_controller : AdminController = Depends(), current_user = Depends(token_config.get_current_user)):
     try:
         return await admin_controller.get_revenue(admin_data , current_user)
     except Exception as e:

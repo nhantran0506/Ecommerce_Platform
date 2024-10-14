@@ -5,7 +5,8 @@ import re
 from datetime import datetime as DateTime
 
 class AdminGetData(BaseModel):
-    timestamp : str
+    timestamp : DateTime
+
 
     class Config:
         arbitrary_types_allowed = True
