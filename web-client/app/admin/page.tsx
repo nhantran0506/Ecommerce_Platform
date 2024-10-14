@@ -6,7 +6,6 @@ import StatCard from "@/components/stat_card";
 import IframeContainer from "@/components/iframe_container";
 
 export default function AdminPage() {
-  // Update the stats state to hold strings instead of numbers
   const [stats, setStats] = useState({
     usersOnline: "0",
     revenue: "$0",
@@ -14,21 +13,20 @@ export default function AdminPage() {
   });
 
   const [iframeSrcs, setIframeSrcs] = useState<{
-    userActivity: string | null;
-    salesOverview: string | null;
-    productPerformance: string | null;
+    userActivity: string ;
+    salesOverview: string ;
+    productPerformance: string ;
   }>({
-    userActivity: null,
-    salesOverview: null,
-    productPerformance: null,
+    userActivity: "",
+    salesOverview: "",
+    productPerformance: "",
   });
 
-  // Function to fetch a number from a given API endpoint and field, then update the state as a string
   const fetchNumber = useCallback(
     async (endpoint: string, field: keyof typeof stats) => {
       try {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-          method: "GET", // Assuming GET for fetching stats; change if different
+          method: "POST", 
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -41,10 +39,8 @@ export default function AdminPage() {
 
         const data = await response.json();
 
-        // Extract the desired field and convert it to a string
         const value = data[field];
 
-        // For revenue, format it as a currency string
         if (field === "revenue") {
           setStats((prevStats) => ({
             ...prevStats,
@@ -58,7 +54,6 @@ export default function AdminPage() {
         }
       } catch (error) {
         console.error(`Error fetching ${field} from ${endpoint}:`, error);
-        // Optionally, set a default or error value
         setStats((prevStats) => ({
           ...prevStats,
           [field]: "N/A",
@@ -68,7 +63,6 @@ export default function AdminPage() {
     []
   );
 
-  // Function to fetch chart iframes
   const fetchChart = useCallback(async (endpoint: string) => {
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -88,7 +82,7 @@ export default function AdminPage() {
       return URL.createObjectURL(blob);
     } catch (error) {
       console.error(`Error fetching chart from ${endpoint}:`, error);
-      return null;
+      return "";
     }
   }, []);
 
@@ -97,7 +91,6 @@ export default function AdminPage() {
     fetchNumber(API_ROUTES.REVENUE_CURRENT, "revenue");
     fetchNumber(API_ROUTES.SHOPS_NUMBER, "shopCount");
 
-    // Fetch all charts
     const fetchAllCharts = async () => {
       const userActivitySrc = await fetchChart(API_ROUTES.USERS_NUMBER);
       const salesOverviewSrc = await fetchChart(API_ROUTES.REVENUE_CURRENT);
@@ -113,7 +106,6 @@ export default function AdminPage() {
     fetchAllCharts();
 
     return () => {
-      // Cleanup function to revoke object URLs
       Object.values(iframeSrcs).forEach((src) => {
         if (src) URL.revokeObjectURL(src);
       });
