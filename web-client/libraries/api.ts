@@ -5,8 +5,8 @@ export const API_ROUTES = {
   SIGNUP: '/users/signup',
   FORGOT_PASSWORD: '/users/forgot_password',
   ADMIN_REVENUE: '/admin/get_revenue',
-  SHOPS_NUMBER : 'admin/',
-  REVENUE_CURRENT : 'admin/',
-  USERS_NUMBER : 'admin/',
+  SHOPS_NUMBER : 'admin/get_number_shops',
+  REVENUE_CURRENT : 'admin/get_current_revenue',
+  USERS_NUMBER : 'admin/get_number_user',
   ADMIN_STATS : ''
 };
