@@ -15,16 +15,121 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class AdminController:
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
 
+    async def get_number_user(self, current_user: User):
+        if current_user.role != UserRoles.ADMIN:
+            return JSONResponse(
+                content={"Message": "Invalid credentials."},
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        try:
+            query = select(User).where(User.is_deleted == False)
+            result = await self.db.execute(query)
+            users = result.scalars().all()
+
+            return JSONResponse(
+                content={"results": str(len(users))},
+                status_code=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(str(e))
+            return JSONResponse(
+                content={"Error": "Error with the server."},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    async def get_number_shops(self, current_user: User):
+        if current_user.role != UserRoles.ADMIN:
+            return JSONResponse(
+                content={"Message": "Invalid credentials."},
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        try:
+            query = select(Shop)
+            result = await self.db.execute(query)
+            shops = result.scalars().all()
+
+            return JSONResponse(
+                content={"results": str(len(shops))},
+                status_code=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(str(e))
+            return JSONResponse(
+                content={"Error": "Error with the server."},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    async def get_current_revenue(self, current_user: User):
+        if current_user.role != UserRoles.ADMIN:
+            return JSONResponse(
+                content={"Message": "Invalid credentials."},
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        try:
+            timestamp_str = datetime.now().strftime("%Y-%m")
+            try:
+                start_date = datetime.strptime(timestamp_str, "%Y-%m")
+            except ValueError:
+                return JSONResponse(
+                    content={"Message": "Invalid date format, expected YYYY-MM."},
+                    status_code=400,
+                )
+
+            start_of_month = start_date.replace(day=1)
+            _, last_day_of_month = calendar.monthrange(
+                start_of_month.year, start_of_month.month
+            )
+            end_of_month = start_of_month.replace(
+                day=last_day_of_month, hour=23, minute=59, second=59
+            )
+
+            query = select(OrderItem).where(
+                OrderItem.order_at >= start_of_month, OrderItem.order_at <= end_of_month
+            )
+            result = await self.db.execute(query)
+            orders_in_month = result.scalars().all()
+
+            total_price = 0.0
+            for order in orders_in_month:
+                product_query = select(Product).where(
+                    Product.product_id == order.product_id
+                )
+                result = await self.db.execute(product_query)
+                product = result.scalar_one_or_none()
+
+                if not product:
+                    continue
+
+                total_price = order.quantity * product.price
+
+            return JSONResponse(
+                content={"results": str(total_price)},
+                status_code=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(str(e))
+            return JSONResponse(
+                content={"Error": "Error with the server."},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
     async def create_admin(self, admin_data: AdminCreate, current_user: User):
-        # if current_user.role != UserRoles.ADMIN:
-        #     return JSONResponse(
-        #         content={"Message": "Invalid credentials."},
-        #         status_code=status.HTTP_401_UNAUTHORIZED,
-        #     )
+        if current_user.role != UserRoles.ADMIN:
+            return JSONResponse(
+                content={"Message": "Invalid credentials."},
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
 
         try:
             query = (
@@ -33,7 +138,8 @@ class AdminController:
                     first_name=admin_data.first_name,
                     last_name=admin_data.last_name,
                     phone_number=admin_data.username,
-                    dob = admin_data.dob,
+                    dob=admin_data.dob,
+                    role=UserRoles.ADMIN,
                 )
                 .returning(User)
             )
@@ -50,7 +156,6 @@ class AdminController:
             await self.db.execute(query_auth)
             await self.db.commit()
 
-
             return JSONResponse(
                 content={"Message": "Create admin successfully!."},
                 status_code=status.HTTP_201_CREATED,
@@ -63,7 +168,6 @@ class AdminController:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-
     async def get_revenue(self, admin_data: AdminGetData, current_user: User):
         if current_user.role != UserRoles.ADMIN:
             return JSONResponse(
@@ -72,22 +176,20 @@ class AdminController:
             )
 
         try:
-            timestamp_str = admin_data.timestamp
-            try:
-                start_date = datetime.strptime(timestamp_str, "%Y-%m")
-            except ValueError:
+            timestamp_dt = admin_data.timestamp  # Already a datetime object
+
+            year = timestamp_dt.year
+            month = timestamp_dt.month
+
+            if not (1 <= month <= 12):
                 return JSONResponse(
-                    content={"Message": "Invalid date format, expected YYYY-MM."},
+                    content={"Message": "Invalid month value."},
                     status_code=400,
                 )
 
-            start_of_month = start_date.replace(day=1)
-            _, last_day_of_month = calendar.monthrange(
-                start_of_month.year, start_of_month.month
-            )
-            end_of_month = start_of_month.replace(
-                day=last_day_of_month, hour=23, minute=59, second=59
-            )
+            start_of_month = datetime(year, month, 1)
+            _, last_day_of_month = calendar.monthrange(year, month)
+            end_of_month = datetime(year, month, last_day_of_month, 23, 59, 59)
 
             query = select(OrderItem).where(
                 OrderItem.order_at >= start_of_month, OrderItem.order_at <= end_of_month
@@ -118,11 +220,12 @@ class AdminController:
             fig = go.Figure()
             fig.add_trace(go.Scatter(x=dates, y=revenues, mode="lines", name="Revenue"))
 
-            chart_html = fig.to_html(full_html=False)
+            chart_html = fig.to_html(full_html=False, config={"displaylogo": False,})
 
             return HTMLResponse(content=chart_html)
         except Exception as e:
             await self.db.rollback()
+            logger.error(str(e))
             blank_fig = go.Figure()
             blank_fig.add_trace(go.Scatter(x=[], y=[], mode="lines", name="Revenue"))
             blank_fig.update_layout(

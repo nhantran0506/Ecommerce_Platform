@@ -13,6 +13,7 @@ class Product(Base):
         UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4
     )
     product_name: Mapped[String] = mapped_column(String)
+
     product_description: Mapped[String] = mapped_column(String)
     create_at_datetime: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     price: Mapped[Float] = mapped_column(Float)
