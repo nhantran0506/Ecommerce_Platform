@@ -62,10 +62,36 @@ async def get_number_shops(admin_controller : AdminController = Depends(), curre
 
 
 
-@router.post("/get_revenue")
-async def get_revenue(admin_data : AdminGetData, admin_controller : AdminController = Depends(), current_user = Depends(token_config.get_current_user)):
+@router.post("/statistics_income")
+async def statistics_income(admin_data : AdminGetData, admin_controller : AdminController = Depends(), current_user = Depends(token_config.get_current_user)):
     try:
-        return await admin_controller.get_revenue(admin_data , current_user)
+        return await admin_controller.statistics_income(admin_data , current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+
+
+@router.post("/statistics_category")
+async def statistics_category(admin_data : AdminGetData, admin_controller : AdminController = Depends(), current_user = Depends(token_config.get_current_user)):
+    try:
+        return await admin_controller.statistics_category(admin_data , current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@router.post("/statistics_number_orders")
+async def statistics_number_orders(admin_data : AdminGetData, admin_controller : AdminController = Depends(), current_user = Depends(token_config.get_current_user)):
+    try:
+        return await admin_controller.statistics_number_orders(admin_data , current_user)
     except Exception as e:
         logger.error(str(e))
         return JSONResponse(

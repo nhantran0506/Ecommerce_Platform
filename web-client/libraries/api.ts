@@ -7,5 +7,7 @@ export const API_ROUTES = {
   SHOPS_NUMBER : '/admin/get_number_shops',
   REVENUE_CURRENT : '/admin/get_current_revenue',
   USERS_NUMBER : '/admin/get_number_user',
-  REVENUE_STATS : '/admin/get_revenue',
+  INCOME_STATS : '/admin/statistics_income',
+  CAT_STATS : '/admin/statistics_category',
+  ORDER_STATS : '/admin/statistics_number_orders',
 };

@@ -13,13 +13,13 @@ export default function AdminPage() {
   });
 
   const [iframeSrcs, setIframeSrcs] = useState<{
-    userActivity: string;
-    salesOverview: string;
-    productPerformance: string;
+    orderStat: string;
+    incomeStats: string;
+    catStats: string;
   }>({
-    userActivity: "",
-    salesOverview: "",
-    productPerformance: "",
+    orderStat: "",
+    incomeStats: "",
+    catStats: "",
   });
 
   const fetchNumber = useCallback(
@@ -98,14 +98,14 @@ export default function AdminPage() {
     fetchNumber(API_ROUTES.SHOPS_NUMBER, "shopCount");
 
     const fetchAllCharts = async () => {
-      const userActivitySrc = await fetchChart(API_ROUTES.USERS_NUMBER);
-      const salesOverviewSrc = await fetchChart(API_ROUTES.REVENUE_STATS);
-      const productPerformanceSrc = await fetchChart(API_ROUTES.SHOPS_NUMBER);
+      const orderStatsSrc = await fetchChart(API_ROUTES.ORDER_STATS);
+      const incomeStatsSrc = await fetchChart(API_ROUTES.INCOME_STATS);
+      const catStatsSrc = await fetchChart(API_ROUTES.CAT_STATS);
 
       setIframeSrcs({
-        userActivity: userActivitySrc,
-        salesOverview: salesOverviewSrc,
-        productPerformance: productPerformanceSrc,
+        orderStat: orderStatsSrc,
+        incomeStats: incomeStatsSrc,
+        catStats: catStatsSrc,
       });
     };
 
@@ -130,12 +130,12 @@ export default function AdminPage() {
 
       <div className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <IframeContainer title="User Activity" src={iframeSrcs.userActivity} />
-          <IframeContainer title="Sales Overview" src={iframeSrcs.salesOverview} />
+          <IframeContainer title="Orders Overview" src={iframeSrcs.orderStat} />
+          <IframeContainer title="Income Overview" src={iframeSrcs.incomeStats} />
         </div>
         <IframeContainer
-          title="Product Performance"
-          src={iframeSrcs.productPerformance}
+          title="Category Overview"
+          src={iframeSrcs.catStats}
           height="600px"
         />
       </div>
