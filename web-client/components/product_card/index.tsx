@@ -4,8 +4,8 @@ import { Card, CardBody, CardFooter, Image } from "@nextui-org/react";
 import { ShoppingCart } from "react-feather";
 import StarRating from "../start_rating";
 import DefaultImage from "./default_image";
-import { ImageSizeEnum } from "@/interface/Product/IProductUI";
-import { IProductData } from "@/interface/Product/IProductData";
+import { ImageSizeEnum } from "@/interface/UI/IProductUI";
+import { IProductData } from "@/interface/Data/IProductData";
 
 interface IProductCard {
   product: IProductData;

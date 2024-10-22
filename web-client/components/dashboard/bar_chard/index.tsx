@@ -19,7 +19,7 @@ import {
   IChartData,
   IChartConfigGroup,
   IBarChartComponentProps,
-} from "@/interface/Chat/IBarChat";
+} from "@/interface/UI/IBarChatUI";
 
 export function BarChartComponent({
   title,

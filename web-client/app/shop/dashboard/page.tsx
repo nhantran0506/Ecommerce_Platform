@@ -1,7 +1,8 @@
 "use client";
 
 import { BarChartComponent } from "@/components/dashboard/bar_chard";
-import { IChartConfigGroup, IChartData } from "@/interface/Chat/IBarChat";
+import SectionHeader from "@/components/section_header";
+import { IChartConfigGroup, IChartData } from "@/interface/UI/IBarChatUI";
 
 // Default data for the chart
 const chartData: IChartData[] = [
@@ -37,16 +38,18 @@ const chartConfig: IChartConfigGroup = {
 
 const ShopDashBoard = () => {
   return (
-    <div className="flex flex-col">
-      <h1 className="mb-4 font-bold text-xl">Total sale 2024</h1>
-      <BarChartComponent
-        title={"This is title"}
-        description={"October 2024"}
-        data={chartData}
-        config={chartConfig}
-        footerText={"Some little description"}
-      />
-    </div>
+    <SectionHeader
+      title={"Total sale 2024 "}
+      content={
+        <BarChartComponent
+          title={"This is title"}
+          description={"October 2024"}
+          data={chartData}
+          config={chartConfig}
+          footerText={"Some little description"}
+        />
+      }
+    />
   );
 };
 

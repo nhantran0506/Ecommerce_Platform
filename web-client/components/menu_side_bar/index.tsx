@@ -1,5 +1,5 @@
 "use client";
-import { IMenuSideBar } from "@/interface/IMenuSideBar";
+import { IMenuSideBar } from "@/interface/UI/IMenuSideBar";
 import { usePathname, useRouter } from "next/navigation";
 
 const MenuSideBar: React.FC<IMenuSideBar> = ({ listTabs, parentEndPoint }) => {

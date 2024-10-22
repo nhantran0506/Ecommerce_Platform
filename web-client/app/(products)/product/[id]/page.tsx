@@ -17,9 +17,9 @@ import {
 import {
   ImageSizeEnum,
   IProductIconDataSection,
-} from "@/interface/Product/IProductUI";
+} from "@/interface/UI/IProductUI";
 import { Button } from "@nextui-org/react";
-import { IProductData } from "@/interface/Product/IProductData";
+import { IProductData } from "@/interface/Data/IProductData";
 
 const ProductDetailPage = ({ params }: { params: { id: string } }) => {
   const maxNumberOfProduct = 10;

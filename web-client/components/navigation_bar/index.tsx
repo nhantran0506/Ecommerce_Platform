@@ -20,10 +20,7 @@ import {
 } from "@nextui-org/react";
 import { LogOut, Settings, ShoppingCart, User } from "react-feather";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  IDropDownOption,
-  IHomePageOption,
-} from "../../interface/NavigationBar/interface";
+import { IDropDownOption, IHomePageOption } from "../../interface/UI/INavBar";
 import { MenuEnum } from "./enum";
 
 const pageNavigation: IHomePageOption[] = [

@@ -2,7 +2,7 @@ import OrderCard, { IOrderItem } from "@/components/order_card";
 import SectionHeader from "@/components/section_header";
 import { listOrderItem } from "@/data/data";
 
-const OrderAnalyzePage = () => {
+const MyOrdersPage = () => {
   return (
     <SectionHeader
       title={"Order History"}
@@ -22,4 +22,4 @@ const OrderAnalyzePage = () => {
   );
 };
 
-export default OrderAnalyzePage;
+export default MyOrdersPage;
