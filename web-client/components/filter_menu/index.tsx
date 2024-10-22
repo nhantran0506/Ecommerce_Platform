@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Filter, X } from "react-feather";
 import FilterSection from "./filter_section";
-import { ICheckBoxItem, IFilterMenuItem } from "./interface";
+import {
+  ICheckBoxItem,
+  IFilterMenuItem,
+} from "../../interface/UI/IFilterMenuUI";
 import ListCheckBox from "./list_checkbox";
 import { Button, Input } from "@nextui-org/react";
 

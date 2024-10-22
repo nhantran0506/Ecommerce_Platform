@@ -1,9 +1,16 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 const ShopPage = () => {
-  return (
-    <div className="flex justify-center">
-      <h1 className="text-center">ShopPage</h1>
-    </div>
-  );
+  const router = useRouter();
+
+  useEffect(() => {
+    router.push("/shop/dashboard");
+  }, [router]);
+
+  return <div>Redirecting to Dashboard...</div>;
 };
 
 export default ShopPage;

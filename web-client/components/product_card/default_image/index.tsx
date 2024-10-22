@@ -1,8 +1,5 @@
 import defaultImage from "@/assets/defaultImage.png";
-import {
-  ImageSizeEnum,
-  IProductDefaultImage,
-} from "@/interface/Product/IProductUI";
+import { ImageSizeEnum, IProductDefaultImage } from "@/interface/UI/IProductUI";
 import Image from "next/image";
 
 const DefaultImage: React.FC<IProductDefaultImage> = ({ imgSize }) => {

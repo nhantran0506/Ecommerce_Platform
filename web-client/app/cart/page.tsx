@@ -1,6 +1,6 @@
 "use client";
 import CartItemCard from "@/components/cart_item_card";
-import { ICartColumProp } from "@/interface/Cart/ICartUI";
+import { ITableColumProp } from "@/interface/UI/ICartUI";
 import {
   Table,
   TableHeader,
@@ -21,13 +21,13 @@ import ProductNumberPicker from "@/components/product_number_picker";
 const CartPage = () => {
   const rows = productlist.map((product) => ({
     key: product.id,
-    item: <CartItemCard product={product} />,
+    item: <CartItemCard product={product} onClick={() => {}} />,
     price: `$${product.price.toFixed(2)}`,
     quantity: <ProductNumberPicker />,
     total_price: `$${product.price.toFixed(2)}`,
   }));
 
-  const columns: ICartColumProp[] = [
+  const columns: ITableColumProp[] = [
     {
       key: "item",
       label: "Item",

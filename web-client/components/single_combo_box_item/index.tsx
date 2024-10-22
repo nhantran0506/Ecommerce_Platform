@@ -1,6 +1,6 @@
 import React from "react";
 import { Select, SelectItem } from "@nextui-org/react";
-import { IFilterMenu } from "./interface";
+import { IFilterMenu } from "../../interface/UI/ISingleComboBoxItem";
 
 const SingleComboBoxItem: React.FC<IFilterMenu> = ({
   prefix,

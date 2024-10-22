@@ -4,13 +4,13 @@ import SingleComboBoxItem from "@/components/single_combo_box_item";
 import {
   IFilterMenu,
   IOptionMenuFilter,
-} from "@/components/single_combo_box_item/interface";
+} from "@/interface/UI/ISingleComboBoxItem";
 import ProductCard from "@/components/product_card";
 import SearchBar from "@/components/search";
 import SectionHeader from "@/components/section_header";
 import { DollarSign, MapPin } from "react-feather";
-import { productlist, recommendProductlist } from "./data";
 import FilterMenu from "@/components/filter_menu";
+import { productlist, recommendProductlist } from "@/data/data";
 
 const ProductPage = () => {
   const router = useRouter();

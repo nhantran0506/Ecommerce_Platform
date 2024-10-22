@@ -1,5 +1,5 @@
 import { Checkbox } from "@nextui-org/react";
-import { IListCheckBox } from "../interface";
+import { IListCheckBox } from "../../../interface/UI/IFilterMenuUI";
 
 const ListCheckBox: React.FC<IListCheckBox> = ({ listCheckBox }) => {
   return (

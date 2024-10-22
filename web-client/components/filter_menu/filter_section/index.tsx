@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp } from "react-feather";
-import { IFilterMenuItem } from "../interface";
+import { IFilterMenuItem } from "../../../interface/UI/IFilterMenuUI";
 
 const FilterSection: React.FC<IFilterMenuItem> = ({ title: name, content }) => {
   const [showContent, setShowContent] = useState(true);
