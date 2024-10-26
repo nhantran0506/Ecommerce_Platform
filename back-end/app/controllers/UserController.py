@@ -28,8 +28,8 @@ class UserController:
             result = await self.db.execute(query)
             user = result.scalar_one_or_none()
 
-            if user and user.is_deleted:
-                update_stmt = update(User).where(User.user_id == auth.user_id).values(is_deleted=False)
+            if user and user.deleted_date:
+                update_stmt = update(User).where(User.user_id == auth.user_id).values(deleted_date=None)
                 await self.db.execute(update_stmt)
                 await self.db.commit()
 
@@ -130,7 +130,6 @@ class UserController:
 
     async def delete_user(self, current_user: User):
         update_stmt = update(User).where(User.user_id == current_user.user_id).values(
-            is_deleted=True,
             deleted_date=datetime.now()
         )
         await self.db.execute(update_stmt)

@@ -26,7 +26,6 @@ class Authentication(Base):
         index=True,
     )
     hash_pwd: Mapped[String] = Column(String, nullable=False)
-    is_deleted: Mapped[Boolean] = Column(Boolean, default=False)
 
     user: Mapped["User"] = relationship(
         "User", back_populates="authenticate"

@@ -20,7 +20,6 @@ class UserTasks:
                 fourteen_days_ago = datetime.now() - timedelta(days=14)
                 
                 query = select(User).where(
-                    User.is_deleted == True,
                     User.deleted_date <= fourteen_days_ago
                 )
                 result = await db.execute(query)

@@ -31,7 +31,6 @@ class User(Base):
     dob : Mapped[String]= mapped_column(DateTime, nullable=False)
     email: Mapped[String] = mapped_column(String, nullable=True, unique=True)
     role : Mapped[String]= mapped_column(Enum(UserRoles), nullable=False, default=UserRoles.USER)
-    is_deleted : Mapped[Boolean]= mapped_column(Boolean, default=False)
     deleted_date : Mapped[UUID]= mapped_column(DateTime, nullable=True)
 
     chat_history: Mapped[list["ChatHistory"]] = relationship("ChatHistory", back_populates="user")

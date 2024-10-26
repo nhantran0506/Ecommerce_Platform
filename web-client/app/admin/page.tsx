@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
 import StatCard from "@/components/stat_card";
 import IframeContainer from "@/components/iframe_container";
+import Spinner from "@/components/spinner";
+import AdminSidebar from "@/components/admin_sidebar";
 
 export default function AdminPage() {
   const [stats, setStats] = useState({
@@ -22,6 +24,8 @@ export default function AdminPage() {
     catStats: "",
   });
 
+  const [isLoading, setIsLoading] = useState(true);
+
   const fetchNumber = useCallback(
     async (endpoint: string, field: keyof typeof stats) => {
       try {
@@ -36,7 +40,6 @@ export default function AdminPage() {
         if (!response.ok) {
           throw new Error(`Failed to fetch ${field} from ${endpoint}`);
         }
-
         const data = await response.json();
         const value = data["results"];
         if (value) {
@@ -93,11 +96,12 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    fetchNumber(API_ROUTES.USERS_NUMBER, "usersOnline");
-    fetchNumber(API_ROUTES.REVENUE_CURRENT, "revenue");
-    fetchNumber(API_ROUTES.SHOPS_NUMBER, "shopCount");
+    const fetchData = async () => {
+      setIsLoading(true);
+      await fetchNumber(API_ROUTES.USERS_NUMBER, "usersOnline");
+      await fetchNumber(API_ROUTES.REVENUE_CURRENT, "revenue");
+      await fetchNumber(API_ROUTES.SHOPS_NUMBER, "shopCount");
 
-    const fetchAllCharts = async () => {
       const orderStatsSrc = await fetchChart(API_ROUTES.ORDER_STATS);
       const incomeStatsSrc = await fetchChart(API_ROUTES.INCOME_STATS);
       const catStatsSrc = await fetchChart(API_ROUTES.CAT_STATS);
@@ -107,9 +111,11 @@ export default function AdminPage() {
         incomeStats: incomeStatsSrc,
         catStats: catStatsSrc,
       });
+
+      setIsLoading(false);
     };
 
-    fetchAllCharts();
+    fetchData();
 
     return () => {
       Object.values(iframeSrcs).forEach((src) => {
@@ -118,26 +124,33 @@ export default function AdminPage() {
     };
   }, []);
 
+  if (isLoading) {
+    return <Spinner />;
+  }
+
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+    <div className="flex">
+      <AdminSidebar />
+      <div className="flex-1 p-8 ml-64">
+        <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <StatCard title="Users Online" value={stats.usersOnline} />
-        <StatCard title="Total Revenue" value={stats.revenue} />
-        <StatCard title="Shops on Platform" value={stats.shopCount} />
-      </div>
-
-      <div className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <IframeContainer title="Orders Overview" src={iframeSrcs.orderStat} />
-          <IframeContainer title="Income Overview" src={iframeSrcs.incomeStats} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <StatCard title="Users Online" value={stats.usersOnline} />
+          <StatCard title="Total Revenue" value={stats.revenue} />
+          <StatCard title="Shops on Platform" value={stats.shopCount} />
         </div>
-        <IframeContainer
-          title="Category Overview"
-          src={iframeSrcs.catStats}
-          height="600px"
-        />
+
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <IframeContainer title="Orders Overview" src={iframeSrcs.orderStat} />
+            <IframeContainer title="Income Overview" src={iframeSrcs.incomeStats} />
+          </div>
+          <IframeContainer
+            title="Category Overview"
+            src={iframeSrcs.catStats}
+            height="600px"
+          />
+        </div>
       </div>
     </div>
   );
