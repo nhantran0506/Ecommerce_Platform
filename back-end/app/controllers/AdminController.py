@@ -31,7 +31,7 @@ class AdminController:
             )
 
         try:
-            query = select(User).where(User.is_deleted == False)
+            query = select(User).where(User.deleted_date != None)
             result = await self.db.execute(query)
             users = result.scalars().all()
 

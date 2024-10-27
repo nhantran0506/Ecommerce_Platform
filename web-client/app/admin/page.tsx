@@ -5,7 +5,6 @@ import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
 import StatCard from "@/components/stat_card";
 import IframeContainer from "@/components/iframe_container";
 import Spinner from "@/components/spinner";
-import AdminSidebar from "@/components/admin_sidebar";
 
 export default function AdminPage() {
   const [stats, setStats] = useState({
@@ -129,28 +128,25 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="flex">
-      <AdminSidebar />
-      <div className="flex-1 p-8 ml-64">
-        <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+    <div>
+      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <StatCard title="Users Online" value={stats.usersOnline} />
-          <StatCard title="Total Revenue" value={stats.revenue} />
-          <StatCard title="Shops on Platform" value={stats.shopCount} />
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <StatCard title="Users Online" value={stats.usersOnline} />
+        <StatCard title="Total Revenue" value={stats.revenue} />
+        <StatCard title="Shops on Platform" value={stats.shopCount} />
+      </div>
 
-        <div className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <IframeContainer title="Orders Overview" src={iframeSrcs.orderStat} />
-            <IframeContainer title="Income Overview" src={iframeSrcs.incomeStats} />
-          </div>
-          <IframeContainer
-            title="Category Overview"
-            src={iframeSrcs.catStats}
-            height="600px"
-          />
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <IframeContainer title="Orders Overview" src={iframeSrcs.orderStat} />
+          <IframeContainer title="Income Overview" src={iframeSrcs.incomeStats} />
         </div>
+        <IframeContainer
+          title="Category Overview"
+          src={iframeSrcs.catStats}
+          height="600px"
+        />
       </div>
     </div>
   );

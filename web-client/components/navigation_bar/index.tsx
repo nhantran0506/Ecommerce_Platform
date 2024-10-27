@@ -23,6 +23,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { IDropDownOption, IHomePageOption } from "../../interface/UI/INavBar";
 import { MenuEnum } from "./enum";
 
+
+const hideNavigationPaths = ["/admin"];
+
+
+
 const pageNavigation: IHomePageOption[] = [
   {
     name: "Home",
@@ -96,6 +101,12 @@ export default function NavigationBar() {
         break;
     }
   };
+
+
+  if (hideNavigationPaths.some(path => pathname.startsWith(path))) {
+    return null;
+  }
+
 
   return (
     <Navbar disableAnimation isBordered>
