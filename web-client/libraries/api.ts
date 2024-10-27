@@ -11,4 +11,5 @@ export const API_ROUTES = {
   CAT_STATS : '/admin/statistics_category',
   ORDER_STATS : '/admin/statistics_number_orders',
   CREATE_ADMIN : '/admin/create_admin',
+  GOOGLE_LOGIN: '/users/login-google',
 };

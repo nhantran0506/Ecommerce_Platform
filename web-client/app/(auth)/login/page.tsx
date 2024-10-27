@@ -9,6 +9,7 @@ import loginImage from "@/assets/login-image.jpg";
 import googleIcon from "@/assets/google-icon.png";
 import zaloIcon from "@/assets/zalo-icon.png";
 import facebookIcon from "@/assets/facebook-icon.png";
+import { useGoogleAuth } from '@/hooks/useGoogleAuth';
 
 export default function LoginPage() {
   const [form_data, set_form_data] = useState({
@@ -54,6 +55,12 @@ export default function LoginPage() {
     }
   };
 
+  const { signIn, error: googleError } = useGoogleAuth();
+
+  const handle_google_login = () => {
+    signIn();
+  };
+
   return (
     <div className="min-h-screen flex">
       <div className="w-1/2 relative">
@@ -64,6 +71,8 @@ export default function LoginPage() {
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome back!
           </h2>
+          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+          {googleError && <p className="text-red-500 text-sm mb-4">{googleError}</p>}
           <form className="space-y-4" onSubmit={handle_submit}>
             <div>
               <label
@@ -123,7 +132,7 @@ export default function LoginPage() {
               or do it via other accounts
             </p>
             <div className="mt-4 flex justify-center space-x-4">
-              <button className="p-2 border border-gray-300 rounded-full">
+              <button className="p-2 border border-gray-300 rounded-full" onClick={handle_google_login}>
                 <Image src={googleIcon} alt="Google" width={24} height={24} />
               </button>
               <button className="p-2 border border-gray-300 rounded-full">

@@ -5,10 +5,10 @@ from models.Users import User
 from serializers.UserSearializers import *
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Session
-
 from middlewares import token_config
 from db_connector import get_db
 import logging
+from fastapi.security import OAuth2PasswordRequestForm
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/users", tags=["users"])
@@ -18,6 +18,18 @@ router = APIRouter(prefix="/users", tags=["users"])
 async def login(user: UserLogin, user_controller : UserController = Depends()):
     try:
         return await user_controller.login(user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@router.post("/login-google")
+async def login_google(token: dict, user_controller: UserController = Depends()):
+    try:
+        return await user_controller.login_google(token['token'])
     except Exception as e:
         logger.error(str(e))
         return JSONResponse(
@@ -85,3 +97,26 @@ async def forgot_password(user_data : UserForgotPassword ,user_controller : User
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+# @router.get("/login-google")
+# async def login_google(request: Request, user_controller: UserController = Depends()):
+#     try:
+#         return await oauth.google.authorize_redirect(request, redirect_uri="http://localhost:8000/users/auth")
+#     except Exception as e:
+#         logger.error(str(e))
+#         return JSONResponse(
+#             content={"Message": "Unexpected error"},
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#         )
+
+# @router.get("/auth")
+# async def auth(request: Request, user_controller: UserController = Depends()):
+#     try:
+#         return await user_controller.login_google(request)
+#     except Exception as e:
+#         logger.error(str(e))
+#         return JSONResponse(
+#             content={"Message": "Unexpected error"},
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#         )
+

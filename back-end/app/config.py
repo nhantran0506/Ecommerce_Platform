@@ -18,3 +18,6 @@ ADDRESS_FE=str(os.getenv('ADDRESS_FE'))
 
 GMAIL_APP_PASSWORD = str(os.getenv('GMAIL_APP_PASS'))
 SENDER_EMAIL = str(os.getenv('SENDER_EMAIL'))
+
+GOOGLE_CLIENT_ID = str(os.getenv('GOOGLE_CLIENT_ID'))
+GOOGLE_CLIENT_SECRET = str(os.getenv('GOOGLE_CLIENT_SECRET'))

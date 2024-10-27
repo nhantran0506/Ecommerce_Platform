@@ -140,7 +140,7 @@ class AdminController:
                 .values(
                     first_name=admin_data.first_name,
                     last_name=admin_data.last_name,
-                    phone_number=admin_data.username,
+                    email=admin_data.username,
                     dob=admin_data.dob,
                     role=UserRoles.ADMIN,
                 )

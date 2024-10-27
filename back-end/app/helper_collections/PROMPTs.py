@@ -34,7 +34,7 @@ SYSTEM_PROMPT = (
 
     Customer Information:
     - Name: {customer_name}
-    - Phone number: {customer_phone}
+    - Email: {customer_email}
     - Address: {customer_address}
 
     Remember, your goal is to ensure a positive, efficient, and satisfying experience for every customer interaction.

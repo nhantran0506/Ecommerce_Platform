@@ -5,6 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from fastapi import FastAPI, HTTPException, Depends
 from db_connector import engine, Base
 from middlewares.routing_config import RouteConfig
+from authlib.integrations.starlette_client import OAuth
 import views
 import views.AIViews
 import views.AdminViews
@@ -20,12 +21,15 @@ from config import DATABASE_PASS, DATABASE_NAME, PORT
 
 routing = RouteConfig()
 
+
 async def create_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
+
 async def startup_event():
     await create_tables()
+
 
 user_tasks = UserTasks()
 
@@ -33,7 +37,7 @@ app = FastAPI()
 
 app.add_event_handler("startup", startup_event)
 
-routing.configure_fe_policy(app)
+routing.configure_middleware(app=app)
 routing.routing_config(
     app,
     list_routing=[

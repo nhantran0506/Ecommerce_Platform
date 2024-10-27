@@ -48,7 +48,7 @@ async def get_current_user(
         query = select(Authentication).where(Authentication.user_name == user_name)
         result = await db.execute(query)
 
-        user_query = select(User).where(User.phone_number == user_name)
+        user_query = select(User).where(User.email == user_name)
         result = await db.execute(user_query)
         user = result.scalar_one_or_none()
 
@@ -92,7 +92,7 @@ async def get_current_user_ws(websocket: WebSocket, db: AsyncSession = Depends(g
         query = select(Authentication).where(Authentication.user_name == user_name)
         result = await db.execute(query)
 
-        user_query = select(User).where(User.phone_number == user_name)
+        user_query = select(User).where(User.email == user_name)
         result = await db.execute(user_query)
         user = result.scalar_one_or_none()
 

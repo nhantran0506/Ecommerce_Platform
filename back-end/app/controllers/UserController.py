@@ -10,10 +10,61 @@ from fastapi import status, Header, HTTPException, Security, Depends
 from helper_collections import UTILS, EMAIL_TEMPLATE
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
+from authlib.integrations.starlette_client import OAuthError
+from middlewares.oauth_config import oauth
+import requests
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from config import GOOGLE_CLIENT_ID
+
 
 class UserController:
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
+    
+    async def login_google(self, token: str):
+        try:
+            idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
+            user_info = token.get('userinfo')
+            if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+                raise ValueError('Wrong issuer.')
+            first_name = user_info.get('given_name')
+            email = idinfo['email']
+            first_name = idinfo.get('given_name')
+            last_name = idinfo.get('family_name')
+            google_user_id = idinfo['sub']
+            auth_query = select(Authentication).where(Authentication.provider_user_id == google_user_id, Authentication.provider == 'google')
+            result = await self.db.execute(auth_query)
+            auth = result.scalar_one_or_none()
+            if not auth:
+                user_create_query = insert(User).values(
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=email,
+                    phone_number=None,
+                    address=None,
+                    dob=None,
+                )
+                result = await self.db.execute(user_create_query)
+                user_id = result.inserted_primary_key[0]
+                auth_insert = insert(Authentication).values(
+                    user_id=user_id,
+                    user_name=email,
+                    hash_pwd=None,
+                    provider_user_id=google_user_id,
+                    provider='google'
+                )
+                await self.db.execute(auth_insert)
+                await self.db.commit()
+            else:
+                user_id = auth.user_id
+            access_token = create_access_token(data={"user_name": auth.user_name})
+            return {"token": access_token, "type": "bearer"}
+
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid token")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
     async def login(self, user: UserLogin):
         try:
@@ -59,7 +110,7 @@ class UserController:
 
     async def signup(self, user: UserCreateSerializer):
         try:  
-            query = select(Authentication).where(Authentication.user_name == user.phone_number)
+            query = select(Authentication).where(Authentication.user_name == user.email)
             result = await self.db.execute(query)
             check_exist = result.scalar_one_or_none()
             
@@ -81,7 +132,7 @@ class UserController:
 
             auth_insert = insert(Authentication).values(
                 user_id=user_id,
-                user_name=user.phone_number,
+                user_name=user.email,
                 hash_pwd= await Authentication.hash_password(user.password)
             )
             await self.db.execute(auth_insert)
@@ -113,7 +164,7 @@ class UserController:
 
         new_hash_password = await Authentication.hash_password(new_password)
         user_auth_update_query = update(Authentication).where(Authentication.user_id == user.user_id).values(
-            user_name = user.phone_number,
+            user_name = user.email,
             hash_pwd = new_hash_password
         )
         await self.db.execute(user_auth_update_query)
@@ -158,3 +209,4 @@ class UserController:
             content={"Message": "User updated successfully."},
             status_code=status.HTTP_200_OK
         )
+
