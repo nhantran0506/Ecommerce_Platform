@@ -45,7 +45,7 @@ async def websocket_endpoint(
 ):
     await websocket.accept()
     session_id = await ws_manager.add_websocket(
-        current_user, websocket, ChatBotController("llama3.1", db)
+        current_user, websocket, ChatBotController("llama3.2", db)
     )
 
     payload = {

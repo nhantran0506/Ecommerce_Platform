@@ -6,8 +6,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import chatIcon from "@/assets/chatbot.png";
 
-const hideChatIconPaths = ["/login", "/sign-up", "/admin"];
-
+const hideChatIconPaths = ["/login", "/sign-up"];
 
 export default function ChatWindow() {
   const [messages, setMessages] = useState<
@@ -91,7 +90,7 @@ export default function ChatWindow() {
     setIsMinimized(!isMinimized);
   };
 
-  if (hideChatIconPaths.some(path => pathName.startsWith(path))) {
+  if (hideChatIconPaths.includes(pathName)) {
     return null;
   }
 
