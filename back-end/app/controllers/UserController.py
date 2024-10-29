@@ -10,11 +10,7 @@ from fastapi import status, Header, HTTPException, Security, Depends
 from helper_collections import UTILS, EMAIL_TEMPLATE
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
-from authlib.integrations.starlette_client import OAuthError
-from middlewares.oauth_config import oauth
-import requests
-from google.oauth2 import id_token
-from google.auth.transport import requests
+from middlewares.oauth_config import verify_google_oauth_token
 from config import GOOGLE_CLIENT_ID
 
 
@@ -24,15 +20,12 @@ class UserController:
     
     async def login_google(self, token: str):
         try:
-            idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
-            user_info = token.get('userinfo')
-            if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
-                raise ValueError('Wrong issuer.')
-            first_name = user_info.get('given_name')
-            email = idinfo['email']
-            first_name = idinfo.get('given_name')
-            last_name = idinfo.get('family_name')
-            google_user_id = idinfo['sub']
+            google_user = await verify_google_oauth_token(token)
+            first_name = google_user.get('given_name')
+            email = google_user['email']
+            first_name = google_user.get('given_name')
+            last_name = google_user.get('family_name')
+            google_user_id = google_user['sub']
             auth_query = select(Authentication).where(Authentication.provider_user_id == google_user_id, Authentication.provider == 'google')
             result = await self.db.execute(auth_query)
             auth = result.scalar_one_or_none()
