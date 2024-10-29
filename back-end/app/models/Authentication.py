@@ -31,9 +31,9 @@ class Authentication(Base):
         unique=True,
         index=True,
     )
-    hash_pwd: Mapped[String] = Column(String, nullable=True)
-    provider_user_id : Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=True)
-    provider : Mapped[String] = Column(String, nullable=False,  default=ProviderEnum.DEFAULT)
+    hash_pwd: Mapped[String] = mapped_column(String, nullable=True)
+    provider_user_id : Mapped[String] = mapped_column(String, nullable=True)
+    provider : Mapped[String] = mapped_column(String, nullable=False,  default=ProviderEnum.DEFAULT)
     user: Mapped["User"] = relationship(
         "User", back_populates="authenticate"
     )

@@ -9,7 +9,11 @@ from middlewares import token_config
 from db_connector import get_db
 import logging
 from fastapi.security import OAuth2PasswordRequestForm
-
+from config import (
+    GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET,
+    GOOGLE_REDIRECT_URI,
+)
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -26,10 +30,18 @@ async def login(user: UserLogin, user_controller : UserController = Depends()):
         )
 
 
-@router.post("/login_google")
-async def login_google(token: str, user_controller: UserController = Depends()):
+# # google login
+@router.post("/get_google_login")
+async def get_google_login():
+    print(GOOGLE_REDIRECT_URI)
+    return {
+        "url": f"https://accounts.google.com/o/oauth2/auth?response_type=code&client_id={GOOGLE_CLIENT_ID}&redirect_uri={GOOGLE_REDIRECT_URI}&scope=openid%20profile%20email&access_type=offline"
+    }
+
+@router.get("/login_google")
+async def login_google(code: str, user_controller: UserController = Depends()):
     try:
-        return await user_controller.login_google(token)
+        return await user_controller.login_google(code)
     except Exception as e:
         logger.error(str(e))
         return JSONResponse(

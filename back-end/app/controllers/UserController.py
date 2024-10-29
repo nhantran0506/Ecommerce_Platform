@@ -18,15 +18,15 @@ class UserController:
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
     
-    async def login_google(self, token: str):
+    async def login_google(self, code: str):
         try:
-            google_user = await verify_google_oauth_token(token)
-            first_name = google_user.get('given_name')
+            google_user = await verify_google_oauth_token(code)
+            print(google_user, type(google_user))
             email = google_user['email']
             first_name = google_user.get('given_name')
             last_name = google_user.get('family_name')
-            google_user_id = google_user['sub']
-            auth_query = select(Authentication).where(Authentication.provider_user_id == google_user_id, Authentication.provider == 'google')
+            google_user_id = google_user['id']
+            auth_query = select(Authentication).where(Authentication.user_name == email, Authentication.provider == 'google')
             result = await self.db.execute(auth_query)
             auth = result.scalar_one_or_none()
             if not auth:
@@ -51,12 +51,14 @@ class UserController:
                 await self.db.commit()
             else:
                 user_id = auth.user_id
-            access_token = create_access_token(data={"user_name": auth.user_name})
+            access_token = create_access_token(data={"user_name": email})
             return {"token": access_token, "type": "bearer"}
 
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid token")
         except Exception as e:
+            print(code)
+            print(e)
             raise HTTPException(status_code=500, detail=str(e))
 
     async def login(self, user: UserLogin):
