@@ -35,7 +35,6 @@ async def login(user: UserLogin, user_controller : UserController = Depends()):
 # google login
 @router.post("/get_google_login")
 async def get_google_login():
-    print(GOOGLE_REDIRECT_URI)
     return {
         "url": f"https://accounts.google.com/o/oauth2/auth?response_type=code&client_id={GOOGLE_CLIENT_ID}&redirect_uri={GOOGLE_REDIRECT_URI}&scope=openid%20profile%20email&access_type=offline"
     }
@@ -55,7 +54,7 @@ async def login_google(code: str, user_controller: UserController = Depends()):
 # fb login
 @router.post("/get_fb_login")
 async def get_fb_login():
-    return {"url": f"https://www.facebook.com/v21.0/dialog/oauth?client_id=3870270233258783&redirect_uri={FACEBOOK_REDIRECT_URI}&scope=email,public_profile&response_type=code"}
+    return {"url": f"https://www.facebook.com/v21.0/dialog/oauth?client_id={FACEBOOK_CLIENT_ID}&redirect_uri={FACEBOOK_REDIRECT_URI}&scope=email,public_profile&response_type=code"}
 
 
 @router.get("/login_fb")
@@ -121,7 +120,6 @@ async def delete_user(user_controller : UserController = Depends(), current_user
 @router.post("/forgot_password")
 async def forgot_password(user_data : UserForgotPassword ,user_controller : UserController = Depends()):
     try:
-        print(user_data.email)
         return await user_controller.forgot_password(user_data)
     except Exception as e:
         logger.error(str(e))

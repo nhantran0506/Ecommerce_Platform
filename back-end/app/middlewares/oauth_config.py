@@ -7,6 +7,9 @@ from config import (
     GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET,
     GOOGLE_REDIRECT_URI,
+    FACEBOOK_CLIENT_ID,
+    FACEBOOK_CLIENT_SECRET,
+    FACEBOOK_REDIRECT_URI,
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -50,6 +53,36 @@ async def verify_google_oauth_token(code: str) -> dict:
         return user_info
 
 
-   
 async def verify_fb_oauth_token(code: str) -> dict:
-    pass
+    token_url = "https://graph.facebook.com/v21.0/oauth/access_token"
+    user_info_url = "https://graph.facebook.com/v21.0/me"
+    
+    data = {
+        "client_id": FACEBOOK_CLIENT_ID,
+        "redirect_uri": FACEBOOK_REDIRECT_URI,
+        "client_secret": FACEBOOK_CLIENT_SECRET,
+        "code": code,
+    }
+
+    async with httpx.AsyncClient() as client:
+        token_response = await client.get(token_url, params=data)
+        
+        if token_response.status_code != 200:
+            raise ValueError("Failed to obtain access token from Facebook")
+
+        token_data = token_response.json()
+        access_token = token_data.get("access_token")
+        if not access_token:
+            raise ValueError("Access token is missing in the response")
+
+        user_info_response = await client.get(
+            user_info_url,
+            params={"access_token": access_token, "fields": "id,name,email"}
+        )
+
+        if user_info_response.status_code != 200:
+            raise ValueError("Failed to fetch user info from Facebook")
+
+        user_info = user_info_response.json()
+        return user_info
+

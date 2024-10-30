@@ -61,11 +61,12 @@ class UserController:
     
     async def login_fb(self, code: str):
         try:
-            google_user = await verify_fb_oauth_token(code)
-            email = google_user['email']
-            first_name = google_user.get('given_name')
-            last_name = google_user.get('family_name')
-            google_user_id = google_user['id']
+            fb_user = await verify_fb_oauth_token(code)
+            name_parts = fb_user["name"].split()
+            email = fb_user['email']
+            first_name = name_parts[0]
+            last_name = name_parts[-1]
+            google_user_id = fb_user['id']
             auth_query = select(Authentication).where(Authentication.user_name == email, Authentication.provider == 'facebook')
             result = await self.db.execute(auth_query)
             auth = result.scalar_one_or_none()
