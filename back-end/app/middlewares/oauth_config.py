@@ -51,3 +51,5 @@ async def verify_google_oauth_token(code: str) -> dict:
 
 
    
+async def verify_fb_oauth_token(code: str) -> dict:
+    pass

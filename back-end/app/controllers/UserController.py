@@ -10,7 +10,7 @@ from fastapi import status, Header, HTTPException, Security, Depends
 from helper_collections import UTILS, EMAIL_TEMPLATE
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
-from middlewares.oauth_config import verify_google_oauth_token
+from middlewares.oauth_config import verify_google_oauth_token, verify_fb_oauth_token
 from config import GOOGLE_CLIENT_ID
 
 
@@ -21,7 +21,6 @@ class UserController:
     async def login_google(self, code: str):
         try:
             google_user = await verify_google_oauth_token(code)
-            print(google_user, type(google_user))
             email = google_user['email']
             first_name = google_user.get('given_name')
             last_name = google_user.get('family_name')
@@ -57,8 +56,47 @@ class UserController:
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid token")
         except Exception as e:
-            print(code)
-            print(e)
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    
+    async def login_fb(self, code: str):
+        try:
+            google_user = await verify_fb_oauth_token(code)
+            email = google_user['email']
+            first_name = google_user.get('given_name')
+            last_name = google_user.get('family_name')
+            google_user_id = google_user['id']
+            auth_query = select(Authentication).where(Authentication.user_name == email, Authentication.provider == 'facebook')
+            result = await self.db.execute(auth_query)
+            auth = result.scalar_one_or_none()
+            if not auth:
+                user_create_query = insert(User).values(
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=email,
+                    phone_number=None,
+                    address=None,
+                    dob=None,
+                )
+                result = await self.db.execute(user_create_query)
+                user_id = result.inserted_primary_key[0]
+                auth_insert = insert(Authentication).values(
+                    user_id=user_id,
+                    user_name=email,
+                    hash_pwd=None,
+                    provider_user_id=google_user_id,
+                    provider='facebook'
+                )
+                await self.db.execute(auth_insert)
+                await self.db.commit()
+            else:
+                user_id = auth.user_id
+            access_token = create_access_token(data={"user_name": email})
+            return {"token": access_token, "type": "bearer"}
+
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid token")
+        except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
     async def login(self, user: UserLogin):
