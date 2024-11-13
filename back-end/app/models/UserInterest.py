@@ -13,9 +13,9 @@ from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy.dialects.postgresql import UUID
 from models.Ratings import *
 from models.Cart import *
-from models.Category import *
+from models.Products import *
 import uuid
-
+from datetime import datetime
 
 class InterestScore(enum.Enum):
     VIEW = 1
@@ -29,12 +29,13 @@ class UserInterest(Base):
     user_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.user_id"), primary_key=True
     )
-    cat_id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("categories.cat_id"), primary_key=True
+    product_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("products.product_id"), primary_key=True
     )
     score : Mapped[int] =  mapped_column(Integer, default=0, nullable=False)
+    updated_at: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now(), nullable=False)
 
     user: Mapped["User"] = relationship("User", back_populates="user_interest")
-    category: Mapped["Category"] = relationship(
-        "Category", back_populates="user_interest"
+    product: Mapped["Product"] = relationship(
+        "Product", back_populates="interest"
     )
