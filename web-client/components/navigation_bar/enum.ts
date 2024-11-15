@@ -1,6 +1,5 @@
 export enum MenuEnum {
   UserProfile = "/user-profile",
-  Settings = "/settings",
   Logout = "/logout",
   LogIn = "/login",
   Cart = "/cart",
