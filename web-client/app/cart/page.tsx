@@ -14,9 +14,9 @@ import {
   Card,
   CardBody,
 } from "@nextui-org/react";
-import { productlist } from "../(products)/products/data";
 import { ChevronLeft, X } from "react-feather";
 import ProductNumberPicker from "@/components/product_number_picker";
+import { productlist } from "@/data/data";
 
 const CartPage = () => {
   const rows = productlist.map((product) => ({
