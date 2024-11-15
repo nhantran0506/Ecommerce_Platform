@@ -80,6 +80,7 @@ class ChatBotController:
         try:
             query = query_payload.query
             session_id = query_payload.session_id
+            model_name = query_payload.model
 
             print(query_payload)
             intent = self.intent_detection(query)
@@ -92,16 +93,16 @@ class ChatBotController:
                     customer_name=f"{current_user.first_name} {current_user.last_name}",
                     customer_phone=current_user.phone_number,
                     customer_address=current_user.address,
+                    customer_email = current_user.email,
                 )
 
                 default_prompt = PromptTemplate(DEFAULT_PROMPT).format(
                     context=context, user_query=query
                 )
 
-                chat_message = await self.add_message(
-                    role=MessageRole.USER, content=default_prompt, session_id=session_id
+                await self.add_message(
+                    role=MessageRole.USER, content=default_prompt, session_id=session_id, current_user=current_user, model_name=model_name
                 )
-                session_id = chat_message.session_id
 
                 system_msg = [
                     ChatMessage(role=MessageRole.SYSTEM, content=system_prompt)
@@ -113,6 +114,8 @@ class ChatBotController:
                     role=MessageRole.ASSISTANT,
                     content=response.message.content,
                     session_id=session_id,
+                    current_user=current_user,
+                    model_name=model_name
                 )
                 llm_response = response.message.content
             else:

@@ -7,23 +7,27 @@ import weaviate
 from helper_collections.FAQQUES import FAQ
 from typing import Optional, List
 from models.Products import *
-
+from config import (
+    OLLAMA_CHAT_MODEL,
+    OLLAMA_BASE_URL,
+    WEAVIATE_URL,
+    OLLAMA_EMBEDDING_MODEL
+)
 class EmbeddingController:
-    def __init__(self, weaviate_url: str = "http://localhost:8080", collection_name: Optional[str] = "FAQ"):
-        # Initialize Weaviate client
-        self.client = weaviate.connect_to_local() 
+    def __init__(self, collection_name: Optional[str] = "FAQ"):
+        self.client = weaviate.connect_to_local(
+            host= WEAVIATE_URL,
+        ) 
         
         self.embed_model = OllamaEmbedding(
-            model_name="nomic-embed-text",
-            base_url="http://localhost:11434",
+            model_name=OLLAMA_EMBEDDING_MODEL,
+            base_url=OLLAMA_BASE_URL,
         )
         
         self.collection_name = collection_name
         
-        # Create schema if it doesn't exist
         self._create_schema()
         
-        # Initialize vector store and index
         self._vector_store = WeaviateVectorStore(
             weaviate_client=self.client,
             index_name=self.collection_name,
@@ -42,7 +46,7 @@ class EmbeddingController:
         """Create Weaviate schema for the collection if it doesn't exist"""
         class_obj = {
             "class": self.collection_name,
-            "vectorizer": "none",  # we'll use our own embeddings
+            "vectorizer": "none", 
             "properties": [
                 {
                     "name": "content",
@@ -55,7 +59,6 @@ class EmbeddingController:
             ]
         }
         
-        # Check if class exists, if not create it
         try:
             self.client.collections.get(self.collection_name)
         except:
@@ -73,6 +76,8 @@ class EmbeddingController:
                     }
                 ]
             )
+            self.load_faq()
+
 
     def load_faq(self):
         docs = []
@@ -107,7 +112,13 @@ class EmbeddingController:
             embed_model=self.embed_model,
         )
 
-    def query(self, query: str, top_k: int = 5, min_similarity: float = 0.6):
+    def query(self, query: str, top_k: int = 5, min_similarity: float = 0.5):
+        try:
+            self.client.collections.get(self.collection_name)
+        except weaviate.exceptions.WeaviateCollectionNotFoundException:
+            self._create_schema()
+        
+
         results = self._index.retrieve(query)
         responses = []
         for node in results[:top_k] or []:
