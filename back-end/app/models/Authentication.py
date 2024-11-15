@@ -33,7 +33,7 @@ class Authentication(Base):
     )
     hash_pwd: Mapped[String] = mapped_column(String, nullable=True)
     provider_user_id : Mapped[String] = mapped_column(String, nullable=True)
-    provider : Mapped[String] = mapped_column(String, nullable=False,  default=ProviderEnum.DEFAULT)
+    provider : Mapped[String] = mapped_column(String, nullable=False,  default=ProviderEnum.DEFAULT.value)
     user: Mapped["User"] = relationship(
         "User", back_populates="authenticate"
     )

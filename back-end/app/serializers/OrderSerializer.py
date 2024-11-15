@@ -5,6 +5,6 @@ class OderItems(BaseModel):
     product_id : uuid.UUID
     quantity : int
 
-    class Config:
+    class ConfigDict:
         arbitrary_types_allowed = True
         from_attributes = True

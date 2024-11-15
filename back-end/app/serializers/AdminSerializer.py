@@ -8,7 +8,7 @@ class AdminGetData(BaseModel):
     timestamp : DateTime
 
 
-    class Config:
+    class ConfigDict:
         arbitrary_types_allowed = True
         from_attributes = True
 
@@ -20,7 +20,7 @@ class AdminCreate(BaseModel):
     password: str = Field(..., alias="password")
     dob: DateTime = Field(..., alias="dob")
 
-    class Config:
+    class ConfigDict:
         arbitrary_types_allowed = True
         from_attributes = True
 

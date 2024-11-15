@@ -8,7 +8,7 @@ class ShopBase(BaseModel):
     shop_phone_number: str
     shop_bio: str
 
-    class Config:
+    class ConfigDict:
         arbitrary_types_allowed = True
         from_attributes = True
 
