@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Navbar,
   NavbarBrand,
@@ -15,18 +15,15 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
-  Divider,
   DropdownSection,
 } from "@nextui-org/react";
-import { LogOut, Settings, ShoppingCart, User } from "react-feather";
+import { LogOut, ShoppingCart, User } from "react-feather";
 import { usePathname, useRouter } from "next/navigation";
 import { IDropDownOption, IHomePageOption } from "../../interface/UI/INavBar";
 import { MenuEnum } from "./enum";
-
+import { Moon, Sun } from "lucide-react";
 
 const hideNavigationPaths = ["/admin"];
-
-
 
 const pageNavigation: IHomePageOption[] = [
   {
@@ -46,10 +43,6 @@ const pageNavigation: IHomePageOption[] = [
 const pageMenu: IHomePageOption[] = [
   ...pageNavigation,
   {
-    name: "Settings",
-    link: "#",
-  },
-  {
     name: "Log In",
     link: "/login",
   },
@@ -66,11 +59,6 @@ const userDropdownOption: IDropDownOption[] = [
     name: "Profile",
   },
   {
-    key: MenuEnum.Settings,
-    prefix: <Settings />,
-    name: "Settings",
-  },
-  {
     key: MenuEnum.Logout,
     prefix: <LogOut />,
     name: "Log Out",
@@ -81,14 +69,13 @@ const userDropdownOption: IDropDownOption[] = [
 export default function NavigationBar() {
   const router = useRouter();
   const pathname = usePathname();
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [isVietNamese, setIsVietNamese] = useState<boolean>(false);
 
   const handleNavigate = (key: string) => {
     switch (key) {
       case MenuEnum.UserProfile:
         router.push(MenuEnum.UserProfile);
-        break;
-      case MenuEnum.Settings:
-        router.push(MenuEnum.Settings);
         break;
       case MenuEnum.Cart:
         router.push(MenuEnum.Cart);
@@ -102,11 +89,21 @@ export default function NavigationBar() {
     }
   };
 
+  const handleSwitchTheme = () => {
+    setIsDarkMode(!isDarkMode);
 
-  if (hideNavigationPaths.some(path => pathname.startsWith(path))) {
+    // TODO: change theme
+  };
+
+  const handleSwitchLanguages = () => {
+    setIsVietNamese(!isVietNamese);
+
+    // TODO: change Languages
+  };
+
+  if (hideNavigationPaths.some((path) => pathname.startsWith(path))) {
     return null;
   }
-
 
   return (
     <Navbar disableAnimation isBordered>
@@ -139,6 +136,27 @@ export default function NavigationBar() {
       </NavbarContent>
 
       <NavbarContent justify="end" className="gap-4">
+        <NavbarItem>
+          <Button
+            isIconOnly
+            className="bg-transparent"
+            onClick={() => handleSwitchLanguages()}
+          >
+            {/* change flat image */}
+            {isVietNamese ? <Moon /> : <Sun />}
+          </Button>
+        </NavbarItem>
+
+        <NavbarItem>
+          <Button
+            isIconOnly
+            className="bg-transparent"
+            onClick={() => handleSwitchTheme()}
+          >
+            {isDarkMode ? <Moon /> : <Sun />}
+          </Button>
+        </NavbarItem>
+
         <NavbarItem>
           <Button isIconOnly className="bg-transparent">
             <ShoppingCart onClick={() => handleNavigate(MenuEnum.Cart)} />{" "}
@@ -175,6 +193,7 @@ export default function NavigationBar() {
         </NavbarItem>
       </NavbarContent>
 
+      {/* responsive ui */}
       <NavbarMenu>
         {pageMenu.map((item, index) => (
           <NavbarMenuItem key={`${item}-${index}`}>

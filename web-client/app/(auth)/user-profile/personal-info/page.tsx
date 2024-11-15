@@ -1,6 +1,5 @@
 "use client";
 import SectionHeader from "@/components/section_header";
-import { InputTypeEnum } from "@/constant/enum";
 import { IInputItem } from "@/interface/UI/IProfile";
 import { Button, Input } from "@nextui-org/react";
 import { X } from "react-feather";
