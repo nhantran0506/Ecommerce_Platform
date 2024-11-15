@@ -13,8 +13,16 @@ from config import (
     WEAVIATE_URL,
     OLLAMA_EMBEDDING_MODEL
 )
+from models.CategoryProduct import CategoryProduct
+from models.Category import Category
+from sqlalchemy import select, update, insert
+from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import Depends
+from db_connector import get_db
+
 class EmbeddingController:
-    def __init__(self, collection_name: Optional[str] = "FAQ"):
+    def __init__(self, db: AsyncSession = Depends(get_db), collection_name: Optional[str] = "FAQ"):
+        self.db = db
         self.client = weaviate.connect_to_local(
             host= WEAVIATE_URL,
         ) 
@@ -43,22 +51,6 @@ class EmbeddingController:
         ).as_retriever()
 
     def _create_schema(self):
-        """Create Weaviate schema for the collection if it doesn't exist"""
-        class_obj = {
-            "class": self.collection_name,
-            "vectorizer": "none", 
-            "properties": [
-                {
-                    "name": "content",
-                    "dataType": ["text"],
-                },
-                {
-                    "name": "topic",
-                    "dataType": ["text"],
-                }
-            ]
-        }
-        
         try:
             self.client.collections.get(self.collection_name)
         except:
@@ -98,12 +90,24 @@ class EmbeddingController:
         doc = BeautifulSoup(html_content, "html.parser")
         return doc.get_text()
 
-    def embedding_product(self, product: Product):
-        product_text = f"{product.product_name} {product.product_description} {product.price}"
+    async def embedding_product(self, product: Product):
+        all_cat_names_query = select(CategoryProduct).where(CategoryProduct.product_id == product.product_id)
+        results = await self.db.execute(all_cat_names_query)
+        results = results.scalars()
+        
+        cat_names = ""
+        for cat in results:
+            cat_names_query = select(Category).where(Category.cat_id==cat.cat_id)
+            cat = await self.db.execute(cat_names_query)
+            cat_names += cat.scalar_one_or_none().cat_name
+
+        product_text = f"{product.product_name * 3} {cat_names * 2}"
         return Document(
             text=product_text,
-            metadata={"topic": "product"}
+            metadata={"topic": "product", "product_id" : product.product_id}
         )
+    
+    
     
     def embedding(self, docs: List[Document]):
         self._index = VectorStoreIndex.from_documents(

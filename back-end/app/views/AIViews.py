@@ -6,7 +6,6 @@ from middlewares import token_config
 from db_connector import get_db
 from controllers.ChatBotController import ChatBotController
 from controllers.EmbeddingController import EmbeddingController
-from managers.WebSocketManagers import WebSocketManager
 import logging
 import json
 from middlewares import token_config
@@ -16,7 +15,6 @@ from middlewares import token_config
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ai", tags=["ai"])
 
-ws_manager = WebSocketManager()
 
 
 @router.post("/body_estimate")
