@@ -6,9 +6,15 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from db_connector import Base
 from models.Users import User
-
+import enum
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
+
+class ProviderEnum(enum.Enum):
+    DEFAULT = "website"
+    GOOGLE_PROVIDER = "google"
+    FACEBOOK_PROVIDER = "facebook"
 
 class Authentication(Base):
     __tablename__ = "authentication"
@@ -20,13 +26,14 @@ class Authentication(Base):
     )
     user_name: Mapped[UUID] = mapped_column(
         String,
-        ForeignKey("users.phone_number"),
+        ForeignKey("users.email"),
         nullable=False,
         unique=True,
         index=True,
     )
-    hash_pwd: Mapped[String] = Column(String, nullable=False)
-
+    hash_pwd: Mapped[String] = mapped_column(String, nullable=True)
+    provider_user_id : Mapped[String] = mapped_column(String, nullable=True)
+    provider : Mapped[String] = mapped_column(String, nullable=False,  default=ProviderEnum.DEFAULT.value)
     user: Mapped["User"] = relationship(
         "User", back_populates="authenticate"
     )

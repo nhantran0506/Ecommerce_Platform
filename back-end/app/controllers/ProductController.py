@@ -3,7 +3,8 @@ from sqlalchemy import select
 from models.Products import Product
 from serializers.ProductSerializers import *
 from middlewares.token_config import *
-
+from sqlalchemy import func, select, insert
+from models.UserInterest import UserInterest, InterestScore
 class ProductController:
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
@@ -13,6 +14,15 @@ class ProductController:
         return result.scalars().all()
 
     async def get_single_product(self, product_id):
+        
+        # UserInterst insert
+        interest_query = insert(UserInterest).values(
+            user_id = current_user.user_id,
+            product_id = product_id,
+            score = InterestScore.VIEW
+        )
+
+        # below code need to change to new SQL base code
         result = await self.db.execute(select(Product).filter(Product.product_id == product_id))
         return result.scalar_one_or_none()
 

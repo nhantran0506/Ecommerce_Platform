@@ -8,7 +8,7 @@ class ProductBase(BaseModel):
     create_at_datetime: Optional[datetime] = Field(default_factory=datetime.now)
     price: int
 
-    class Config:
+    class ConfigDict:
         arbitrary_types_allowed = True
         from_attributes = True
 

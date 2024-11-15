@@ -39,29 +39,13 @@ async def embedding(embedding_request : EmbeddingPayload ,
 
 
 
-@router.websocket("/chatbot")
-async def websocket_endpoint(
-    websocket: WebSocket, current_user=Depends(token_config.get_current_user_ws), db = Depends(get_db)
-):
-    await websocket.accept()
-    session_id = await ws_manager.add_websocket(
-        current_user, websocket, ChatBotController("llama3.2", db)
-    )
-
-    payload = {
-        "session_id": session_id,
-    }
-
-    await websocket.send_json(json.dumps(payload))
-
+@router.post("/chatbot")
+async def chatbot(query_payload : QueryPayload, chat_controller : ChatBotController = Depends(), current_user = Depends(token_config.get_current_user)):
     try:
-        while True:
-            message = await websocket.receive_json()
-            query = message.get("message")
-
-            client_session_id = message.get("session_id")
-            await ws_manager.llm_answer(query, client_session_id, current_user)
-
-    except WebSocketDisconnect:
-        logger.info(f"WebSocket connection closed for session: {session_id}")
-        ws_manager.remove_websocket(session_id)
+        return await chat_controller.answer(query_payload, current_user)
+    except Exception as e:
+        logger.error(e)
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )

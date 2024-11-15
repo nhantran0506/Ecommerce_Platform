@@ -48,7 +48,7 @@ async def get_current_user(
         query = select(Authentication).where(Authentication.user_name == user_name)
         result = await db.execute(query)
 
-        user_query = select(User).where(User.phone_number == user_name)
+        user_query = select(User).where(User.email == user_name)
         result = await db.execute(user_query)
         user = result.scalar_one_or_none()
 
@@ -69,37 +69,37 @@ async def authenticate_user(db: AsyncSession, user_name: str, password: str):
     return user_auth
 
 
-async def get_current_user_ws(websocket: WebSocket, db: AsyncSession = Depends(get_db)):
-    token = websocket.query_params.get("token")
-    if token is None:
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing authentication token",
-        )
+# async def get_current_user_ws(websocket: WebSocket, db: AsyncSession = Depends(get_db)):
+#     token = websocket.query_params.get("token")
+#     if token is None:
+#         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail="Missing authentication token",
+#         )
 
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-    )
-    try:
-        payload = jwt.decode(token, SERECT_KEY, algorithms=[ALGORITHM])
-        user_name = payload.get("user_name")
-        if not user_name:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-            raise credentials_exception
+#     credentials_exception = HTTPException(
+#         status_code=status.HTTP_401_UNAUTHORIZED,
+#         detail="Could not validate credentials",
+#     )
+#     try:
+#         payload = jwt.decode(token, SERECT_KEY, algorithms=[ALGORITHM])
+#         user_name = payload.get("user_name")
+#         if not user_name:
+#             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+#             raise credentials_exception
 
-        query = select(Authentication).where(Authentication.user_name == user_name)
-        result = await db.execute(query)
+#         query = select(Authentication).where(Authentication.user_name == user_name)
+#         result = await db.execute(query)
 
-        user_query = select(User).where(User.phone_number == user_name)
-        result = await db.execute(user_query)
-        user = result.scalar_one_or_none()
+#         user_query = select(User).where(User.email == user_name)
+#         result = await db.execute(user_query)
+#         user = result.scalar_one_or_none()
 
-        if not user:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-            raise credentials_exception
-        return user
-    except (JWSError, KeyError):
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-        raise credentials_exception
+#         if not user:
+#             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+#             raise credentials_exception
+#         return user
+#     except (JWSError, KeyError):
+#         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+#         raise credentials_exception

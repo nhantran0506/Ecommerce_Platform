@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
 import loginImage from "@/assets/login-image.jpg";
 import googleIcon from "@/assets/google-icon.png";
@@ -16,7 +16,39 @@ export default function LoginPage() {
     password: "",
   });
   const [error, set_error] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Handle Google OAuth code if present in URL
+  useEffect(() => {
+    const code = searchParams.get('code');
+    if (code) {
+      handleGoogleCallback(code);
+    }
+  }, [searchParams]);
+
+  const handleGoogleCallback = async (code: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}${API_ROUTES.LOGIN_GOOGLE}?code=${code}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get access token');
+      }
+
+      const data = await response.json();
+      localStorage.setItem("token", data.token);
+      router.push("/");
+    } catch (error) {
+      console.error('Error handling Google callback:', error);
+      set_error("Failed to complete Google login");
+    }
+  };
 
   const handle_change = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -41,16 +73,41 @@ export default function LoginPage() {
       if (!response.ok) {
         throw new Error("Login failed");
       }
-      if (response.status == 401){
+      if (response.status == 401) {
         throw new Error('Wrong password or username.');
       }
 
       const data = await response.json();
-
       localStorage.setItem("token", data.token);
       router.push("/");
     } catch (error) {
       set_error("Invalid credentials. Please try again.");
+    }
+  };
+
+  const handle_google_login = async () => {
+    try {
+      setIsLoading(true);
+      set_error("");
+      
+      const response = await fetch(`${API_BASE_URL}${API_ROUTES.GET_GOOGLE_LOGIN}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Error with server");
+      }
+
+      const data = await response.json();
+      window.location.href = data.url; // Redirect to Google login
+      
+    } catch (error) {
+      console.error('Google login error:', error);
+      set_error(error instanceof Error ? error.message : "Error with Google login");
+      setIsLoading(false);
     }
   };
 
@@ -64,6 +121,7 @@ export default function LoginPage() {
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome back!
           </h2>
+          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
           <form className="space-y-4" onSubmit={handle_submit}>
             <div>
               <label
@@ -123,8 +181,18 @@ export default function LoginPage() {
               or do it via other accounts
             </p>
             <div className="mt-4 flex justify-center space-x-4">
-              <button className="p-2 border border-gray-300 rounded-full">
-                <Image src={googleIcon} alt="Google" width={24} height={24} />
+              <button 
+                className="p-2 border border-gray-300 rounded-full relative" 
+                onClick={handle_google_login}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-5 h-5 border-t-2 border-gray-500 rounded-full animate-spin"></div>
+                  </div>
+                ) : (
+                  <Image src={googleIcon} alt="Google" width={24} height={24} />
+                )}
               </button>
               <button className="p-2 border border-gray-300 rounded-full">
                 <Image src={zaloIcon} alt="Zalo" width={24} height={24} />

@@ -5,11 +5,17 @@ from models.Users import User
 from serializers.UserSearializers import *
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Session
-
 from middlewares import token_config
 from db_connector import get_db
 import logging
-
+from fastapi.security import OAuth2PasswordRequestForm
+from config import (
+    GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET,
+    GOOGLE_REDIRECT_URI,
+    FACEBOOK_CLIENT_ID,
+    FACEBOOK_REDIRECT_URI,
+)
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -18,6 +24,43 @@ router = APIRouter(prefix="/users", tags=["users"])
 async def login(user: UserLogin, user_controller : UserController = Depends()):
     try:
         return await user_controller.login(user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+# google login
+@router.post("/get_google_login")
+async def get_google_login():
+    return {
+        "url": f"https://accounts.google.com/o/oauth2/auth?response_type=code&client_id={GOOGLE_CLIENT_ID}&redirect_uri={GOOGLE_REDIRECT_URI}&scope=openid%20profile%20email&access_type=offline"
+    }
+
+@router.get("/login_google")
+async def login_google(code: str, user_controller: UserController = Depends()):
+    try:
+        return await user_controller.login_google(code)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+# fb login
+@router.post("/get_fb_login")
+async def get_fb_login():
+    return {"url": f"https://www.facebook.com/v21.0/dialog/oauth?client_id={FACEBOOK_CLIENT_ID}&redirect_uri={FACEBOOK_REDIRECT_URI}&scope=email,public_profile&response_type=code"}
+
+
+@router.get("/login_fb")
+async def login_fb(code: str, user_controller: UserController = Depends()):
+    try:
+        return await user_controller.login_fb(code)
     except Exception as e:
         logger.error(str(e))
         return JSONResponse(
@@ -77,7 +120,6 @@ async def delete_user(user_controller : UserController = Depends(), current_user
 @router.post("/forgot_password")
 async def forgot_password(user_data : UserForgotPassword ,user_controller : UserController = Depends()):
     try:
-        print(user_data.email)
         return await user_controller.forgot_password(user_data)
     except Exception as e:
         logger.error(str(e))
@@ -85,3 +127,4 @@ async def forgot_password(user_data : UserForgotPassword ,user_controller : User
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+

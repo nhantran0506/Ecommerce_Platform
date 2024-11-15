@@ -27,3 +27,6 @@ class Product(Base):
     )
     cat_products : Mapped["CategoryProduct"] = relationship("CategoryProduct",back_populates="product")
     order_items : Mapped["OrderItem"] = relationship("OrderItem",back_populates="product")
+    interest: Mapped["UserInterest"] = relationship(
+        "UserInterest", back_populates="product"
+    )

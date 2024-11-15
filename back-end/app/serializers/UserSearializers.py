@@ -11,7 +11,7 @@ class UserGetSerializer(BaseModel):
     first_name: str
     last_name: str
 
-    class Config:
+    class ConfigDict:
         arbitrary_types_allowed = True
         from_attributes = True
 
