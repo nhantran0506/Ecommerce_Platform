@@ -52,22 +52,21 @@ class ChatBotController:
         ]
 
     async def add_message(
-        self, role: str, content: str, session_id: str
+        self,
+        role: str,
+        content: str,
+        session_id: str,
+        current_user: User,
+        model_name: str,
     ) -> MessageHistory:
         try:
-            if session_id:
-                insert_stmt = insert(MessageHistory).values(
-                    role=role, content=content, session_id=session_id
-                )
-            else:
-                insert_stmt = (
-                    insert(MessageHistory)
-                    .values(role=role, content=content)
-                    .returning(MessageHistory)
-                )
-            result = await self.db.execute(insert_stmt)
+            if not session_id:
+                session_id = await self.add_user(current_user, model_name)
+            insert_stmt = insert(MessageHistory).values(
+                role=role, content=content, session_id=session_id
+            )
+            await self.db.execute(insert_stmt)
             await self.db.commit()
-            return result
         except Exception as e:
             await self.db.rollback()
             raise e
@@ -75,7 +74,6 @@ class ChatBotController:
     def intent_detection(self, query):
         intent_prompt = PromptTemplate(INTENT_DETECTION).format(query=query)
         intent_output = self.llm.complete(prompt=intent_prompt).text
-
         return "query" if "query" in intent_output.lower() else intent_output
 
     async def answer(self, query_payload: QueryPayload, current_user: User):
@@ -83,8 +81,8 @@ class ChatBotController:
             query = query_payload.query
             session_id = query_payload.session_id
 
+            print(query_payload)
             intent = self.intent_detection(query)
-
             llm_response = ""
             if intent == "query":
                 nodes = self.embedding_engine.query(query, top_k=5, min_similarity=0.7)
@@ -105,7 +103,9 @@ class ChatBotController:
                 )
                 session_id = chat_message.session_id
 
-                system_msg = [ChatMessage(role=MessageRole.SYSTEM, content=system_prompt)]
+                system_msg = [
+                    ChatMessage(role=MessageRole.SYSTEM, content=system_prompt)
+                ]
                 chat_history = await self.get_history(session_id)
                 response = self.llm.chat(system_msg + chat_history)
 
