@@ -15,3 +15,12 @@ class ProductBase(BaseModel):
 class ProductCreate(ProductBase):
     pass
 
+
+class ProductResponse(BaseModel):
+    product_name : str
+    product_id : str
+    product_price : float
+
+    class ConfigDict:
+        orm_mode = True 
+    
