@@ -7,7 +7,10 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from models.UserInterest import UserInterest, InterestScore
 from models.Users import User
+from models.Category import Category
 from datetime import datetime
+from models.CategoryProduct import CategoryProduct
+from controllers.EmbeddingController import EmbeddingController
 class ProductController:
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
@@ -44,11 +47,47 @@ class ProductController:
             
     
     async def create_new_product(self, product: ProductCreate, current_user):
-        db_product = Product(**product.model_dump())
-        self.db.add(db_product)
-        await self.db.commit()
-        await self.db.refresh(db_product)
-        return db_product
+        try:
+            for cat in product.category:
+                query_insert = insert(Category).values(
+                    cat_name=cat
+                ).on_conflict_do_nothing()
+                await self.db.execute(query_insert)
+                await self.db.commit()
+
+            db_product = Product(
+                product_name=product.product_name,
+                product_description=product.product_description,
+                price=product.price,
+                create_at_datetime=product.create_at_datetime
+            )
+            self.db.add(db_product)
+            await self.db.commit()
+            await self.db.refresh(db_product)
+
+          
+            for cat_name in product.category:
+                cat_query = select(Category).where(Category.cat_name == cat_name)
+                result = await self.db.execute(cat_query)
+                category = result.scalar_one_or_none()
+                
+                if category:
+                    
+                    cat_product = CategoryProduct(
+                        cat_id=category.cat_id,
+                        product_id=db_product.product_id
+                    )
+                    self.db.add(cat_product)
+                    await self.db.commit()
+
+    
+            embedding_controller = EmbeddingController(self.db)
+            await embedding_controller.embedding_product(db_product)
+
+            return db_product
+        except Exception as e:
+            await self.db.rollback()
+            raise e
 
     async def delete_existing_product(self, product_id, current_user):
         result = await self.db.execute(select(Product).filter(Product.product_id == product_id))

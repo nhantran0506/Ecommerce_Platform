@@ -13,6 +13,11 @@ from sqlalchemy.dialects.postgresql import UUID
 from models.Ratings import *
 from models.CategoryProduct import *
 import uuid
+import enum
+
+class CatTypes(enum.Enum):
+    SHIRT = "shirt"
+    
 
 
 class Category(Base):
