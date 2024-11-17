@@ -33,8 +33,8 @@ class EmbeddingController:
             base_url=OLLAMA_BASE_URL,
         )
         
-        
-        self._create_schema(collection_name)
+        self.collection_name = collection_name
+        self._create_schema(self.collection_name)
         
         self._vector_store = WeaviateVectorStore(
             weaviate_client=self.client,
@@ -54,20 +54,22 @@ class EmbeddingController:
         try:
             self.client.collections.get(self.collection_name)
         except:
-            self.client.collections.create(
-                name=collection_name,
-                vectorizer_config={"none": {"vectorizerModule": None}},
-                properties=[
-                    {
-                        "name": "content",
-                        "dataType": ["text"],
-                    },
-                    {
-                        "name": "topic",
-                        "dataType": ["text"],
-                    }
-                ]
-            )
+            schema = {
+            "class": collection_name, 
+            "properties": [
+                {
+                    "name": "content",
+                    "dataType": ["string"], 
+                },
+                {
+                    "name": "topic",
+                    "dataType": ["string"], 
+                }
+            ],
+            "vectorizer": "none" 
+            }
+
+            self.client.collections.create_from_dict(schema)
             if collection_name == "FAQ":
                 self.load_faq()
 

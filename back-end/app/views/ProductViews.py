@@ -5,7 +5,7 @@ from middlewares import token_config
 from serializers.ProductSerializers import *
 from controllers.ProductController import ProductController
 from controllers.EmbeddingController import EmbeddingController
-
+import uuid
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -20,10 +20,22 @@ async def get_products(product_controller: ProductController = Depends()):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-@router.get("/{product_id}")
-async def get_product(product_id: int, product_controller: ProductController = Depends()):
+# @router.get("/{product_id}")
+# async def get_product(product_id: uuid.UUID, product_controller: ProductController = Depends()):
+#     try:
+#         return await product_controller.get_single_product(product_id=product_id)   
+#     except Exception as e:
+#         logger.error(str(e))
+#         return JSONResponse(
+#             content={"Message": "Unexpected error"},
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#         )
+
+
+@router.post("/{product_id}")
+async def get_product(product_id: uuid.UUID, product_controller: ProductController = Depends(), current_user = Depends(token_config.get_current_user)):
     try:
-        return await product_controller.get_single_product(product_id=product_id)   # Need to add interest score on view, add cart, buy for product
+        return await product_controller.get_single_product(product_id=product_id, current_user=current_user)   
     except Exception as e:
         logger.error(str(e))
         return JSONResponse(
