@@ -67,7 +67,7 @@ def delete_product(product_id: int, current_user = Depends(token_config.get_curr
 
 
 
-@router.post("/search_products")
+@router.get("/search_products")
 async def product_search(user_query : str, embedding_controller : EmbeddingController = Depends()):
     try:
         return await embedding_controller.search_product(user_query)

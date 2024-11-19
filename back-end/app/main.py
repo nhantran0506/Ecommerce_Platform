@@ -29,26 +29,26 @@ async def create_tables():
         await conn.run_sync(Base.metadata.create_all)
 
 
-# async def startup_event():
-#     await create_tables()
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+async def startup_event():
     await create_tables()
-    yield
-    for route in app.routes:
-        if hasattr(route, "dependencies"):
-            for dep in route.dependencies:
-                if hasattr(dep, "client"):
-                    dep.client.close()
+
+
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     await create_tables()
+#     yield
+#     for route in app.routes:
+#         if hasattr(route, "dependencies"):
+#             for dep in route.dependencies:
+#                 if hasattr(dep, "client"):
+#                     dep.client.close()
 
 
 user_tasks = UserTasks()
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
-# app.add_event_handler("startup", startup_event)
+app.add_event_handler("startup", startup_event)
 
 routing.configure_middleware(app=app)
 routing.routing_config(

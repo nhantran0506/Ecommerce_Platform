@@ -80,7 +80,6 @@ class ProductController:
                     self.db.add(cat_product)
                     await self.db.commit()
 
-    
             embedding_controller = EmbeddingController(self.db)
             await embedding_controller.embedding_product(db_product)
 

@@ -34,11 +34,12 @@ class RecommendedController:
         try:
             self.client = weaviate.connect_to_local(
                 host=WEAVIATE_URL,
+                port=8080
             )
 
             self.embed_model = OllamaEmbedding(
                 model_name=OLLAMA_EMBEDDING_MODEL,
-                base_url=OLLAMA_BASE_URL,
+                # base_url=OLLAMA_BASE_URL,
             )
 
             self._create_schema(collection_name=self.collection_name)
@@ -47,7 +48,7 @@ class RecommendedController:
                 weaviate_client=self.client,
                 index_name=self.collection_name,
                 text_key="content",
-                metadata_keys=["topic"],
+                metadata_keys=["topic", "product_id"],
             )
             self._storage_context = StorageContext.from_defaults(
                 vector_store=self._vector_store
@@ -60,31 +61,33 @@ class RecommendedController:
             if hasattr(self, 'client'):
                 self.client.close()
 
-    def _create_schema(self, collection_name):
+    def _create_schema(self):
+        if not self.client.is_connected():
+            self.client.connect()
         try:
-            self.client.collections.get(self.collection_name)
-        except:
-            self.client.collections.create(
-                name=collection_name,
-                vectorizer_config={"none": {"vectorizerModule": None}},
-                properties=[
-                    {
-                        "name": "content",
-                        "dataType": ["text"],
-                    },
-                    {
-                        "name": "topic",
-                        "dataType": ["text"],
-                    },
-                ],
+            self.client.schema.get(self.collection_name)
+        except weaviate.exceptions.SchemaValidationException:
+            self.client.collections.create_from_dict(
+                {
+                    "class": self.collection_name,
+                    "vectorizer": None,
+                    "properties": [
+                        {"name": "content", "dataType": ["text"]},
+                        {"name": "topic", "dataType": ["text"]},
+                        {"name": "product_id", "dataType": ["text"]},
+                    ],
+                }
             )
+        
+
     
     def __del__(self):
-        if hasattr(self, 'client'):
+        if hasattr(self, "client"):
             self.client.close()
 
     async def get_recommed(self, current_user: User):
         try:
+            self.client.connect()
             query_user_interest = (
                 select(UserInterest)
                 .where(UserInterest.user_id == current_user.user_id)
@@ -138,11 +141,10 @@ class RecommendedController:
                 limit=10,
                 return_metadata=wq.MetadataQuery(score=True),
             )
-
+            
             product_ids = []
             for product in vector_result.objects or []:
-                print(product)
-                product_id = product.node.metadata.get("product_id", None)
+                product_id = product.properties.get("product_id", None)
                 if product_id is None:
                     continue
 
@@ -150,8 +152,12 @@ class RecommendedController:
 
             product_get_query = select(Product).where(Product.product_id in product_ids)
             results = await self.db.execute(product_get_query)
-            results = [ProductResponse.model_validate(pro) for pro in results.scalars()]
-            return JSONResponse(content=results, status_code=status.HTTP_200_OK)
+            products = []
+            for pro in results.scalars():
+                products.append({"product_id": str(pro.product_id), "product_name" : pro.product_name, "product_price" : pro.price})
+           
+            return JSONResponse(content=products, status_code=status.HTTP_200_OK)
+
         except Exception as e:
             await self.db.rollback()
             logger.error(str(e))
