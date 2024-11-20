@@ -82,7 +82,6 @@ class ChatBotController:
             session_id = query_payload.session_id
             model_name = query_payload.model
 
-            print(query_payload)
             intent = self.intent_detection(query)
             llm_response = ""
             if intent == "query":
@@ -132,7 +131,6 @@ class ChatBotController:
             )
         except Exception as e:
             await self.db.rollback()
-            print(e)
             return JSONResponse(
                 content={"Error": "Error with the server."},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -23,11 +23,12 @@ from config import (
 )
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 
 class RecommendedController:
-    collection_name = "Recommended"
+    collection_name = "Recommend"
 
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
@@ -39,10 +40,12 @@ class RecommendedController:
 
             self.embed_model = OllamaEmbedding(
                 model_name=OLLAMA_EMBEDDING_MODEL,
-                # base_url=OLLAMA_BASE_URL,
+                base_url=OLLAMA_BASE_URL,
+                request_timeout=500.0, 
+                show_progress=True,
             )
 
-            self._create_schema(collection_name=self.collection_name)
+            self._ensure_schema()
 
             self._vector_store = WeaviateVectorStore(
                 weaviate_client=self.client,
@@ -65,7 +68,7 @@ class RecommendedController:
         if not self.client.is_connected():
             self.client.connect()
         try:
-            self.client.schema.get(self.collection_name)
+            self.client.collections.get(self.collection_name)
         except weaviate.exceptions.SchemaValidationException:
             self.client.collections.create_from_dict(
                 {
@@ -80,10 +83,11 @@ class RecommendedController:
             )
         
 
-    
+
     def __del__(self):
-        if hasattr(self, "client"):
+        if hasattr(self, 'client') and self.client is not None:
             self.client.close()
+
 
     async def get_recommed(self, current_user: User):
         try:
@@ -150,10 +154,10 @@ class RecommendedController:
 
                 product_ids.append(product_id)
 
-            product_get_query = select(Product).where(Product.product_id in product_ids)
-            results = await self.db.execute(product_get_query)
+            product_get_query = select(Product).where(Product.product_id.in_(product_ids))
+            product_results = await self.db.execute(product_get_query)
             products = []
-            for pro in results.scalars():
+            for pro in product_results.scalars():
                 products.append({"product_id": str(pro.product_id), "product_name" : pro.product_name, "product_price" : pro.price})
            
             return JSONResponse(content=products, status_code=status.HTTP_200_OK)

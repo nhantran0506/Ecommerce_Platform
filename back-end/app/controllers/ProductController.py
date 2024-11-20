@@ -11,6 +11,12 @@ from models.Category import Category
 from datetime import datetime
 from models.CategoryProduct import CategoryProduct
 from controllers.EmbeddingController import EmbeddingController
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+
 class ProductController:
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
@@ -79,9 +85,13 @@ class ProductController:
                     )
                     self.db.add(cat_product)
                     await self.db.commit()
+           
 
             embedding_controller = EmbeddingController(self.db)
-            await embedding_controller.embedding_product(db_product)
+            embedding_result = await embedding_controller.embedding_product(db_product)
+            if not embedding_result:
+                logger.error(f"Embedding fail product {db_product.product_id}")
+            
 
             return db_product
         except Exception as e:

@@ -22,53 +22,64 @@ from db_connector import get_db
 from serializers.ProductSerializers import ProductResponse
 from fastapi import status
 from fastapi.responses import JSONResponse
+import weaviate.classes.query as wq
 from loguru import logger
 
 
 class EmbeddingController:
+    faq_collection_name = "FAQ"
+    recommend_collection_name = "Recommend"
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
-        self.client = weaviate.connect_to_local(
-            host=WEAVIATE_URL,
-        )
+        try:
+            self.client = weaviate.connect_to_local(
+                host=WEAVIATE_URL,
+            )
 
-        self.embed_model = OllamaEmbedding(
-            model_name=OLLAMA_EMBEDDING_MODEL,
-        )
+            self.embed_model = OllamaEmbedding(
+                model_name=OLLAMA_EMBEDDING_MODEL,
+                base_url=OLLAMA_BASE_URL,
+                request_timeout=500.0, 
+                show_progress=True,
+            )
 
-        # Initialize two collections: FAQ and Recommend
-        self.faq_collection_name = "FAQ"
-        self.recommend_collection_name = "Recommend"
 
-        self._create_schema(self.faq_collection_name, is_faq=True)
-        self._create_schema(self.recommend_collection_name, is_faq=False)
+            self._create_schema(self.faq_collection_name, is_faq=True)
+            self._create_schema(self.recommend_collection_name, is_faq=False)
 
-        # Initialize vector stores for FAQ and Recommend
-        self.faq_vector_store = WeaviateVectorStore(
-            weaviate_client=self.client,
-            index_name=self.faq_collection_name,
-            text_key="content",
-            metadata_keys=["topic"],
-        )
+            
+            self.faq_vector_store = WeaviateVectorStore(
+                weaviate_client=self.client,
+                index_name=self.faq_collection_name,
+                text_key="content",
+                metadata_keys=["topic"],
+            )
 
-        self.recommend_vector_store = WeaviateVectorStore(
-            weaviate_client=self.client,
-            index_name=self.recommend_collection_name,
-            text_key="content",
-            metadata_keys=["topic", "product_id"],
-        )
+            self.recommend_vector_store = WeaviateVectorStore(
+                weaviate_client=self.client,
+                index_name=self.recommend_collection_name,
+                text_key="content",
+                metadata_keys=["topic", "product_id"],
+            )
 
-        self.faq_storage_context = StorageContext.from_defaults(
-            vector_store=self.faq_vector_store
-        )
-        self.recommend_storage_context = StorageContext.from_defaults(
-            vector_store=self.recommend_vector_store
-        )
+            self.faq_storage_context = StorageContext.from_defaults(
+                vector_store=self.faq_vector_store
+            )
+            self.recommend_storage_context = StorageContext.from_defaults(
+                vector_store=self.recommend_vector_store
+            )
 
-        self.faq_index = VectorStoreIndex.from_vector_store(
-            self.faq_vector_store,
-            embed_model=self.embed_model,
-        ).as_retriever()
+            self.faq_index = VectorStoreIndex.from_vector_store(
+                self.faq_vector_store,
+                embed_model=self.embed_model,
+            ).as_retriever()
+
+            self.recommend_index = VectorStoreIndex.from_vector_store(
+                self.recommend_vector_store,
+                embed_model=self.embed_model,
+            ).as_retriever()
+        except Exception as e:
+            logger.error(str(e))
 
     def _create_schema(self, collection_name, is_faq: bool = False):
         try:
@@ -125,32 +136,45 @@ class EmbeddingController:
 
     async def embedding_product(self, product: Product):
         try:
+            
             all_cat_names_query = select(CategoryProduct).where(
                 CategoryProduct.product_id == product.product_id
             )
             results = await self.db.execute(all_cat_names_query)
-            results = results.scalars()
+            results = results.scalars().all()  
 
+            
             cat_names = ""
             for cat in results:
-                cat_names_query = select(Category).where(Category.cat_id == cat.cat_id)
-                cat = await self.db.execute(cat_names_query)
-                cat_names += cat.scalar_one_or_none().cat_name
+                cat = await self.db.execute(
+                    select(Category).where(Category.cat_id == cat.cat_id)
+                )
+                cat_data = cat.scalar_one_or_none()
+                if cat_data:
+                    cat_names += cat_data.cat_name
 
+            
             product_text = f"{product.product_name * 3} {cat_names * 2}"
 
+         
             document = Document(
                 text=product_text,
                 metadata={"topic": "product", "product_id": str(product.product_id)},
             )
 
+            
             _index = VectorStoreIndex.from_documents(
                 [document],
                 storage_context=self.recommend_storage_context,
                 embed_model=self.embed_model,
+                show_progress=True,
             )
 
-            return bool(_index)
+           
+            if hasattr(_index, 'close'):
+                _index.close()
+
+            return True
 
         except Exception as e:
             logger.error(f"Error embedding product: {str(e)}")
@@ -158,21 +182,24 @@ class EmbeddingController:
 
     async def search_product(self, user_query: str):
         try:
-            recommend_index = VectorStoreIndex.from_vector_store(
-                self.recommend_vector_store,
-                embed_model=self.embed_model,
-            ).as_retriever()
-
-            results = recommend_index.retrieve(user_query)
-            if not results:
+            query_embedding = self.embed_model.get_text_embedding(user_query)
+            
+            collection = self.client.collections.get(self.recommend_collection_name)
+            vector_result = collection.query.near_vector(
+                near_vector=query_embedding,
+                limit=10,
+                # return_metadata=wq.MetadataQuery(score=True),
+            )
+            
+            if not vector_result.objects:
                 return JSONResponse(
                     content={"Message": "No products found"},
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
 
             product_ids = []
-            for product in results:
-                product_id = product.node.metadata.get("product_id", None)
+            for obj in vector_result.objects:
+                product_id = obj.properties.get("product_id")
                 if product_id:
                     product_ids.append(product_id)
 
@@ -187,12 +214,13 @@ class EmbeddingController:
             )
             results = await self.db.execute(product_get_query)
 
-           
-
             products = []
-            for pro in results.scalars():
-                products.append({"product_id": str(pro.product_id), "product_name" : pro.product_name, "product_price" : pro.price})
-           
+            for pro in results.scalars().all():
+                products.append({
+                    "product_id": str(pro.product_id), 
+                    "product_name": pro.product_name, 
+                    "product_price": pro.price
+                })
 
             return JSONResponse(content=products, status_code=status.HTTP_200_OK)
 
@@ -238,6 +266,11 @@ class EmbeddingController:
         except Exception as e:
             logger.error(f"Error clearing collection: {e}")
 
-    def __del__(self):
-        if hasattr(self, "client"):
+    async def __aenter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if hasattr(self, 'embed_model'):
+            del self.embed_model
+        if hasattr(self, 'client'):
             self.client.close()
