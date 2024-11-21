@@ -23,7 +23,10 @@ from serializers.ProductSerializers import ProductResponse
 from fastapi import status
 from fastapi.responses import JSONResponse
 import weaviate.classes.query as wq
-from loguru import logger
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class EmbeddingController:
@@ -34,6 +37,7 @@ class EmbeddingController:
         try:
             self.client = weaviate.connect_to_local(
                 host=WEAVIATE_URL,
+                # skip_init_checks=True,
             )
 
             self.embed_model = OllamaEmbedding(
@@ -247,9 +251,8 @@ class EmbeddingController:
             self.faq_index = index
 
     def query(self, query: str, top_k: int = 5, min_similarity: float = 0.5):
-        index = self.faq_index
 
-        results = index.retrieve(query)
+        results = self.faq_index.retrieve(query)
         responses = []
         for node in results[:top_k] or []:
             if node.score >= min_similarity:

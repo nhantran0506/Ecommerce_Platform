@@ -16,7 +16,9 @@ from sqlalchemy import func
 from serializers.AISerializer import QueryPayload
 from fastapi.responses import JSONResponse
 from fastapi import status
+import logging
 
+logger = logging.getLogger(__name__)
 
 class ChatBotController:
     embedding_engine = EmbeddingController()
@@ -24,6 +26,7 @@ class ChatBotController:
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.llm = Ollama("llama3.2", request_timeout=500)
         self.db = db
+        self.embedding_engine = EmbeddingController(self.db)
 
     async def add_user(self, user: User, model_name: str):
         try:
@@ -67,7 +70,10 @@ class ChatBotController:
             )
             await self.db.execute(insert_stmt)
             await self.db.commit()
+            
+            return session_id
         except Exception as e:
+            logger.error(e)
             await self.db.rollback()
             raise e
 
@@ -99,7 +105,7 @@ class ChatBotController:
                     context=context, user_query=query
                 )
 
-                await self.add_message(
+                session_id = await self.add_message(
                     role=MessageRole.USER, content=default_prompt, session_id=session_id, current_user=current_user, model_name=model_name
                 )
 
@@ -109,7 +115,7 @@ class ChatBotController:
                 chat_history = await self.get_history(session_id)
                 response = self.llm.chat(system_msg + chat_history)
 
-                await self.add_message(
+                session_id = await self.add_message(
                     role=MessageRole.ASSISTANT,
                     content=response.message.content,
                     session_id=session_id,
@@ -131,6 +137,7 @@ class ChatBotController:
             )
         except Exception as e:
             await self.db.rollback()
+            logger.error(e)
             return JSONResponse(
                 content={"Error": "Error with the server."},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

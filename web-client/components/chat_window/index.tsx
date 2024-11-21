@@ -33,9 +33,13 @@ export default function ChatWindow() {
         setMessages((prev) => [...prev, { sender: "You", content: input }]);
         
         const payload = {
+          model : "llama3.2",
           session_id: localStorage.getItem("sessionId"),
-          message: input,
+          query: input,
+          current_route: pathName,
         };
+
+        console.log(payload);
 
         const response = await fetch(`${API_BASE_URL}${API_ROUTES.CHAT_MESSAGE}`, {
           method: "POST",
