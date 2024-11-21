@@ -1,4 +1,4 @@
-from sqlalchemy import insert, select
+from sqlalchemy import select
 from models.MessageHistory import MessageHistory
 from llama_index.core.llms import ChatMessage
 from llama_index.llms.ollama import Ollama
@@ -16,6 +16,12 @@ from sqlalchemy import func
 from serializers.AISerializer import QueryPayload
 from fastapi.responses import JSONResponse
 from fastapi import status
+from sqlalchemy.dialects.postgresql import insert
+import logging
+from bs4 import BeautifulSoup
+import aiohttp
+
+logger = logging.getLogger(__name__)
 
 
 class ChatBotController:
@@ -24,11 +30,40 @@ class ChatBotController:
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.llm = Ollama("llama3.2", request_timeout=500)
         self.db = db
+        self.embedding_engine = EmbeddingController(self.db)
+
+    async def get_page_content(self, html_url: str) -> str:
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(html_url) as response:
+                    if response.status != 200:
+                        logger.error(
+                            f"Error: Failed to fetch the page. Status code: {response.status}"
+                        )
+                        return ""
+
+                    html_content = await response.text()
+            soup = BeautifulSoup(html_content, "html.parser")
+
+            for element in soup(["script", "style"]):
+                element.decompose()
+
+            text = soup.get_text()
+
+            lines = (line.strip() for line in text.splitlines())
+            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+            clean_text = "\n".join(chunk for chunk in chunks if chunk)
+
+            return clean_text
+        except Exception as e:
+            return f"Error: {str(e)}"
 
     async def add_user(self, user: User, model_name: str):
         try:
-            insert_stmt = insert(ChatHistory).values(
-                user_id=user.user_id, model_name=model_name
+            insert_stmt = (
+                insert(ChatHistory)
+                .values(user_id=user.user_id, model_name=model_name)
+                .on_conflict_do_nothing()
             )
             result = await self.db.execute(insert_stmt)
             await self.db.commit()
@@ -60,14 +95,17 @@ class ChatBotController:
         model_name: str,
     ) -> MessageHistory:
         try:
-            if not session_id:
-                session_id = await self.add_user(current_user, model_name)
+
+            session_id = await self.add_user(current_user, model_name)
             insert_stmt = insert(MessageHistory).values(
                 role=role, content=content, session_id=session_id
             )
             await self.db.execute(insert_stmt)
             await self.db.commit()
+
+            return session_id
         except Exception as e:
+            logger.error(e)
             await self.db.rollback()
             raise e
 
@@ -92,15 +130,23 @@ class ChatBotController:
                     customer_name=f"{current_user.first_name} {current_user.last_name}",
                     customer_phone=current_user.phone_number,
                     customer_address=current_user.address,
-                    customer_email = current_user.email,
+                    customer_email=current_user.email,
                 )
 
                 default_prompt = PromptTemplate(DEFAULT_PROMPT).format(
-                    context=context, user_query=query
+                    context=context,
+                    user_query=query,
+                    current_page_content=await self.get_page_content(
+                        query_payload.current_route
+                    ),
                 )
 
-                await self.add_message(
-                    role=MessageRole.USER, content=default_prompt, session_id=session_id, current_user=current_user, model_name=model_name
+                session_id = await self.add_message(
+                    role=MessageRole.USER,
+                    content=default_prompt,
+                    session_id=session_id,
+                    current_user=current_user,
+                    model_name=model_name,
                 )
 
                 system_msg = [
@@ -109,12 +155,12 @@ class ChatBotController:
                 chat_history = await self.get_history(session_id)
                 response = self.llm.chat(system_msg + chat_history)
 
-                await self.add_message(
+                session_id = await self.add_message(
                     role=MessageRole.ASSISTANT,
                     content=response.message.content,
                     session_id=session_id,
                     current_user=current_user,
-                    model_name=model_name
+                    model_name=model_name,
                 )
                 llm_response = response.message.content
             else:
@@ -131,6 +177,7 @@ class ChatBotController:
             )
         except Exception as e:
             await self.db.rollback()
+            logger.error(e)
             return JSONResponse(
                 content={"Error": "Error with the server."},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
