@@ -17,12 +17,21 @@ export default function ChatWindow() {
   const [isLoading, setIsLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
+  const [fullUrl, setFullUrl] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pathName = usePathname();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+   
+    if (typeof window !== "undefined") {
+      const currentUrl = `${window.location.origin}${window.location.pathname}`;
+      setFullUrl(currentUrl);
+    }
+  }, []);
 
   const handleSendMessage = useCallback(async () => {
     if (input.trim() && !isLoading) {
@@ -34,12 +43,11 @@ export default function ChatWindow() {
         
         const payload = {
           model : "llama3.2",
-          session_id: localStorage.getItem("sessionId"),
+          session_id: localStorage.getItem("sessionId" || ""),
           query: input,
-          current_route: pathName,
+          current_route: fullUrl,
         };
 
-        console.log(payload);
 
         const response = await fetch(`${API_BASE_URL}${API_ROUTES.CHAT_MESSAGE}`, {
           method: "POST",
@@ -60,10 +68,14 @@ export default function ChatWindow() {
           localStorage.setItem("sessionId", data.session_id);
         }
 
-        if (data.message) {
+        if (data.purpose == "search"){
+           // Kelly where mine search ultis ?
+        }
+
+        if (data.response && data.purpose != "search") {
           setMessages((prev) => [
             ...prev,
-            { sender: "Chatbot", content: data.message },
+            { sender: "Chatbot", content: data.response },
           ]);
         }
 
