@@ -45,7 +45,7 @@ class RecommendedController:
                 show_progress=True,
             )
 
-            self._ensure_schema()
+            self._create_schema()
 
             self._vector_store = WeaviateVectorStore(
                 weaviate_client=self.client,

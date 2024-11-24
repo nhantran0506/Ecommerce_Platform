@@ -5,7 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from fastapi import FastAPI, HTTPException, Depends
 from db_connector import engine, Base
 from middlewares.routing_config import RouteConfig
-from authlib.integrations.starlette_client import OAuth
+from authlib.integrations.starlette_client import OAuth, OAuthError
 import views
 import views.AIViews
 import views.AdminViews
@@ -19,7 +19,12 @@ import uvicorn
 from tasks.UserTasks import UserTasks
 from config import DATABASE_PASS, DATABASE_NAME, PORT
 from contextlib import asynccontextmanager
-
+from starlette.middleware.sessions import SessionMiddleware
+from config import (
+    SERECT_KEY,
+    GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET,
+)
 
 routing = RouteConfig()
 
@@ -44,11 +49,14 @@ async def startup_event():
 #                     dep.client.close()
 
 
+
+
 user_tasks = UserTasks()
 
 app = FastAPI()
 
 app.add_event_handler("startup", startup_event)
+
 
 routing.configure_middleware(app=app)
 routing.routing_config(

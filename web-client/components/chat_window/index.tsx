@@ -43,7 +43,7 @@ export default function ChatWindow() {
         
         const payload = {
           model : "llama3.2",
-          session_id: localStorage.getItem("sessionId" || ""),
+          session_id: "",//localStorage.getItem("sessionId" || ""),
           query: input,
           current_route: fullUrl,
         };

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, Request, Depends
+from fastapi import APIRouter, status, Request, Depends, HTTPException
 from controllers.UserController import UserController
 from fastapi.responses import JSONResponse
 from models.Users import User
@@ -16,6 +16,7 @@ from config import (
     FACEBOOK_CLIENT_ID,
     FACEBOOK_REDIRECT_URI,
 )
+from middlewares import routing_config
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -32,23 +33,59 @@ async def login(user: UserLogin, user_controller : UserController = Depends()):
         )
 
 
+import uuid
 # google login
-@router.post("/get_google_login")
-async def get_google_login():
-    return {
-        "url": f"https://accounts.google.com/o/oauth2/auth?response_type=code&client_id={GOOGLE_CLIENT_ID}&redirect_uri={GOOGLE_REDIRECT_URI}&scope=openid%20profile%20email&access_type=offline"
-    }
+@router.get("/get_google_login")
+async def get_google_login(request: Request):
+    try:
+        state = str(uuid.uuid4())
+        request.session['oauth_state'] = state
+
+        # Redirect URI for Google OAuth callback
+        redirect_uri = request.url_for('login_google')
+        print("dmm", redirect_uri)
+
+        # Generate the redirect URL to Google OAuth with state parameter
+        redirect_response = await routing_config.RouteConfig.oauth.google.authorize_redirect(
+            request, 
+            redirect_uri,
+            # state=state  
+        )
+        google_redirect_url = str(redirect_response.headers["location"])
+
+        return JSONResponse(content={"url": google_redirect_url})
+    except Exception as e:
+        logger.error("Error in /get_google_login: %s", str(e), exc_info=True)
+        raise HTTPException(status_code=500, detail="Error generating Google login URL")
+
+
+    
 
 @router.get("/login_google")
-async def login_google(code: str, user_controller: UserController = Depends()):
+async def login_google(request: Request, user_controller: UserController = Depends()):
     try:
-        return await user_controller.login_google(code)
+        state_from_session = request.session.get('oauth_state')
+        state_from_request = request.query_params.get('state')
+
+
+        logger.info(f"Session state: {state_from_session}, Request state: {state_from_request}")
+
+        if not state_from_session or state_from_session != state_from_request:
+            raise HTTPException(status_code=400, detail="Invalid state parameter")
+        
+        request.session.pop('oauth_state', None)
+        
+        token = await routing_config.RouteConfig.oauth.google.authorize_access_token(request)
+        user_informations = token.get('userinfo')
+        return await user_controller.login_google(user_informations)
     except Exception as e:
-        logger.error(str(e))
+        logger.error(f"Error in /login_google: {str(e)}", exc_info=True)
         return JSONResponse(
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
 
 
 # fb login

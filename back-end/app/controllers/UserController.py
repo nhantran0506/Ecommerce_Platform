@@ -12,19 +12,22 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from middlewares.oauth_config import verify_google_oauth_token, verify_fb_oauth_token
 from config import GOOGLE_CLIENT_ID
+from fastapi.responses import HTMLResponse
+import json
+import logging
 
-
+logger = logging.getLogger(__name__)
 class UserController:
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
     
-    async def login_google(self, code: str):
+    async def login_google(self, google_user):
         try:
-            google_user = await verify_google_oauth_token(code)
+            # google_user = await verify_google_oauth_token(code)
             email = google_user['email']
             first_name = google_user.get('given_name')
             last_name = google_user.get('family_name')
-            google_user_id = google_user['id']
+            google_user_id = google_user['sub']
             auth_query = select(Authentication).where(Authentication.user_name == email, Authentication.provider == 'google')
             result = await self.db.execute(auth_query)
             auth = result.scalar_one_or_none()
@@ -51,11 +54,39 @@ class UserController:
             else:
                 user_id = auth.user_id
             access_token = create_access_token(data={"user_name": email})
-            return {"token": access_token, "type": "bearer"}
+            
+            html_content = f"""
+            <html>
+            <body>
+                <script>
+                    try {{
+                        // Send the token back to the parent window
+                        window.opener.postMessage({{
+                            type: 'google-auth-success',
+                            data: '{json.dumps(access_token)}'
+                        }}, '*');
+                        // Close the popup
+                        window.close();
+                    }} catch (error) {{
+                        console.error('Error:', error);
+                        window.opener.postMessage({{
+                            type: 'google-auth-error',
+                            error: error.message
+                        }}, '*');
+                    }}
+                </script>
+            </body>
+            </html>
+            """
 
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid token")
+            return HTMLResponse(content=html_content, media_type="text/html")
+           
+          
+
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
         except Exception as e:
+            logger.error(f"Google login error: {str(e)}")
             raise HTTPException(status_code=500, detail=str(e))
     
     

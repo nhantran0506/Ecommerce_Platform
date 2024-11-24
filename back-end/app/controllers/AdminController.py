@@ -25,11 +25,11 @@ class AdminController:
         self.db = db
 
     async def get_number_user(self, current_user: User):
-        if current_user.role != UserRoles.ADMIN:
-            return JSONResponse(
-                content={"Message": "Invalid credentials."},
-                status_code=status.HTTP_401_UNAUTHORIZED,
-            )
+        # if current_user.role != UserRoles.ADMIN:
+        #     return JSONResponse(
+        #         content={"Message": "Invalid credentials."},
+        #         status_code=status.HTTP_401_UNAUTHORIZED,
+        #     )
 
         try:
             query = select(User).where(User.deleted_date != None)
@@ -49,11 +49,11 @@ class AdminController:
             )
 
     async def get_number_shops(self, current_user: User):
-        if current_user.role != UserRoles.ADMIN:
-            return JSONResponse(
-                content={"Message": "Invalid credentials."},
-                status_code=status.HTTP_401_UNAUTHORIZED,
-            )
+        # if current_user.role != UserRoles.ADMIN:
+        #     return JSONResponse(
+        #         content={"Message": "Invalid credentials."},
+        #         status_code=status.HTTP_401_UNAUTHORIZED,
+        #     )
 
         try:
             query = select(Shop)
@@ -73,11 +73,11 @@ class AdminController:
             )
 
     async def get_current_revenue(self, current_user: User):
-        if current_user.role != UserRoles.ADMIN:
-            return JSONResponse(
-                content={"Message": "Invalid credentials."},
-                status_code=status.HTTP_401_UNAUTHORIZED,
-            )
+        # if current_user.role != UserRoles.ADMIN:
+        #     return JSONResponse(
+        #         content={"Message": "Invalid credentials."},
+        #         status_code=status.HTTP_401_UNAUTHORIZED,
+        #     )
 
         try:
             timestamp_str = datetime.now().strftime("%Y-%m")
@@ -129,11 +129,11 @@ class AdminController:
             )
 
     async def create_admin(self, admin_data: AdminCreate, current_user: User):
-        if current_user.role != UserRoles.ADMIN:
-            return JSONResponse(
-                content={"Message": "Invalid credentials."},
-                status_code=status.HTTP_401_UNAUTHORIZED,
-            )
+        # if current_user.role != UserRoles.ADMIN:
+        #     return JSONResponse(
+        #         content={"Message": "Invalid credentials."},
+        #         status_code=status.HTTP_401_UNAUTHORIZED,
+        #     )
 
         try:
             query = (
@@ -173,11 +173,11 @@ class AdminController:
             )
 
     async def statistics_income(self, admin_data: AdminGetData, current_user: User):
-        if current_user.role != UserRoles.ADMIN:
-            return JSONResponse(
-                content={"Message": "Invalid credentials."},
-                status_code=status.HTTP_401_UNAUTHORIZED,
-            )
+        # if current_user.role != UserRoles.ADMIN:
+        #     return JSONResponse(
+        #         content={"Message": "Invalid credentials."},
+        #         status_code=status.HTTP_401_UNAUTHORIZED,
+        #     )
 
         timestamp_dt = admin_data.timestamp
         year = timestamp_dt.year
@@ -262,11 +262,11 @@ class AdminController:
             )
 
     async def statistics_category(self, admin_data: AdminGetData, current_user: User):
-        if current_user.role != UserRoles.ADMIN:
-            return JSONResponse(
-                content={"Message": "Invalid credentials."},
-                status_code=status.HTTP_401_UNAUTHORIZED,
-            )
+        # if current_user.role != UserRoles.ADMIN:
+        #     return JSONResponse(
+        #         content={"Message": "Invalid credentials."},
+        #         status_code=status.HTTP_401_UNAUTHORIZED,
+        #     )
 
         timestamp_dt = admin_data.timestamp
         year = timestamp_dt.year
@@ -392,11 +392,11 @@ class AdminController:
     async def statistics_number_orders(
         self, admin_data: AdminCreate, current_user: User
     ):
-        if current_user.role != UserRoles.ADMIN:
-            return JSONResponse(
-                content={"Message": "Invalid credentials."},
-                status_code=status.HTTP_401_UNAUTHORIZED,
-            )
+        # if current_user.role != UserRoles.ADMIN:
+        #     return JSONResponse(
+        #         content={"Message": "Invalid credentials."},
+        #         status_code=status.HTTP_401_UNAUTHORIZED,
+        #     )
 
         timestamp_dt = admin_data.timestamp
         year = timestamp_dt.year

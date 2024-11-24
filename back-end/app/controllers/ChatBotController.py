@@ -43,12 +43,17 @@ class ChatBotController:
                         return ""
 
                     html_content = await response.text()
-            soup = BeautifulSoup(html_content, "html.parser")
 
-            for element in soup(["script", "style"]):
+            soup = BeautifulSoup(html_content, "html.parser")
+            body = soup.body
+            if not body:
+                logger.error("Error: No <body> tag found in the HTML.")
+                return ""
+
+            for element in body(["script", "style"]):
                 element.decompose()
 
-            text = soup.get_text()
+            text = body.get_text()
 
             lines = (line.strip() for line in text.splitlines())
             chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
@@ -56,6 +61,7 @@ class ChatBotController:
 
             return clean_text
         except Exception as e:
+            logger.error(f"Error: {str(e)}")
             return f"Error: {str(e)}"
 
     async def add_user(self, user: User, model_name: str):
@@ -116,6 +122,7 @@ class ChatBotController:
 
     async def answer(self, query_payload: QueryPayload, current_user: User):
         try:
+            print(query_payload)
             query = query_payload.query
             session_id = query_payload.session_id
             model_name = query_payload.model

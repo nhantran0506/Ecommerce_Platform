@@ -11,7 +11,19 @@ from config import (
 )
 
 
+
+
 class RouteConfig:
+    oauth = OAuth()
+    oauth.register(
+        name='google',
+        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+        client_id=GOOGLE_CLIENT_ID,
+        client_secret=GOOGLE_CLIENT_SECRET,
+        client_kwargs={
+            'scope': 'email openid profile',  
+        }
+    )
     def __init__(self, port: str = PORT_FE, address: str = ADDRESS_FE) -> None:
         self.port = port
         self.address = address
@@ -29,7 +41,11 @@ class RouteConfig:
         app.add_middleware(
             SessionMiddleware,
             secret_key = SERECT_KEY,
+            same_site="lax",
+            https_only=False,
         )
+        
+        
 
 
     def routing_config(self, app: FastAPI, list_routing: list[APIRouter]) -> None:
