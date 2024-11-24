@@ -60,15 +60,15 @@ class UserController:
             <body>
                 <script>
                     try {{
-                        // Send the token back to the parent window
+                        console.log("Attempting to send token to parent...");
                         window.opener.postMessage({{
                             type: 'google-auth-success',
-                            data: '{json.dumps(access_token)}'
-                        }}, '*');
-                        // Close the popup
+                            token: '{access_token}'
+                        }}, 'http://localhost:3000'); 
+                        console.log("Token sent successfully. Closing popup...");
                         window.close();
                     }} catch (error) {{
-                        console.error('Error:', error);
+                        console.error("Error in sending token:", error);
                         window.opener.postMessage({{
                             type: 'google-auth-error',
                             error: error.message
@@ -78,6 +78,7 @@ class UserController:
             </body>
             </html>
             """
+
 
             return HTMLResponse(content=html_content, media_type="text/html")
            

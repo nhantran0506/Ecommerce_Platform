@@ -32,7 +32,7 @@ class RouteConfig:
     def configure_middleware(self, app: FastAPI) -> None:
         app.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"], #allow_origins=[f"http://{self.address}:{self.port}/"],
+            allow_origins=["http://localhost:3000"], #allow_origins=[f"http://{self.address}:{self.port}/"],
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],

@@ -9,12 +9,11 @@ export function useGoogleAuth() {
 
   const handleGoogleLogin = useCallback(async () => {
     try {
-      console.log('Starting Google login process...'); // Debug log
-      
+      // Fetch Google login URL from the back-end
       const response = await fetch(`${API_BASE_URL}${API_ROUTES.GET_GOOGLE_LOGIN}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
+        credentials: 'include', // Include cookies
       });
 
       if (!response.ok) {
@@ -22,57 +21,63 @@ export function useGoogleAuth() {
       }
 
       const data = await response.json();
-      console.log('Received Google login URL:', data.url); // Debug log
-      
+
+      // Open a popup window for Google login
       const width = 500;
       const height = 600;
       const left = window.screenX + (window.outerWidth - width) / 2;
       const top = window.screenY + (window.outerHeight - height) / 2;
-      
-      console.log('Opening popup...'); // Debug log
+
       const popup = window.open(
         data.url,
-        'Google Login',
-        `width=${width},height=${height},left=${left},top=${top}`
+        'GoogleAuth',
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
       );
 
       if (!popup) {
         throw new Error('Popup blocked');
       }
 
-      console.log('Popup opened, setting up message listener...'); // Debug log
-
+      // Listen for messages from the popup
       return new Promise((resolve, reject) => {
         const handleMessage = (event: MessageEvent) => {
-          console.log('Received message event:', event); // Debug log
-          console.log('Message data:', event.data); // Debug log
+          // Log the event for debugging purposes
+          console.log('Received message:', event);
 
-          const { type, data, error } = event.data || {};
-          console.log('Parsed message:', { type, data, error }); // Debug log
+          // Validate the event origin for security
+          if (event.origin !== API_BASE_URL) {
+            console.warn('Ignoring message from unknown origin:', event.origin);
+            return;
+          }
 
-          if (type === 'google-auth-success' && data) {
-            console.log('Login successful, storing token...'); // Debug log
+          // Handle success or error messages
+          if (event.data && event.data.type === 'google-auth-success') {
+            try {
+              const token = event.data.token;
+              if (token) {
+                window.removeEventListener('message', handleMessage);
+                localStorage.setItem('token', token); // Save the token
+                resolve(token);
+                router.push('/'); // Redirect on success
+              }
+            } catch (error) {
+              console.error('Failed to handle token:', error);
+              reject(error);
+            }
+          } else if (event.data && event.data.type === 'google-auth-error') {
             window.removeEventListener('message', handleMessage);
-            localStorage.setItem('token', data);
-            console.log('Token stored, redirecting...'); // Debug log
-            resolve(data);
-            router.push('/');
-          } else if (type === 'google-auth-error') {
-            console.log('Login error received:', error); // Debug log
-            window.removeEventListener('message', handleMessage);
-            reject(new Error(error || 'Unknown error'));
+            reject(new Error(event.data.error || 'Authentication failed'));
           }
         };
 
-        console.log('Adding message event listener...'); // Debug log
+        // Attach the event listener
         window.addEventListener('message', handleMessage);
 
-        // Add timeout
+        // Cleanup on timeout
         setTimeout(() => {
-          console.log('Login timeout reached'); // Debug log
           window.removeEventListener('message', handleMessage);
           reject(new Error('Login timeout'));
-        }, 300000);
+        }, 300000); // 5 minutes timeout
       });
 
     } catch (error) {

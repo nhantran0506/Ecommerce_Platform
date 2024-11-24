@@ -19,7 +19,6 @@ export default function LoginPage() {
   const [error, set_error] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { handleGoogleLogin } = useGoogleAuth();
 
   const handle_change = (e: React.ChangeEvent<HTMLInputElement>) => {
