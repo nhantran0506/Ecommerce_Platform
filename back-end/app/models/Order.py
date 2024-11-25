@@ -12,4 +12,4 @@ class Order(Base):
     user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     created_at : Mapped[UUID] = mapped_column(DateTime, nullable=False, default=datetime.now)
 
-    order_items : Mapped["OrderItem"] = relationship("OrderItem", back_populates="order")
+    order_items : Mapped["OrderItem"] = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")

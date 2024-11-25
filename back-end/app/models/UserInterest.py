@@ -1,11 +1,4 @@
-from sqlalchemy import (
-    Boolean,
-    String,
-    Column,
-    DateTime,
-    Enum,
-    Integer
-)
+from sqlalchemy import Boolean, String, Column, DateTime, Enum, Integer
 from sqlalchemy.orm import relationship
 import enum
 from db_connector import Base
@@ -16,6 +9,7 @@ from models.Cart import *
 from models.Products import *
 import uuid
 from datetime import datetime
+
 
 class InterestScore(enum.Enum):
     VIEW = 1
@@ -32,10 +26,10 @@ class UserInterest(Base):
     product_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("products.product_id"), primary_key=True
     )
-    score : Mapped[int] =  mapped_column(Integer, default=0, nullable=False)
-    updated_at: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now(), nullable=False)
+    score: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    updated_at: Mapped[DateTime] = mapped_column(
+        DateTime, default=datetime.now(), nullable=False
+    )
 
     user: Mapped["User"] = relationship("User", back_populates="user_interest")
-    product: Mapped["Product"] = relationship(
-        "Product", back_populates="interest"
-    )
+    product: Mapped["Product"] = relationship("Product", back_populates="interest")

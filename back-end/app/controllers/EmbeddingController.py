@@ -20,9 +20,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
 from db_connector import get_db
 from serializers.ProductSerializers import ProductResponse
+from llama_index.core.indices.vector_store.retrievers import VectorIndexRetriever
 from fastapi import status
 from fastapi.responses import JSONResponse
 import weaviate.classes.query as wq
+from llama_index.core.vector_stores import MetadataFilters, ExactMatchFilter
 import logging
 
 
@@ -183,6 +185,37 @@ class EmbeddingController:
         except Exception as e:
             logger.error(f"Error embedding product: {str(e)}")
             return False
+    
+    async def delete_product(self, product: Product):
+        try:
+            filters = MetadataFilters(
+                filters=[ExactMatchFilter(key="product_id", value=str(product.product_id))]
+            )
+
+            _index = VectorStoreIndex.from_vector_store(
+                self.recommend_vector_store,
+                embed_model=self.embed_model,
+            ).as_retriever(
+                similarity_top_k=1,
+                vector_store_query_mode="default",
+                filters=filters
+            )
+
+            vector_result = _index.retrieve(" ")
+            if vector_result:
+                document_id = vector_result[0].node.id_
+                self.recommend_vector_store.delete(document_id)
+                return True
+            else:
+                await self.recommend_vector_store.async_add(vector_result[0].node)
+                logger.error("No document found with the specified product_id.")
+                return False
+
+        except Exception as e:
+            logger.error(f"Error removing product from vector store: {str(e)}")
+            return False
+
+            
 
     async def search_product(self, user_query: str):
         try:
@@ -268,6 +301,8 @@ class EmbeddingController:
             self._create_schema(collection_name, is_faq=is_faq)
         except Exception as e:
             logger.error(f"Error clearing collection: {e}")
+    
+    
 
     async def __aenter__(self):
         return self

@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from models.Products import Product
 from serializers.ProductSerializers import *
 from middlewares.token_config import *
-from sqlalchemy import func, delete, select
+from sqlalchemy import func, delete, select, update
 from sqlalchemy.dialects.postgresql import insert
 from models.UserInterest import UserInterest, InterestScore
 from models.Users import User
@@ -58,7 +58,69 @@ class ProductController:
             return result.scalar_one_or_none()
         except Exception as e:
             await self.db.rollback()
+    
+    async def update_product(self, product_update : ProductBase, current_user : User):
+        try:
+            # check user
+            get_shop = select(Shop).where(Shop.owner_id == current_user.user_id)
+            shop_result = await self.db.execute(get_shop)
+            shop_result = shop_result.scalar_one_or_none()
+
+            if not shop_result:
+                return JSONResponse(content="User don't have shop.", status_code=status.HTTP_404_NOT_FOUND)
             
+            for cat in product_update.category:
+                query_insert = update(Category).values(
+                    cat_name=cat
+                )
+                await self.db.execute(query_insert)
+                await self.db.commit()
+
+            db_product = Product(
+                product_name=product.product_name,
+                product_description=product.product_description,
+                price=product.price,
+            )
+            self.db.add(db_product)
+            await self.db.commit()
+            await self.db.refresh(db_product)
+
+          
+            for cat_name in product.category:
+                cat_query = select(Category).where(Category.cat_name == cat_name)
+                result = await self.db.execute(cat_query)
+                category = result.scalar_one_or_none()
+                
+                if category:
+                    
+                    cat_product = CategoryProduct(
+                        cat_id=category.cat_id,
+                        product_id=db_product.product_id
+                    )
+                    self.db.add(cat_product)
+                    await self.db.commit()
+            
+            product_shop_insert = insert(ShopProduct).values(
+                product_id = db_product.product_id,
+                shop_id = shop_result.shop_id,
+            )
+            await self.db.execute(product_shop_insert)
+            await self.db.commit()
+           
+
+            embedding_controller = EmbeddingController(self.db)
+            embedding_result = await embedding_controller.embedding_product(db_product)
+            if not embedding_result:
+                await self.db.rollback()
+                logger.error(f"Embedding fail product {db_product.product_id}")
+                return JSONResponse(content={"error" : "Can't save product"}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+
+            return db_product
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(str(e))
+            return JSONResponse(content={"error" : "Can't save product"}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     async def create_new_product(self, product: ProductCreate, current_user : User):
         try:
@@ -81,7 +143,6 @@ class ProductController:
                 product_name=product.product_name,
                 product_description=product.product_description,
                 price=product.price,
-                create_at_datetime=product.create_at_datetime
             )
             self.db.add(db_product)
             await self.db.commit()
@@ -166,21 +227,30 @@ class ProductController:
             )
             await self.db.execute(delete_shop_product)
 
-         
+        
+            try:
+                embedding_controller = EmbeddingController(self.db)
+                embedding_result = await embedding_controller.delete_product(product)
+                if not embedding_result:
+                    await self.db.rollback()
+                    return JSONResponse(
+                        content={"message": f"Error deleting product: {str(e)}"},
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+            except Exception as e:
+                logger.warning(f"Error removing product from vector store: {str(e)}")
+                
+            
             await self.db.delete(product)
             await self.db.commit()
 
-        
-            # try:
-            #     embedding_controller = EmbeddingController(self.db)
-            #     embedding_result = await embedding_controller.embedding_product(db_product)
-            # except Exception as e:
-            #     logger.warning(f"Error removing product from vector store: {str(e)}")
 
             return JSONResponse(
                 content={"message": "Product deleted successfully"},
                 status_code=status.HTTP_200_OK
             )
+            
+            
 
         except Exception as e:
             logger.error(f"Error deleting product: {str(e)}")
@@ -189,3 +259,4 @@ class ProductController:
                 content={"message": f"Error deleting product: {str(e)}"},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+            

@@ -15,18 +15,21 @@ from models.CategoryProduct import *
 import uuid
 import enum
 
+
 class CatTypes(enum.Enum):
     SHIRT = "shirt"
-    
 
 
 class Category(Base):
     __tablename__ = "categories"
 
-    cat_id : Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    cat_name : Mapped[String] = mapped_column(String, nullable= False, default="", unique=True)
+    cat_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    cat_name: Mapped[String] = mapped_column(
+        String, nullable=False, default="", unique=True
+    )
 
-    cat_products : Mapped["CategoryProduct"] = relationship("CategoryProduct", back_populates="category")
-    
-
-    
+    cat_products: Mapped["CategoryProduct"] = relationship(
+        "CategoryProduct", back_populates="category", cascade="all, delete-orphan"
+    )

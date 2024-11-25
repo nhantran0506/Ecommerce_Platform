@@ -6,8 +6,7 @@ import uuid
 class ProductBase(BaseModel):
     product_name: str
     product_description: str
-    create_at_datetime: Optional[datetime] = Field(default_factory=datetime.now)
-    price: int
+    price: float
     category : list[str]
 
 
@@ -33,6 +32,13 @@ class ProductResponse(BaseModel):
 class ProductDelete(BaseModel):
     product_id : uuid.UUID
 
+    class ConfigDict:
+        orm_mode = True 
+        from_attributes=True
+
+class ProductUpdateSerializer(ProductBase):
+    product_id : uuid.UUID
+    
     class ConfigDict:
         orm_mode = True 
         from_attributes=True
