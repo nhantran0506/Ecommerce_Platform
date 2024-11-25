@@ -18,3 +18,4 @@ class Shop(Base):
 
     owner: Mapped["User"] = relationship("User", back_populates="shops")
     ratings: Mapped["ShopRating"] = relationship("ShopRating", back_populates="shop")
+    shop_products : Mapped["ShopProduct"] = relationship("ShopProduct", back_populates="shop")

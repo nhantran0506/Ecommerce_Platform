@@ -30,3 +30,4 @@ class Product(Base):
     interest: Mapped["UserInterest"] = relationship(
         "UserInterest", back_populates="product"
     )
+    shop_products : Mapped["ShopProduct"] = relationship("ShopProduct",back_populates="product" )

@@ -1,15 +1,17 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from fastapi.responses import JSONResponse
 from models.Products import Product
 from serializers.ProductSerializers import *
 from middlewares.token_config import *
-from sqlalchemy import func, select
+from sqlalchemy import func, delete, select
 from sqlalchemy.dialects.postgresql import insert
 from models.UserInterest import UserInterest, InterestScore
 from models.Users import User
 from models.Category import Category
+from models.Shop import Shop
 from datetime import datetime
 from models.CategoryProduct import CategoryProduct
+from models.ShopProduct import ShopProduct
 from controllers.EmbeddingController import EmbeddingController
 import logging
 
@@ -22,8 +24,14 @@ class ProductController:
         self.db = db
 
     async def get_all_products(self):
-        result = await self.db.execute(select(Product))
-        return result.scalars().all()
+        try:
+            get_product_query = select(Product)
+            result = await self.db.execute(get_product_query)
+            results = result.scalars().all()
+            return JSONResponse(content=results, status_code=status.HTTP_200_OK)
+        except Exception as e:
+            await self.db.rollback()
+            return JSONResponse(content={"error" : "Internal error"}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     async def get_single_product(self, product_id, current_user : User):
         try:
@@ -52,8 +60,16 @@ class ProductController:
             await self.db.rollback()
             
     
-    async def create_new_product(self, product: ProductCreate, current_user):
+    async def create_new_product(self, product: ProductCreate, current_user : User):
         try:
+            # check user
+            get_shop = select(Shop).where(Shop.owner_id == current_user.user_id)
+            shop_result = await self.db.execute(get_shop)
+            shop_result = shop_result.scalar_one_or_none()
+
+            if not shop_result:
+                return JSONResponse(content="User don't have shop.", status_code=status.HTTP_404_NOT_FOUND)
+            
             for cat in product.category:
                 query_insert = insert(Category).values(
                     cat_name=cat
@@ -85,23 +101,91 @@ class ProductController:
                     )
                     self.db.add(cat_product)
                     await self.db.commit()
+            
+            product_shop_insert = insert(ShopProduct).values(
+                product_id = db_product.product_id,
+                shop_id = shop_result.shop_id,
+            )
+            await self.db.execute(product_shop_insert)
+            await self.db.commit()
            
 
             embedding_controller = EmbeddingController(self.db)
             embedding_result = await embedding_controller.embedding_product(db_product)
             if not embedding_result:
+                await self.db.rollback()
                 logger.error(f"Embedding fail product {db_product.product_id}")
+                return JSONResponse(content={"error" : "Can't save product"}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
 
             return db_product
         except Exception as e:
             await self.db.rollback()
-            raise e
+            logger.error(str(e))
+            return JSONResponse(content={"error" : "Can't save product"}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    async def delete_existing_product(self, product_id, current_user):
-        result = await self.db.execute(select(Product).filter(Product.product_id == product_id))
-        db_product = result.scalar_one_or_none()
-        if db_product:
-            await self.db.delete(db_product)
+    async def delete_product(self, product_id: uuid.UUID, current_user: User):
+        try:
+            get_shop = select(Shop).where(Shop.owner_id == current_user.user_id)
+            shop_result = await self.db.execute(get_shop)
+            shop = shop_result.scalar_one_or_none()
+
+            if not shop:
+                return JSONResponse(
+                    content={"message": "User doesn't have a shop"}, 
+                    status_code=status.HTTP_404_NOT_FOUND
+                )
+
+
+            product_query = (
+                select(Product)
+                .join(ShopProduct, Product.product_id == ShopProduct.product_id)
+                .where(
+                    Product.product_id == product_id,
+                    ShopProduct.shop_id == shop.shop_id
+                )
+            )
+            result = await self.db.execute(product_query)
+            product = result.scalar_one_or_none()
+
+            if not product:
+                return JSONResponse(
+                    content={"message": "Product not found or doesn't belong to your shop"},
+                    status_code=status.HTTP_404_NOT_FOUND
+                )
+
+            
+            delete_cat_product = delete(CategoryProduct).where(
+                CategoryProduct.product_id == product_id
+            )
+            await self.db.execute(delete_cat_product)
+
+          
+            delete_shop_product = delete(ShopProduct).where(
+                ShopProduct.product_id == product_id
+            )
+            await self.db.execute(delete_shop_product)
+
+         
+            await self.db.delete(product)
             await self.db.commit()
-        return db_product
+
+        
+            # try:
+            #     embedding_controller = EmbeddingController(self.db)
+            #     embedding_result = await embedding_controller.embedding_product(db_product)
+            # except Exception as e:
+            #     logger.warning(f"Error removing product from vector store: {str(e)}")
+
+            return JSONResponse(
+                content={"message": "Product deleted successfully"},
+                status_code=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            logger.error(f"Error deleting product: {str(e)}")
+            await self.db.rollback()
+            return JSONResponse(
+                content={"message": f"Error deleting product: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

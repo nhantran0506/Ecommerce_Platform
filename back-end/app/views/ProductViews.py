@@ -20,16 +20,16 @@ async def get_products(product_controller: ProductController = Depends()):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-# @router.get("/{product_id}")
-# async def get_product(product_id: uuid.UUID, product_controller: ProductController = Depends()):
-#     try:
-#         return await product_controller.get_single_product(product_id=product_id)   
-#     except Exception as e:
-#         logger.error(str(e))
-#         return JSONResponse(
-#             content={"Message": "Unexpected error"},
-#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#         )
+@router.get("/{product_id}")
+async def get_product(product_id: uuid.UUID, product_controller: ProductController = Depends()):
+    try:
+        return await product_controller.get_single_product(product_id=product_id)   
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 @router.post("/{product_id}")
@@ -43,7 +43,7 @@ async def get_product(product_id: uuid.UUID, product_controller: ProductControll
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/create", status_code=status.HTTP_201_CREATED)
 async def create_product(product: ProductCreate, current_user = Depends(token_config.get_current_user), product_controller: ProductController = Depends()):
     try:
         return await product_controller.create_new_product(product=product, current_user=current_user)
@@ -54,10 +54,10 @@ async def create_product(product: ProductCreate, current_user = Depends(token_co
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-@router.delete("/")
-def delete_product(product_id: int, current_user = Depends(token_config.get_current_user), product_controller : ProductController = Depends()):
+@router.delete("/remove_product")
+async def delete_product(product_id : uuid.UUID, current_user = Depends(token_config.get_current_user), product_controller : ProductController = Depends()):
     try:
-        return product_controller.delete_existing_product(product_id=product_id, current_user=current_user)
+        return await product_controller.delete_product(product_id=product_id, current_user=current_user)
     except Exception as e:
         logger.error(str(e))
         return JSONResponse(
