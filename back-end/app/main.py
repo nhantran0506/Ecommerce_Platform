@@ -20,6 +20,9 @@ from tasks.UserTasks import UserTasks
 from config import DATABASE_PASS, DATABASE_NAME, PORT
 from contextlib import asynccontextmanager
 from starlette.middleware.sessions import SessionMiddleware
+from models.Category import Category, CatTypes
+from sqlalchemy import func, select, insert
+from db_connector import get_db
 from config import (
     SERECT_KEY,
     GOOGLE_CLIENT_ID,
@@ -28,10 +31,24 @@ from config import (
 
 routing = RouteConfig()
 
+async def insert_default_enum_values(session: AsyncSession):
+    async with session.begin():
+        for cat_type in CatTypes:
+            result = await session.execute(
+                select(Category).filter(Category.cat_name == cat_type)
+            )
+            if not result.scalar_one_or_none():
+                category = Category(cat_name=cat_type)
+                session.add(category)
+        await session.commit()
 
 async def create_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    
+    async for session in get_db():
+        await insert_default_enum_values(session)
 
 
 async def startup_event():

@@ -25,12 +25,12 @@ async def get_products(product_controller: ProductController = Depends()):
 
 @router.post("/create")
 async def create_product(
-    product: ProductCreate,
+    product: ProductBase,
     current_user=Depends(token_config.get_current_user),
     product_controller: ProductController = Depends(),
 ):
     try:
-        return await product_controller.create_new_product(
+        return await product_controller.create_product(
             product=product, current_user=current_user
         )
     except Exception as e:

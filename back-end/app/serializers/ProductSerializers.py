@@ -2,20 +2,31 @@ from pydantic import BaseModel, Field,field_validator
 from datetime import datetime
 from typing import Optional
 import uuid
+from models.Category import CatTypes
 
 class ProductBase(BaseModel):
     product_name: str
     product_description: str
     price: float
-    category : list[str]
+    category: list[str]
 
+    @field_validator('category')
+    @classmethod
+    def validate_categories(cls, categories: list[str]) -> list[str]:
+        valid_categories = {cat.value for cat in CatTypes}
+        invalid_categories = [cat for cat in categories if cat not in valid_categories]
+        
+        if invalid_categories:
+            raise ValueError(
+                f"Invalid categories: {invalid_categories}. "
+                f"Valid categories are: {list(valid_categories)}"
+            )
+        return categories
 
     class ConfigDict:
         arbitrary_types_allowed = True
         from_attributes = True
 
-class ProductCreate(ProductBase):
-    pass
 
 
 class ProductResponse(BaseModel):

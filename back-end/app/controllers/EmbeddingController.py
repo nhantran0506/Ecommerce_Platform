@@ -157,7 +157,7 @@ class EmbeddingController:
                 )
                 cat_data = cat.scalar_one_or_none()
                 if cat_data:
-                    cat_names += cat_data.cat_name
+                    cat_names += cat_data.cat_name.value
 
             
             product_text = f"{product.product_name * 3} {cat_names * 2}"

@@ -17,7 +17,7 @@ import enum
 
 
 class CatTypes(enum.Enum):
-    SHIRT = "shirt"
+    SHIRT = "SHIRT"
 
 
 class Category(Base):
@@ -26,8 +26,9 @@ class Category(Base):
     cat_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    cat_name: Mapped[String] = mapped_column(
-        String, nullable=False, default="", unique=True
+    cat_name: Mapped[str] = mapped_column(
+        Enum(CatTypes, create_type=True, name="cattypes", values_callable=lambda obj: [e.value for e in obj]),
+        nullable=False
     )
 
     cat_products: Mapped["CategoryProduct"] = relationship(
