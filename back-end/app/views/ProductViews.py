@@ -87,7 +87,7 @@ async def product_search(
 @router.post("/product_update")
 async def product_update(
     product_name: str = Form(...),
-    product_id: uuid.UUID = Form(...),
+    product_id: str = Form(...),
     product_description: str = Form(...),
     price: float = Form(...),
     category: list[str] = Form(...),
@@ -97,7 +97,7 @@ async def product_update(
 ):
     try:
         product = ProductUpdateSerializer(
-            product_id=product_id,
+            product_id=uuid.UUID(product_id),
             product_name=product_name,
             product_description=product_description,
             price=price,
