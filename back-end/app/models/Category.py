@@ -28,7 +28,7 @@ class Category(Base):
     )
     cat_name: Mapped[str] = mapped_column(
         Enum(CatTypes, create_type=True, name="cattypes", values_callable=lambda obj: [e.value for e in obj]),
-        nullable=False
+        nullable=False, unique=True
     )
 
     cat_products: Mapped["CategoryProduct"] = relationship(

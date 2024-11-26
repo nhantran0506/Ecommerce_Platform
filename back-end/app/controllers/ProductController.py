@@ -25,13 +25,28 @@ class ProductController:
 
     async def get_all_products(self):
         try:
-            get_product_query = select(Product)
+            get_product_query = select(Product).limit(256).order_by(Product.create_at_datetime.desc())
             result = await self.db.execute(get_product_query)
             results = result.scalars().all()
-            return JSONResponse(content=results, status_code=status.HTTP_200_OK)
+            
+            if not results:
+                return JSONResponse(content=[], status_code=status.HTTP_200_OK)
+            
+            response = []
+            for pro in results:
+                response.append({
+                     "product_id" : str(pro.product_id),
+                     "product_name" : pro.product_name,
+                     "product_price" : pro.price,
+                }
+                   
+                )
+            
+            return JSONResponse(content=response, status_code=status.HTTP_200_OK)
         except Exception as e:
+            logger.error(str(e))
             await self.db.rollback()
-            return JSONResponse(content={"error" : "Internal error"}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return JSONResponse(content={"error" : "Internal server"}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     async def get_single_product(self, product_id, current_user : User):
         try:

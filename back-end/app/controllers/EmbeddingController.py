@@ -219,24 +219,18 @@ class EmbeddingController:
 
     async def search_product(self, user_query: str):
         try:
-            query_embedding = self.embed_model.get_text_embedding(user_query)
+            vector_result = self.recommend_index.retrieve(user_query)
             
-            collection = self.client.collections.get(self.recommend_collection_name)
-            vector_result = collection.query.near_vector(
-                near_vector=query_embedding,
-                limit=10,
-                # return_metadata=wq.MetadataQuery(score=True),
-            )
-            
-            if not vector_result.objects:
+            if not vector_result:
                 return JSONResponse(
                     content={"Message": "No products found"},
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
 
             product_ids = []
-            for obj in vector_result.objects:
-                product_id = obj.properties.get("product_id")
+            for obj in vector_result:
+                product_id = obj.node.metadata.get("product_id")
+                print(product_id)
                 if product_id:
                     product_ids.append(product_id)
 
