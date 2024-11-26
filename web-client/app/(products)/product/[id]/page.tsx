@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { productlist } from "../../products/data";
 import DefaultImage from "@/components/product_card/default_image";
 import {
   Calendar,
@@ -20,6 +19,7 @@ import {
 } from "@/interface/UI/IProductUI";
 import { Button } from "@nextui-org/react";
 import { IProductData } from "@/interface/Data/IProductData";
+import { productlist } from "@/data/data";
 
 const ProductDetailPage = ({ params }: { params: { id: string } }) => {
   const maxNumberOfProduct = 10;

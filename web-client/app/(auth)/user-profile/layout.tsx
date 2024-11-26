@@ -31,8 +31,8 @@ export default function UserProfileLayout({
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex mx-40 my-20 ">
-      <nav className="mr-auto">
+    <section className="flex mx-40 my-20">
+      <nav className="mr-auto h-1/2">
         <MenuSideBar listTabs={listMenuSideBar} parentEndPoint="user-profile" />
       </nav>
 

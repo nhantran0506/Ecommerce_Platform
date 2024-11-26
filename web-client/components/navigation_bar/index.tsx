@@ -16,12 +16,15 @@ import {
   DropdownMenu,
   DropdownItem,
   DropdownSection,
+  Image,
 } from "@nextui-org/react";
 import { LogOut, ShoppingCart, User } from "react-feather";
 import { usePathname, useRouter } from "next/navigation";
 import { IDropDownOption, IHomePageOption } from "../../interface/UI/INavBar";
 import { MenuEnum } from "./enum";
 import { Moon, Sun } from "lucide-react";
+import vietNamImg from "@/assets/vietnam.png";
+import usImg from "@/assets/united-states-of-america.png";
 
 const hideNavigationPaths = ["/admin"];
 
@@ -143,7 +146,16 @@ export default function NavigationBar() {
             onClick={() => handleSwitchLanguages()}
           >
             {/* change flat image */}
-            {isVietNamese ? <Moon /> : <Sun />}
+            {isVietNamese ? (
+              <Image
+                src={vietNamImg.src}
+                alt="vietnam-img"
+                width={30}
+                radius="none"
+              />
+            ) : (
+              <Image src={usImg.src} alt="us-img" width={35} radius="none" />
+            )}
           </Button>
         </NavbarItem>
 
