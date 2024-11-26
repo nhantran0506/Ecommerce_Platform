@@ -230,7 +230,6 @@ class EmbeddingController:
             product_ids = []
             for obj in vector_result:
                 product_id = obj.node.metadata.get("product_id")
-                print(product_id)
                 if product_id:
                     product_ids.append(product_id)
 

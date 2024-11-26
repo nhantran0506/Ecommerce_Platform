@@ -3,12 +3,14 @@ from datetime import datetime
 from typing import Optional
 import uuid
 from models.Category import CatTypes
+from fastapi import UploadFile
 
 class ProductBase(BaseModel):
     product_name: str
     product_description: str
     price: float
     category: list[str]
+    
 
     @field_validator('category')
     @classmethod

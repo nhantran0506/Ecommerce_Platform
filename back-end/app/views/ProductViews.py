@@ -1,10 +1,11 @@
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, status, Depends, File, Form, UploadFile
 from fastapi.responses import JSONResponse
 import logging
 from middlewares import token_config
 from serializers.ProductSerializers import *
 from controllers.ProductController import ProductController
 from controllers.EmbeddingController import EmbeddingController
+from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
 logger = logging.getLogger(__name__)
@@ -25,13 +26,23 @@ async def get_products(product_controller: ProductController = Depends()):
 
 @router.post("/create")
 async def create_product(
-    product: ProductBase,
+    product_name: str = Form(...),
+    product_description: str = Form(...),
+    price: float = Form(...),
+    category: list[str] = Form(...),
+    images: list[UploadFile] = File(...),
     current_user=Depends(token_config.get_current_user),
     product_controller: ProductController = Depends(),
 ):
     try:
+        product = ProductBase(
+            product_name=product_name,
+            product_description=product_description,
+            price=price,
+            category=category,
+        )
         return await product_controller.create_product(
-            product=product, current_user=current_user
+            product=product, image_list=images, current_user=current_user
         )
     except Exception as e:
         logger.error(str(e))
@@ -73,12 +84,27 @@ async def product_search(
         )
 
 
-@router.route("/product_update")
-async def product_update(product_update : ProductUpdateSerializer, product_controller: ProductController = Depends(),
-    current_user=Depends(token_config.get_current_user)):
+@router.post("/product_update")
+async def product_update(
+    product_name: str = Form(...),
+    product_id: uuid.UUID = Form(...),
+    product_description: str = Form(...),
+    price: float = Form(...),
+    category: list[str] = Form(...),
+    images: list[UploadFile] = File(...),
+    product_controller: ProductController = Depends(),
+    current_user=Depends(token_config.get_current_user),
+):
     try:
+        product = ProductUpdateSerializer(
+            product_id=product_id,
+            product_name=product_name,
+            product_description=product_description,
+            price=price,
+            category=category,
+        )
         return await product_controller.update_product(
-            product=product_update, current_user=current_user
+            product=product, image_list=images, current_user=current_user
         )
     except Exception as e:
         logger.error(str(e))
@@ -86,7 +112,7 @@ async def product_update(product_update : ProductUpdateSerializer, product_contr
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-    
+
 
 @router.delete("/{product_id}")
 async def product_delete(
@@ -104,4 +130,3 @@ async def product_delete(
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-

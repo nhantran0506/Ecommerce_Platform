@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship, mapped_column, Mapped
 from db_connector import Base
 from models.CartProduct import CartProduct
 from models.OrderItem import *
-
+from models.ImageProduct import ImageProduct
 
 class Product(Base):
     __tablename__ = "products"
@@ -14,7 +14,6 @@ class Product(Base):
         UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4
     )
     product_name: Mapped[String] = mapped_column(String)
-
     product_description: Mapped[String] = mapped_column(String)
     create_at_datetime: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     price: Mapped[Float] = mapped_column(Float)
@@ -36,4 +35,8 @@ class Product(Base):
     )
     shop_products: Mapped["ShopProduct"] = relationship(
         "ShopProduct", back_populates="product", cascade="all, delete-orphan"
+    )
+    
+    image_product : Mapped["ImageProduct"] =  relationship(
+        "ImageProduct", back_populates="product", cascade="all, delete-orphan"
     )
