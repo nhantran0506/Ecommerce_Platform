@@ -48,7 +48,16 @@ class ProductController:
 
             async def get_product_with_image(pro, image_results):
                 product_images = image_results.scalars().all()
-
+                
+                cat_names = []
+                query_get_cat = await self.db.execute(select(CategoryProduct).where(CategoryProduct.product_id == pro.product_id))
+                for cat in query_get_cat.scalars().all():
+                    cat_name = await self.db.execute(select(Category).where(Category.cat_id == cat.cat_id))
+                    cat_name = cat_name.scalar_one_or_none()
+                    if not cat_name:
+                        continue
+                    cat_names.append(cat_name.cat_name.value)
+                
                 image_urls = []
                 if product_images:
 
@@ -69,6 +78,8 @@ class ProductController:
                     "product_id": str(pro.product_id),
                     "product_name": pro.product_name,
                     "product_price": pro.price,
+                    "product_category" : cat_names,
+                    "product_description" : pro.product_description,
                     "image_urls": image_urls,
                 }
 
@@ -100,6 +111,13 @@ class ProductController:
 
             if not product:
                 raise ValueError(f"Product with id {product_id} does not exist.")
+
+            cat = await self.db.execute(select(CategoryProduct).where(CategoryProduct.product_id == product.product_id))
+            cat = cat.scalar_one_or_none()
+            
+            cat_name = await self.db.execute(select(Category).where(Category.cat_id == cat.cat_id))
+            cat_names = cat_name.scalars().all()
+            cat_names = [cat.cat_name.value for cat in cat_names]
 
             # Record user interest
             interest_query = (
@@ -143,6 +161,7 @@ class ProductController:
                 "product_id": str(product.product_id),
                 "product_name": product.product_name,
                 "product_description": product.product_description,
+                "product_category" : cat_names,
                 "price": product.price,
                 "image_urls": image_urls
             }

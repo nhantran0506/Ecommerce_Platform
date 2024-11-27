@@ -32,7 +32,7 @@ OLLAMA_EMBEDDING_MODEL = str(os.getenv('OLLAMA_EMBEDDING_MODEL'))
 OLLAMA_BASE_URL = str(os.getenv('OLLAMA_BASE_URL'))
 WEAVIATE_URL = str(os.getenv('WEAVIATE_URL'))
 
-CDN_BASE_URL = str(os.getenv('CDN_SERVER_URL'))
+CDN_BASE_URL = str(os.getenv('CDN_BASE_URL'))
 CDN_UPLOAD_URL = str(os.getenv('CDN_UPLOAD_URL'))
 CDN_GET_URL = str(os.getenv('CDN_GET_URL'))
 CDN_DELETE_URL = str(os.getenv('CDN_DELETE_URL'))
