@@ -29,9 +29,10 @@ export default function ForgotPasswordPage() {
         throw new Error("Failed to send reset password email");
       }
 
+      localStorage.setItem("userEmail", email);
       setSuccess(true);
       setTimeout(() => {
-        router.push("/login");
+        router.push("/validate-code");
       }, 3000);
     } catch (error) {
       setError("Failed to send reset password email. Please try again.");
@@ -49,7 +50,7 @@ export default function ForgotPasswordPage() {
         {error && <p className="text-center text-red-500 text-sm">{error}</p>}
         {success && (
           <p className="text-center text-green-500 text-sm">
-            Password reset email sent. Redirecting to login page...
+            Check your email for the verification code.
           </p>
         )}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

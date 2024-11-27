@@ -5,6 +5,8 @@ export const API_ROUTES = {
   SIGNUP: '/users/signup',
   CHANGE_PASSWORD : '/users/change_password',
   FORGOT_PASSWORD: '/users/forgot_password',
+  PASSWORD_CODE_VALIDATE:'/users/validate_temp_code',
+  CHANGE_PASSWORD_WITH_CODE : '/users/change_password_with_code',
   SHOPS_NUMBER : '/admin/get_number_shops',
   REVENUE_CURRENT : '/admin/get_current_revenue',
   USERS_NUMBER : '/admin/get_number_user',

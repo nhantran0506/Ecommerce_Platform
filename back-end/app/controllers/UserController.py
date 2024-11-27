@@ -334,27 +334,32 @@ class UserController:
             )
 
     async def validate_temp_code(self, user_data: UserValidateCode):
-        query = select(Authentication).where(Authentication.user_name == user_data.email)
-        result = await self.db.execute(query)
-        auth = result.scalar_one_or_none()
+        try:
+            query = select(Authentication).where(Authentication.user_name == user_data.email)
+            result = await self.db.execute(query)
+            auth = result.scalar_one_or_none()
 
-        if auth is None or auth.temp_code != user_data.temp_code:
+            if auth is None or auth.temp_code != user_data.temp_code:
+                return JSONResponse(
+                    content={"Message": "Invalid or expired temporary code."},
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Check if the code is expired
+            if datetime.now() > auth.temp_code_expiration:
+                return JSONResponse(
+                    content={"Message": "Temporary code has expired."},
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
             return JSONResponse(
-                content={"Message": "Invalid or expired temporary code."},
-                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"Message": "Temporary code validated successfully."},
+                status_code=status.HTTP_200_OK,
             )
-
-        # Check if the code is expired
-        if datetime.now() > auth.temp_code_expiration:
-            return JSONResponse(
-                content={"Message": "Temporary code has expired."},
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
-        return JSONResponse(
-            content={"Message": "Temporary code validated successfully."},
-            status_code=status.HTTP_200_OK,
-        )
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(str(e))
+            return JSONResponse(content={"error:" : "INTERNAL_SERVER_ERROR"}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     async def change_password_with_code(self, update_password: UserChangeNewPasswordSerializer, temp_code: str, user_email : str):
         try:

@@ -9,8 +9,8 @@ class UserForgotPassword(BaseModel):
 
 
 class UserValidateCode(BaseModel):
-    email: str
-    temp_code: str
+    email: str = Field(..., alias="email")
+    temp_code: str = Field(..., alias="temp_code")
 
 
 class UserGetSerializer(BaseModel):
