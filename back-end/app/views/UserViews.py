@@ -182,7 +182,21 @@ async def forgot_password(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-
+@router.post("/validate_temp_code")
+async def validate_temp_code(
+    user_data: UserValidateCode, 
+    user_controller: UserController = Depends()
+):
+    try:
+        return await user_controller.validate_temp_code(user_data)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+    
+    
 @router.get("/{user_id}")
 async def get_user(user_id: str, user_controller: UserController = Depends()):
     try:
@@ -193,3 +207,20 @@ async def get_user(user_id: str, user_controller: UserController = Depends()):
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+@router.post("/change_password_with_code")
+async def change_password_with_code(
+    user_update_password: UserChangeNewPasswordSerializer, 
+    temp_code: str, 
+    user_email : str,
+    user_controller: UserController = Depends(), 
+):
+    try:
+        return await user_controller.change_password_with_code(user_update_password, temp_code, user_email = user_email)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+

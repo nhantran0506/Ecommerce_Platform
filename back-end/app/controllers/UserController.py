@@ -5,12 +5,13 @@ from middlewares.token_config import *
 from fastapi.responses import JSONResponse
 from fastapi import status, Header, HTTPException ,Depends
 from helper_collections import UTILS, EMAIL_TEMPLATE
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from middlewares.oauth_config import verify_fb_oauth_token
 from middlewares.token_config import authenticate_user
 from passlib.context import CryptContext
 import logging
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -261,48 +262,32 @@ class UserController:
             )
 
     async def forgot_password(self, user_data: UserForgotPassword):
-        # try:
-        query = select(User).where(User.email == user_data.email)
+        query = select(Authentication).where(Authentication.user_name == user_data.email)
         result = await self.db.execute(query)
-        user = result.scalar_one_or_none()
+        auth = result.scalar_one_or_none()
 
-        if user is None:
+        if auth is None:
             return JSONResponse(
                 content={"Message": "Unable to find any user."},
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
-        new_password = await UTILS.random_password()
-
-        email_body = EMAIL_TEMPLATE.FORGOT_PASSWORD_EMAIL_TEMPLATE.format(
-            user_name=f"{user.first_name} {user.last_name}", new_password=new_password
-        )
-
-        new_hash_password = await Authentication.hash_password(new_password)
-        user_auth_update_query = (
-            update(Authentication)
-            .where(Authentication.user_id == user.user_id)
-            .values(user_name=user.email, hash_pwd=new_hash_password)
-        )
-        await self.db.execute(user_auth_update_query)
+        # Generate a 6-digit temporary code
+        temp_code = str(random.randint(100000, 999999))
+        
+        # Store the temp_code and its expiration time in the authentication record
+        auth.temp_code = temp_code
+        auth.temp_code_expiration = datetime.now() + timedelta(minutes=5)
         await self.db.commit()
 
-        email_send_check = await UTILS.send_email(
-            recipient_email=user.email, subject="[RESET PASSWORD]", body=email_body
-        )
-        if email_send_check:
-            return JSONResponse(
-                content={"Message": "Email have been sent successfully!"},
-                status_code=status.HTTP_200_OK,
-            )
+        # Send the temporary code via email
+        email_body = f"Your temporary code is: {temp_code}. It will expire in 5 minutes."
+        await UTILS.send_email(user_data.email, "Password Reset Code", email_body)
 
         return JSONResponse(
-            content={"Message": "Email have not been sent!."},
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"Message": "Temporary code sent to your email."},
+            status_code=status.HTTP_200_OK,
         )
-        # except Exception as e:
-        #     await self.db.rollback()
-        #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     async def delete_user(self, current_user: User):
         update_stmt = (
@@ -318,26 +303,94 @@ class UserController:
         )
 
     async def update_user(self, user_update: UserUpdate, current_user: User):
-        if not current_user:
+        try:
+            if not current_user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
+                )
+
+            update_values = {}
+            for field, value in user_update.model_dump(exclude_unset=True).items():
+                if value is not None:
+                    update_values[field] = value
+
+            if update_values:
+                update_stmt = (
+                    update(User)
+                    .where(User.user_id == current_user.user_id)
+                    .values(**update_values)
+                )
+                await self.db.execute(update_stmt)
+                await self.db.commit()
+
+            return JSONResponse(
+                content={"Message": "User updated successfully."},
+                status_code=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            await self.db.rollback()
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
             )
 
-        update_values = {}
-        for field, value in user_update.model_dump(exclude_unset=True).items():
-            if value is not None:
-                update_values[field] = value
+    async def validate_temp_code(self, user_data: UserValidateCode):
+        query = select(Authentication).where(Authentication.user_name == user_data.email)
+        result = await self.db.execute(query)
+        auth = result.scalar_one_or_none()
 
-        if update_values:
-            update_stmt = (
-                update(User)
-                .where(User.user_id == current_user.user_id)
-                .values(**update_values)
+        if auth is None or auth.temp_code != user_data.temp_code:
+            return JSONResponse(
+                content={"Message": "Invalid or expired temporary code."},
+                status_code=status.HTTP_400_BAD_REQUEST,
             )
-            await self.db.execute(update_stmt)
-            await self.db.commit()
+
+        # Check if the code is expired
+        if datetime.now() > auth.temp_code_expiration:
+            return JSONResponse(
+                content={"Message": "Temporary code has expired."},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
 
         return JSONResponse(
-            content={"Message": "User updated successfully."},
+            content={"Message": "Temporary code validated successfully."},
             status_code=status.HTTP_200_OK,
         )
+
+    async def change_password_with_code(self, update_password: UserChangeNewPasswordSerializer, temp_code: str, user_email : str):
+        try:
+            query = select(Authentication).where(Authentication.user_name == user_email)
+            result = await self.db.execute(query)
+            auth = result.scalar_one_or_none()
+
+            if auth is None or auth.temp_code != temp_code:
+                return JSONResponse(
+                    content={"Message": "Invalid or expired temporary code."},
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+           
+            if datetime.now() > auth.temp_code_expiration:
+                return JSONResponse(
+                    content={"Message": "Temporary code has expired."},
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+           
+            user_query = select(Authentication).where(Authentication.user_name == user_email)
+            user_result = await self.db.execute(user_query)
+            user = user_result.scalar_one_or_none()
+
+            if user:
+                user.hash_pwd = await Authentication.hash_password(update_password.new_password)
+                auth.temp_code = None 
+                auth.temp_code_expiration = None  
+                await self.db.commit()
+
+            return JSONResponse(
+                content={"Message": "Password changed successfully."},
+                status_code=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(str(e))
+            return JSONResponse(content={"error:" : "INTERNAL_SERVER_ERROR"}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

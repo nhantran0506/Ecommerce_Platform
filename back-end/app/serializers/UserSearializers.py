@@ -3,9 +3,15 @@ from typing import Optional
 from datetime import datetime as DateTime
 import re
 
+
 class UserForgotPassword(BaseModel):
-    email : str
-    
+    email: str
+
+
+class UserValidateCode(BaseModel):
+    email: str
+    temp_code: str
+
 
 class UserGetSerializer(BaseModel):
     first_name: str
@@ -22,25 +28,13 @@ class UserPostSerializer(UserGetSerializer):
     email: Optional[str] = None
 
 
-class UserChangePasswordSerializer(BaseModel):
-    old_password: str = Field(..., alias="old_password")
+class UserChangeNewPasswordSerializer(BaseModel):
     new_password: str = Field(..., alias="new_password")
 
-    @field_validator("old_password")
-    def validate_password(cls, value):
-        pattern = r"^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*().]).+$"
-        if len(value) < 8:
-            raise ValueError("Password must be at least 8 characters")
-
-        if not re.match(pattern, value):
-            raise ValueError(
-                "Password must contain at least one uppercase letter, one digit, and one special character"
-            )
-
-        return value
     
+
     @field_validator("new_password")
-    def validate_password(cls, value):
+    def validate_new_password(cls, value):
         pattern = r"^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*().]).+$"
         if len(value) < 8:
             raise ValueError("Password must be at least 8 characters")
@@ -52,6 +46,22 @@ class UserChangePasswordSerializer(BaseModel):
 
         return value
 
+
+class UserChangePasswordSerializer(UserChangeNewPasswordSerializer):
+    old_password: str = Field(..., alias="old_password")
+
+    @field_validator("old_password")
+    def validate_old_password(cls, value):
+        pattern = r"^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*().]).+$"
+        if len(value) < 8:
+            raise ValueError("Password must be at least 8 characters")
+
+        if not re.match(pattern, value):
+            raise ValueError(
+                "Password must contain at least one uppercase letter, one digit, and one special character"
+            )
+
+        return value
 
 class UserCreateSerializer(UserPostSerializer):
     first_name: str = Field(..., alias="first_name")

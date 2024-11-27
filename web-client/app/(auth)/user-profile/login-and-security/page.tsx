@@ -1,67 +1,152 @@
+"use client";
 import SectionHeader from "@/components/section_header";
 import { IInputItem } from "@/interface/UI/IProfile";
+import { useState, FormEvent } from "react";
 import { Button, Input } from "@nextui-org/react";
 import { X } from "react-feather";
+import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
+import PasswordInput from "@/components/password_input";
 
 const LoginAndSecurityPage = () => {
+  const [formData, setFormData] = useState({
+    old_password: "",
+    new_password: "",
+    confirm_password: "",
+  });
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
   const listFormInput: IInputItem[] = [
     {
-      type: "text",
+      type: "password",
       label: "Current password",
       placeholder: "Enter your current password",
+      value: formData.old_password,
+      name: "old_password",
     },
     {
-      type: "text",
+      type: "password",
       label: "New password",
       placeholder: "Enter your new password",
+      value: formData.new_password,
+      name: "new_password",
     },
     {
-      type: "text",
+      type: "password",
       label: "Confirm new password",
       placeholder: "Confirm your new password",
+      value: formData.confirm_password,
+      name: "confirm_password",
     },
   ];
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const clearForm = () => {
+    setFormData({
+      old_password: "",
+      new_password: "",
+      confirm_password: "",
+    });
+    setError("");
+    setSuccess("");
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    // Validate form data
+    if (!formData.old_password || !formData.new_password) {
+        setError("Both old and new passwords are required.");
+        return;
+    }
+
+    if (formData.new_password !== formData.confirm_password) {
+        setError("New password and confirmation do not match.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}${API_ROUTES.CHANGE_PASSWORD}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({
+                "old_password": formData.old_password,
+                "new_password": formData.new_password,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to change password");
+        }
+
+        setSuccess("Password changed successfully");
+        clearForm();
+    } catch (error) {
+        setError("Failed to change password. Please check your current password and try again.");
+    }
+  };
 
   return (
     <SectionHeader
       title={"Login and Security"}
       content={
         <>
-          <div className="grid grid-cols-2 gap-4">
-            {listFormInput.map((item, index) => (
-              <div
-                key={index}
-                className={`mb-4 ${
-                  listFormInput.length % 2 !== 0 && index === 0
-                    ? "col-span-2"
-                    : ""
-                }`}
-              >
-                <Input
-                  type={item.type}
-                  label={item.label}
-                  labelPlacement={"outside"}
-                  placeholder={item.placeholder}
-                  isClearable
-                  className="font-bold"
-                />
-              </div>
-            ))}
-          </div>
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-2 gap-4">
+              {listFormInput.map((item, index) => (
+                <div
+                  key={index}
+                  className={`mb-4 ${
+                    listFormInput.length % 2 !== 0 && index === 0
+                      ? "col-span-2"
+                      : ""
+                  }`}
+                >
+                  <PasswordInput
+                    label={item.label}
+                    labelPlacement={"outside"}
+                    placeholder={item.placeholder}
+                    value={(item.value ?? "").toString()}
+                    name={item.name}
+                    onChange={handleChange}
+                    isClearable
+                    className="font-bold"
+                  />
+                </div>
+              ))}
+            </div>
 
-          <div className="flex gap-4">
-            <Button
-              variant="solid"
-              radius="full"
-              className="text-white bg-black"
-            >
-              Update password
-            </Button>
-            <Button variant="light" radius="full">
-              <X size={15} />
-              <div>Clear all</div>
-            </Button>
-          </div>
+            {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
+            {success && <div className="text-green-500 text-sm mt-2">{success}</div>}
+
+            <div className="flex gap-4 mt-4">
+              <Button
+                type="submit"
+                variant="solid"
+                radius="full"
+                className="text-white bg-black"
+              >
+                Update password
+              </Button>
+              <Button variant="light" radius="full" onClick={clearForm}>
+                <X size={15} />
+                <div>Clear all</div>
+              </Button>
+            </div>
+          </form>
         </>
       }
     />

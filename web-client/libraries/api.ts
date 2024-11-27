@@ -3,6 +3,7 @@ export const API_BASE_URL = 'http://localhost:8000';
 export const API_ROUTES = {
   LOGIN: '/users/login',
   SIGNUP: '/users/signup',
+  CHANGE_PASSWORD : '/users/change_password',
   FORGOT_PASSWORD: '/users/forgot_password',
   SHOPS_NUMBER : '/admin/get_number_shops',
   REVENUE_CURRENT : '/admin/get_current_revenue',

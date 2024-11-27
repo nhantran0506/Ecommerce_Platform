@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, UUID, Column, String, ForeignKey, Boolean
+from sqlalchemy import ForeignKey, UUID, Column, String, ForeignKey, Boolean, DateTime
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 import uuid
 from abc import abstractmethod
@@ -32,6 +32,8 @@ class Authentication(Base):
         index=True,
     )
     hash_pwd: Mapped[String] = mapped_column(String, nullable=True)
+    temp_code: Mapped[String] = mapped_column(String, nullable=True)
+    temp_code_expiration: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     provider_user_id : Mapped[String] = mapped_column(String, nullable=True)
     provider : Mapped[String] = mapped_column(String, nullable=False,  default=ProviderEnum.DEFAULT.value)
     user: Mapped["User"] = relationship(

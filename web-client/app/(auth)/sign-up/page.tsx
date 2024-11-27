@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
 import loginImage from "@/assets/login-image.jpg";
+import PasswordInput from "@/components/password_input";
 
 export default function SignUpPage() {
   const [form_data, set_form_data] = useState({
@@ -70,7 +71,7 @@ export default function SignUpPage() {
               { name: "dob", label: "Date of Birth", type: "date" },
               { name: "phone_number", label: "Phone number", type: "tel" },
               { name: "email", label: "Email", type: "email" },
-              { name: "password", label: "Password", type: "password" },
+              { name: "password", label: "Password", component: PasswordInput },
             ].map((field) => (
               <div key={field.name}>
                 <label
@@ -79,16 +80,28 @@ export default function SignUpPage() {
                 >
                   {field.label}
                 </label>
-                <input
-                  id={field.name}
-                  name={field.name}
-                  type={field.type}
-                  required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  placeholder={`Enter your ${field.label.toLowerCase()}`}
-                  value={form_data[field.name as keyof typeof form_data]}
-                  onChange={handle_change}
-                />
+                {field.component ? (
+                  <field.component
+                    id={field.name}
+                    name={field.name}
+                    required
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    placeholder={`Enter your ${field.label.toLowerCase()}`}
+                    value={form_data[field.name as keyof typeof form_data]}
+                    onChange={handle_change}
+                  />
+                ) : (
+                  <input
+                    id={field.name}
+                    name={field.name}
+                    type={field.type}
+                    required
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    placeholder={`Enter your ${field.label.toLowerCase()}`}
+                    value={form_data[field.name as keyof typeof form_data]}
+                    onChange={handle_change}
+                  />
+                )}
               </div>
             ))}
             <div className="flex items-center">

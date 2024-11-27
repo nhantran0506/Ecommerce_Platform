@@ -32,6 +32,7 @@ class User(Base):
     email: Mapped[String] = mapped_column(String, nullable=False, unique=True)
     role : Mapped[String]= mapped_column(Enum(UserRoles), nullable=False, default=UserRoles.USER)
     deleted_date : Mapped[DateTime]= mapped_column(DateTime, nullable=True)
+    
 
     chat_history: Mapped[list["ChatHistory"]] = relationship("ChatHistory", back_populates="user")
     shops : Mapped["Shop"]= relationship("Shop", back_populates="owner")
