@@ -45,7 +45,7 @@ export default function LoginPage() {
         throw new Error("Login failed");
       }
       if (response.status == 401) {
-        throw new Error('Wrong password or username.');
+        throw new Error("Wrong password or username.");
       }
 
       const data = await response.json();
@@ -62,17 +62,24 @@ export default function LoginPage() {
       set_error("");
       await handleGoogleLogin();
     } catch (error) {
-      console.error('Google login error:', error);
-      set_error(error instanceof Error ? error.message : "Error with Google login");
+      console.error("Google login error:", error);
+      set_error(
+        error instanceof Error ? error.message : "Error with Google login"
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-[calc(91vh)] flex">
       <div className="w-1/2 relative">
-        <Image src={loginImage} alt="Login" layout="fill" objectFit="cover" />
+        <Image
+          src={loginImage}
+          alt="login-image"
+          layout="fill"
+          objectFit="cover"
+        />
       </div>
       <div className="w-1/2 flex items-center justify-center bg-white">
         <div className="max-w-md w-full p-8">
@@ -139,8 +146,8 @@ export default function LoginPage() {
               or do it via other accounts
             </p>
             <div className="mt-4 flex justify-center space-x-4">
-              <button 
-                className="p-2 border border-gray-300 rounded-full relative" 
+              <button
+                className="p-2 border border-gray-300 rounded-full relative"
                 onClick={handleGoogleLoginClick}
                 disabled={isLoading}
               >

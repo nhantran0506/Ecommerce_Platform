@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import chatIcon from "@/assets/chatbot.png";
 import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
+import { BotIcon } from "lucide-react";
 
 const hideChatIconPaths = ["/login", "/sign-up"];
 
@@ -26,7 +27,6 @@ export default function ChatWindow() {
   }, [messages]);
 
   useEffect(() => {
-   
     if (typeof window !== "undefined") {
       const currentUrl = `${window.location.origin}${window.location.pathname}`;
       setFullUrl(currentUrl);
@@ -38,38 +38,40 @@ export default function ChatWindow() {
       try {
         setIsLoading(true);
         setIsTyping(true);
-        
+
         setMessages((prev) => [...prev, { sender: "You", content: input }]);
-        
+
         const payload = {
-          model : "llama3.2",
-          session_id: "",//localStorage.getItem("sessionId" || ""),
+          model: "llama3.2",
+          session_id: "", //localStorage.getItem("sessionId" || ""),
           query: input,
           current_route: fullUrl,
         };
 
-
-        const response = await fetch(`${API_BASE_URL}${API_ROUTES.CHAT_MESSAGE}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify(payload),
-        });
+        const response = await fetch(
+          `${API_BASE_URL}${API_ROUTES.CHAT_MESSAGE}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify(payload),
+          }
+        );
 
         if (!response.ok) {
           throw new Error("Failed to send message");
         }
 
         const data = await response.json();
-        
+
         if (data.session_id) {
           localStorage.setItem("sessionId", data.session_id);
         }
 
-        if (data.purpose == "search"){
-           // Kelly where mine search ultis ?
+        if (data.purpose == "search") {
+          // Kelly where mine search ultis ?
         }
 
         if (data.response && data.purpose != "search") {
@@ -84,7 +86,11 @@ export default function ChatWindow() {
         console.error("Error sending message:", error);
         setMessages((prev) => [
           ...prev,
-          { sender: "Chatbot", content: "The service is not available right now, please try later." },
+          {
+            sender: "Chatbot",
+            content:
+              "The service is not available right now, please try later.",
+          },
         ]);
       } finally {
         setIsTyping(false);
@@ -105,19 +111,21 @@ export default function ChatWindow() {
     <div>
       <div
         onClick={toggleMinimize}
-        className="fixed bottom-4 right-4 cursor-pointer"
+        className="fixed bottom-4 right-4 cursor-pointer rounded-full shadow-md bg-black p-2"
       >
-        <Image
+        {/* <Image
           src={chatIcon}
           alt="Chat"
           width={60}
           height={60}
           className="rounded-full shadow-lg"
-        />
+        /> */}
+
+        <BotIcon size={40} color="white" />
       </div>
       {!isMinimized && (
         <div
-          className={`fixed bottom-0 right-0 m-4 w-96 bg-white shadow-lg rounded-lg overflow-hidden transition-transform ${
+          className={`fixed bottom-0 right-0 m-4 w-96 bg-white shadow-lg rounded-lg overflow-hidden transition-transform z-50 ${
             isMinimized ? "transform translate-y-[calc(100%-2.5rem)]" : ""
           }`}
         >
@@ -194,7 +202,7 @@ export default function ChatWindow() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === "Enter") {
                   handleSendMessage();
                 }
               }}
