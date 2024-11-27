@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { UserRoleEnum } from "./enum";
 
 // // Define the store types
 // interface CounterState {
@@ -8,7 +9,7 @@ import { create } from "zustand";
 //   reset: () => void;
 // }
 
-// // Create the store
+// // // Create the store
 // export const useCounterStore = create<CounterState>((set) => ({
 //   count: 0, // Initial state
 
@@ -22,12 +23,40 @@ import { create } from "zustand";
 //   reset: () => set({ count: 0 }),
 // }));
 
-interface IProductId {
-  productId: string;
-  setProductId: (newId: string) => void;
-}
-
 export const useProductId = create<IProductId>((set) => ({
   productId: "",
   setProductId: (newId) => set(() => ({ productId: newId })),
+}));
+
+export const userState = create<IUserState>((set) => ({
+  user: {
+    first_name: "",
+    last_name: "",
+    phone_number: "",
+    address: "",
+    email: "",
+    role: UserRoleEnum.user,
+  },
+
+  setUser: (userInfo: IUserData) => set(() => ({ user: userInfo })),
+  clearUser: () =>
+    set({
+      user: {
+        first_name: "",
+        last_name: "",
+        phone_number: "",
+        address: "",
+        email: "",
+        role: UserRoleEnum.user,
+      },
+    }),
+}));
+
+export const productState = create<IListProductState>((set) => ({
+  productList: [],
+
+  setProductList: (productList: IProductData[]) =>
+    set(() => ({ productList: productList })),
+
+  clearProductList: () => set({ productList: [] }),
 }));

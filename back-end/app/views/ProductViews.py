@@ -121,7 +121,7 @@ async def product_delete(
 
 
 
-@router.post("/{product_id}")
+@router.get("/{product_id}")
 async def get_product(
     product_id: uuid.UUID,
     product_controller: ProductController = Depends(),

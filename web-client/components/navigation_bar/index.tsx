@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Navbar,
   NavbarBrand,
@@ -74,6 +74,20 @@ export default function NavigationBar() {
   const pathname = usePathname();
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isVietNamese, setIsVietNamese] = useState<boolean>(false);
+  const [isLogin, setIsLogin] = useState<boolean>(false);
+
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    if (token && token != "") setIsLogin(true);
+  }, [token]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setIsLogin(false);
+
+    router.push(MenuEnum.LogIn);
+  };
 
   const handleNavigate = (key: string) => {
     switch (key) {
@@ -84,8 +98,10 @@ export default function NavigationBar() {
         router.push(MenuEnum.Cart);
         break;
       case MenuEnum.Logout:
-        // Handle logout logic (e.g., clearing tokens) before navigating
-        router.push(MenuEnum.Logout);
+        handleLogout();
+        break;
+      case MenuEnum.LogIn:
+        router.push(MenuEnum.LogIn);
         break;
       default:
         break;
@@ -145,7 +161,6 @@ export default function NavigationBar() {
             className="bg-transparent"
             onClick={() => handleSwitchLanguages()}
           >
-            {/* change flat image */}
             {isVietNamese ? (
               <Image
                 src={vietNamImg.src}
@@ -188,17 +203,25 @@ export default function NavigationBar() {
               onAction={(key) => handleNavigate(key as string)}
             >
               <DropdownItem key="name">
-                <p className="text-lg text-black font-bold">Phuoc Truong</p>
+                <p className="text-lg text-black font-bold">
+                  {isLogin ? "Phuoc Truong" : "Welcome 👋"}
+                </p>
               </DropdownItem>
               <DropdownSection>
-                {userDropdownOption.map((item, index) => (
-                  <DropdownItem key={item.key} color={item.color}>
-                    <div className="flex items-center gap-3">
-                      {item.prefix}
-                      <p>{item.name}</p>
-                    </div>
+                {isLogin ? (
+                  userDropdownOption.map((item, index) => (
+                    <DropdownItem key={item.key} color={item.color}>
+                      <div className="flex items-center gap-3">
+                        {item.prefix}
+                        <p>{item.name}</p>
+                      </div>
+                    </DropdownItem>
+                  ))
+                ) : (
+                  <DropdownItem onClick={() => handleNavigate(MenuEnum.LogIn)}>
+                    Login
                   </DropdownItem>
-                ))}
+                )}
               </DropdownSection>
             </DropdownMenu>
           </Dropdown>
