@@ -10,10 +10,31 @@ import SearchBar from "@/components/search";
 import SectionHeader from "@/components/section_header";
 import { DollarSign, MapPin } from "react-feather";
 import FilterMenu from "@/components/filter_menu";
-import { productlist, recommendProductlist } from "@/data/data";
+import { Suspense, useEffect, useState } from "react";
+import { productState } from "@/state/state";
+import productAPIs from "@/api/product";
 
 const ProductPage = () => {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const productlist = productState((state) => state.productList);
+  const setProductList = productState((state) => state.setProductList);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await productAPIs.getAll();
+
+        setProductList(res);
+        setLoading(false);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      }
+    };
+
+    setLoading(true);
+    fetchProducts();
+  }, []);
 
   const listFilterOptionForPrice: IOptionMenuFilter[] = [
     { key: "ascending", label: "Ascending" },
@@ -41,7 +62,7 @@ const ProductPage = () => {
   ];
 
   return (
-    <div className="flex justify-center my-8">
+    <div className="px-72 my-8 w-full">
       <div className="flex flex-col">
         {/* Filter and search bar */}
         <div className="mb-8 flex">
@@ -63,31 +84,20 @@ const ProductPage = () => {
 
         {/* Products */}
         <SectionHeader
-          title={"Recommended"}
-          content={
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {recommendProductlist.map((item, index) => (
-                <ProductCard
-                  key={index}
-                  product={item}
-                  onClick={() => router.push("/product/" + item.id)}
-                />
-              ))}
-            </div>
-          }
-        />
-
-        <SectionHeader
           title={"All Products"}
           content={
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {productlist.map((item, index) => (
-                <ProductCard
-                  key={index}
-                  product={item}
-                  onClick={() => router.push("/product/" + item.id)}
-                />
-              ))}
+              {loading ? (
+                <div>Loading...</div>
+              ) : (
+                productlist?.map((item: IProductData, index: number) => (
+                  <ProductCard
+                    key={index}
+                    product={item}
+                    onClick={() => router.push("/product/" + item.product_id)}
+                  />
+                ))
+              )}
             </div>
           }
         />

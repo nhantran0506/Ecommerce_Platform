@@ -1,69 +1,63 @@
 "use client";
 
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
-import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
+import { useRouter } from "next/navigation";
 import loginImage from "@/assets/login-image.jpg";
 import googleIcon from "@/assets/google-icon.png";
 import zaloIcon from "@/assets/zalo-icon.png";
 import facebookIcon from "@/assets/facebook-icon.png";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
+import authAPIs from "@/api/auth";
 
 export default function LoginPage() {
-  const [form_data, set_form_data] = useState({
-    user_name: "",
-    password: "",
-  });
-  const [error, set_error] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { handleGoogleLogin } = useGoogleAuth();
 
-  const handle_change = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    set_form_data((prev_state) => ({
-      ...prev_state,
-      [name]: value,
-    }));
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUsername(e.target.value);
   };
 
-  const handle_submit = async (e: FormEvent<HTMLFormElement>) => {
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    set_error("");
+    setError("");
+
+    const reqBody: IReqLogin = {
+      user_name: username,
+      password: password,
+    };
 
     try {
-      const response = await fetch(`${API_BASE_URL}${API_ROUTES.LOGIN}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form_data),
-      });
-      if (!response.ok) {
-        throw new Error("Login failed");
-      }
-      if (response.status == 401) {
-        throw new Error("Wrong password or username.");
-      }
+      const response = await authAPIs.login(reqBody);
 
-      const data = await response.json();
-      localStorage.setItem("token", data.token);
+      localStorage.setItem("token", response.token);
       router.push("/");
     } catch (error) {
-      set_error("Invalid credentials. Please try again.");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Invalid credentials. Please try again."
+      );
     }
   };
 
   const handleGoogleLoginClick = async () => {
     try {
       setIsLoading(true);
-      set_error("");
+      setError("");
       await handleGoogleLogin();
     } catch (error) {
       console.error("Google login error:", error);
-      set_error(
+      setError(
         error instanceof Error ? error.message : "Error with Google login"
       );
     } finally {
@@ -87,23 +81,23 @@ export default function LoginPage() {
             Welcome back!
           </h2>
           {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-          <form className="space-y-4" onSubmit={handle_submit}>
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label
-                htmlFor="user_name"
+                htmlFor="username"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
                 E-mail or phone number
               </label>
               <input
-                id="user_name"
-                name="user_name"
+                id="username"
+                name="username"
                 type="text"
                 required
                 className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 placeholder="Type your e-mail or phone number"
-                value={form_data.user_name}
-                onChange={handle_change}
+                value={username}
+                onChange={handleUsernameChange}
               />
             </div>
             <div>
@@ -120,8 +114,8 @@ export default function LoginPage() {
                 required
                 className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 placeholder="Type your password"
-                value={form_data.password}
-                onChange={handle_change}
+                value={password}
+                onChange={handlePasswordChange}
               />
             </div>
             <div className="flex items-center justify-end">

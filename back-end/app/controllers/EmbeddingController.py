@@ -39,6 +39,7 @@ class EmbeddingController:
         try:
             self.client = weaviate.connect_to_local(
                 host=WEAVIATE_URL,
+                port=8080,
                 # skip_init_checks=True,
             )
 
