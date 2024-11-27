@@ -143,6 +143,21 @@ class UserController:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
             )
+    
+
+    async def get_current_user(self, current_user : User):
+        try:
+            if not current_user:
+                return JSONResponse(
+                    content={"error" : "Invalid user"}, status_code=status.HTTP_401_UNAUTHORIZED
+                )
+
+            return current_user 
+        except Exception as e:
+            logger.error(str(e))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
 
     async def get_user_by_id(self, user_id: str):
         try:
@@ -150,16 +165,23 @@ class UserController:
             result = await self.db.execute(query)
             user = result.scalar_one_or_none()
 
-            if user:
-                return JSONResponse(
-                    content=user.to_dict(), status_code=status.HTTP_200_OK
-                )
-            else:
+            if not user:
                 return JSONResponse(
                     content={"Message": "Unable to find any user."},
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
+            
+            response = {
+                "first_name" : user.first_name,
+                "last_name" : user.last_name,
+            }
+
+            return JSONResponse(
+                    content=response, status_code=status.HTTP_200_OK
+                )
+                
         except Exception as e:
+            logger.error(str(e))
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
             )
