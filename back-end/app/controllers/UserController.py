@@ -1,22 +1,20 @@
 from sqlalchemy import select, update, insert
-from sqlalchemy.orm import Session
-from models.Users import User, UserRoles
 from models.Authentication import Authentication
 from serializers.UserSearializers import *
 from middlewares.token_config import *
-from fastapi.responses import JSONResponse, RedirectResponse
-from sqlalchemy.dialects.postgresql import UUID
-from fastapi import status, Header, HTTPException, Security, Depends
+from fastapi.responses import JSONResponse
+from fastapi import status, Header, HTTPException ,Depends
 from helper_collections import UTILS, EMAIL_TEMPLATE
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
-from middlewares.oauth_config import verify_google_oauth_token, verify_fb_oauth_token
-from config import GOOGLE_CLIENT_ID
-from fastapi.responses import HTMLResponse
-import json
+from middlewares.oauth_config import verify_fb_oauth_token
+from middlewares.token_config import authenticate_user
+from passlib.context import CryptContext
 import logging
 
 logger = logging.getLogger(__name__)
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class UserController:
@@ -158,6 +156,41 @@ class UserController:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
             )
+    
+
+    async def update_password(self, update_password: UserChangePasswordSerializer, current_user : User):
+        try:
+            query = select(Authentication).where(Authentication.user_name == current_user.email)
+            result = await self.db.execute(query)
+            user_auth = result.scalar_one_or_none()
+
+            if not user_auth.verify_password(update_password.old_password):
+                return JSONResponse(
+                    content={"error": "User not found."},
+                    status_code=status.HTTP_404_NOT_FOUND
+                )
+    
+            auth_update = (
+                update(Authentication)
+                .where(Authentication.user_id == current_user.user_id)
+                .values(hash_pwd=await Authentication.hash_password(update_password.new_password))
+            )
+            await self.db.execute(auth_update)
+            await self.db.commit()
+
+            return JSONResponse(
+                content={"message": "Password updated successfully."},
+                status_code=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(str(e))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=str(e)
+            )
+
 
     async def get_user_by_id(self, user_id: str):
         try:

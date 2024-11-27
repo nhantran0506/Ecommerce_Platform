@@ -110,6 +110,20 @@ async def signup(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+
+@router.post("/change_password")
+async def change_password(
+   user_update_password : UserChangePasswordSerializer , user_controller: UserController = Depends(), current_user=Depends(token_config.get_current_user)
+):
+    try:
+        return await user_controller.update_password(user_update_password, current_user=current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
 @router.post("/get_current_user")
 async def get_current_user(user_controller: UserController = Depends(), current_user=Depends(token_config.get_current_user)):
     try:

@@ -122,7 +122,6 @@ class ChatBotController:
 
     async def answer(self, query_payload: QueryPayload, current_user: User):
         try:
-            print(query_payload)
             query = query_payload.query
             session_id = query_payload.session_id
             model_name = query_payload.model
