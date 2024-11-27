@@ -51,16 +51,30 @@ async def create_product(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-
-@router.post("/{product_id}")
-async def get_product(
-    product_id: uuid.UUID,
+@router.post("/product_update") 
+async def product_update(
+    product_name: str = Form(...),
+    product_id: uuid.UUID = Form(...),
+    product_description: str = Form(...),
+    price: float = Form(...),
+    category: list[str] = Form(...),
+    images: list[UploadFile] = File(...),
     product_controller: ProductController = Depends(),
     current_user=Depends(token_config.get_current_user),
 ):
-    try:
-        return await product_controller.get_single_product(
-            product_id=product_id, current_user=current_user
+    try: 
+        product = ProductUpdateSerializer(
+            product_id=product_id,
+            product_name=product_name,
+            product_description=product_description,
+            price=price,
+            category=category,
+        )
+        
+        return await product_controller.update_product(
+            product_update=product, 
+            image_list=images, 
+            current_user=current_user
         )
     except Exception as e:
         logger.error(str(e))
@@ -68,6 +82,7 @@ async def get_product(
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
 
 
 @router.get("/search_products")
@@ -84,34 +99,6 @@ async def product_search(
         )
 
 
-@router.post("/product_update")
-async def product_update(
-    product_name: str = Form(...),
-    product_id: str = Form(...),
-    product_description: str = Form(...),
-    price: float = Form(...),
-    category: list[str] = Form(...),
-    images: list[UploadFile] = File(...),
-    product_controller: ProductController = Depends(),
-    current_user=Depends(token_config.get_current_user),
-):
-    try:
-        product = ProductUpdateSerializer(
-            product_id=uuid.UUID(product_id),
-            product_name=product_name,
-            product_description=product_description,
-            price=price,
-            category=category,
-        )
-        return await product_controller.update_product(
-            product=product, image_list=images, current_user=current_user
-        )
-    except Exception as e:
-        logger.error(str(e))
-        return JSONResponse(
-            content={"Message": "Unexpected error"},
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
 
 
 @router.delete("/{product_id}")
@@ -122,6 +109,26 @@ async def product_delete(
 ):
     try:
         return await product_controller.delete_product(
+            product_id=product_id, current_user=current_user
+        )
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+
+
+@router.post("/{product_id}")
+async def get_product(
+    product_id: uuid.UUID,
+    product_controller: ProductController = Depends(),
+    current_user=Depends(token_config.get_current_user),
+):
+    try:
+        return await product_controller.get_single_product(
             product_id=product_id, current_user=current_user
         )
     except Exception as e:

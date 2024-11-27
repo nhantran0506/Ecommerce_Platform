@@ -91,6 +91,7 @@ class ProductController:
 
     async def get_single_product(self, product_id, current_user: User):
         try:
+            # Check if product exists
             product_check_query = select(Product).where(
                 Product.product_id == product_id
             )
@@ -100,6 +101,7 @@ class ProductController:
             if not product:
                 raise ValueError(f"Product with id {product_id} does not exist.")
 
+            # Record user interest
             interest_query = (
                 insert(UserInterest)
                 .values(
@@ -115,14 +117,51 @@ class ProductController:
                     },
                 )
             )
-
             await self.db.execute(interest_query)
             await self.db.commit()
-            product_query = select(Product).where(Product.product_id == product_id)
-            result = await self.db.execute(product_query)
-            return result.scalar_one_or_none()
-        except Exception as e:
+
+            # Get product images
+            image_query = select(ImageProduct).where(ImageProduct.product_id == product_id)
+            image_results = await self.db.execute(image_query)
+            product_images = image_results.scalars().all()
+
+            # Get image URLs from CDN
+            image_urls = []
+            if product_images:
+                image_url_tasks = [
+                    self._get_image(img.image_url) for img in product_images
+                ]
+                image_url_results = await asyncio.gather(*image_url_tasks)
+                image_urls = [
+                    result["image_url"]
+                    for result in image_url_results
+                    if result["success"]
+                ]
+
+            # Prepare response
+            response = {
+                "product_id": str(product.product_id),
+                "product_name": product.product_name,
+                "product_description": product.product_description,
+                "price": product.price,
+                "image_urls": image_urls
+            }
+
+            return JSONResponse(content=response, status_code=status.HTTP_200_OK)
+
+        except ValueError as e:
             await self.db.rollback()
+            return JSONResponse(
+                content={"message": str(e)},
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(str(e))
+            await self.db.rollback()
+            return JSONResponse(
+                content={"message": "Internal server error"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     async def _upload_image(self, image: UploadFile) -> dict:
         try:
