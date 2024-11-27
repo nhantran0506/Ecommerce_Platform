@@ -3,7 +3,6 @@ import { useRouter } from "next/navigation";
 import { Image } from "@nextui-org/react";
 import bannerImg from "@/assets/banner-bg.jpg";
 import SectionHeader from "@/components/section_header";
-import { productlist, recommendProductlist } from "@/data/data";
 import ProductCard from "@/components/product_card";
 
 export default function Home() {
@@ -35,22 +34,7 @@ export default function Home() {
       </div>
 
       {/* Content Section */}
-      <SectionHeader
-        title={"Recommended"}
-        content={
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {recommendProductlist.map((item, index) => (
-              <ProductCard
-                key={index}
-                product={item}
-                onClick={() => router.push("/product/" + item.id)}
-              />
-            ))}
-          </div>
-        }
-      />
-
-      <SectionHeader
+      {/* <SectionHeader
         title={"All Products"}
         content={
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -63,7 +47,7 @@ export default function Home() {
             ))}
           </div>
         }
-      />
+      /> */}
     </div>
   );
 }

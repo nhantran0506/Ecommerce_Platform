@@ -5,7 +5,6 @@ import { ShoppingCart } from "react-feather";
 import StarRating from "../start_rating";
 import DefaultImage from "./default_image";
 import { ImageSizeEnum } from "@/interface/UI/IProductUI";
-import { IProductData } from "@/interface/Data/IProductData";
 
 interface IProductCard {
   product: IProductData;
@@ -20,7 +19,7 @@ const ProductCard: React.FC<IProductCard> = ({ product, onClick }) => {
       onPress={() => onClick()}
     >
       <CardBody className="overflow-visible p-0">
-        {!product.image ? (
+        {!product.image_urls[0] ? (
           <div className="h-full w-full">
             <DefaultImage imgSize={ImageSizeEnum.md} />
           </div>
@@ -31,7 +30,7 @@ const ProductCard: React.FC<IProductCard> = ({ product, onClick }) => {
             width="100%"
             alt={product.product_name}
             className="w-full h-[180px] object-cover"
-            src={product.image}
+            src={product.image_urls[0]}
             style={{
               objectFit: "cover",
               objectPosition: "center",
@@ -45,10 +44,10 @@ const ProductCard: React.FC<IProductCard> = ({ product, onClick }) => {
             {truncateText(product.product_name)}
           </p>
 
-          <div className="flex justify-between">
+          <div className="flex justify-between items-center">
             <div className="flex flex-col items-start">
-              <p className="font-bold text-lg">$ {product.price}</p>
-              <StarRating totalStars={5} initStart={4} />
+              <p className="font-bold text-lg">$ {product.product_price}</p>
+              {/* <StarRating totalStars={5} initStart={4} /> */}
             </div>
 
             <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center">

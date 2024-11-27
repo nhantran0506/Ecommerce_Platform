@@ -18,17 +18,29 @@ import {
   IProductIconDataSection,
 } from "@/interface/UI/IProductUI";
 import { Button } from "@nextui-org/react";
-import { IProductData } from "@/interface/Data/IProductData";
-import { productlist } from "@/data/data";
+import productAPIs from "@/api/product";
+// import { IProductData } from "@/interface/Data/IProductData";
+// import { productlist } from "@/data/data";
 
 const ProductDetailPage = ({ params }: { params: { id: string } }) => {
   const maxNumberOfProduct = 10;
-  const [product, setProduct] = useState<IProductData | null>(null);
+  const [product, setProduct] = useState<IProductDetailData | null>(null);
   const [loading, setLoading] = useState(false);
   const [numberOfProduct, setNumberOfProduct] = useState<number>(1);
 
   useEffect(() => {
-    setProduct(productlist[Number(params.id)]);
+    const fetchProductDetail = async () => {
+      try {
+        const res = await productAPIs.getProductById(params.id);
+        setProduct(res);
+        setLoading(false);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      }
+    };
+
+    setLoading(true);
+    fetchProductDetail();
   }, [params.id]);
 
   // useEffect(() => {
@@ -50,24 +62,24 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
   // }, [params.id]);
 
   const listIconDataSection: IProductIconDataSection[] = [
-    {
-      prefix: <Calendar />,
-      data: new Date(product?.create_at_datetime!).toLocaleString(),
-    },
-    {
-      prefix: <Star />,
-      data: "4.8",
-      subText: "1823",
-      isHightlight: true,
-    },
+    // {
+    //   prefix: <Calendar />,
+    //   data: new Date(product?.create_at_datetime!).toLocaleString(),
+    // },
+    // {
+    //   prefix: <Star />,
+    //   data: "4.8",
+    //   subText: "1823",
+    //   isHightlight: true,
+    // },
     {
       prefix: <Tag />,
       data: "Electric devices",
     },
-    {
-      prefix: <Home />,
-      data: maxNumberOfProduct.toString(),
-    },
+    // {
+    //   prefix: <Home />,
+    //   data: maxNumberOfProduct.toString(),
+    // },
   ];
 
   const IconDataSection = ({
@@ -128,9 +140,9 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
   return (
     <div className="mx-64 grid grid-cols-2 mt-20">
       <div className="rounded-lg bg-transparent overflow-hidden w-[450px] h-[400px] relative">
-        {product.image ? (
+        {product.image_urls[0] ? (
           <Image
-            src={product.image}
+            src={product.image_urls[0]}
             alt="Product image"
             layout="fill"
             className="object-cover"

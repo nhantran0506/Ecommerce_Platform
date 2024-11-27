@@ -1,7 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ["letsenhance.io", "t3.ftcdn.net"], // Add the required domain for images
+    domains: [
+      "letsenhance.io",
+      "t3.ftcdn.net",
+      "d2sabl064492ta.cloudfront.net",
+    ], // Add the required domain for images
   },
   async headers() {
     return [
