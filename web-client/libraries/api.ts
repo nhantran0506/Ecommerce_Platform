@@ -7,6 +7,8 @@ export const API_ROUTES = {
   FORGOT_PASSWORD: "/users/forgot_password",
   PASSWORD_CODE_VALIDATE: "/users/validate_temp_code",
   CHANGE_PASSWORD_WITH_CODE: "/users/change_password_with_code",
+  GET_CURRENT_USER: "/users/get_current_user",
+  UPDATE_CURRENT_USER: "/users/update_user",
   SHOPS_NUMBER: "/admin/get_number_shops",
   REVENUE_CURRENT: "/admin/get_current_revenue",
   USERS_NUMBER: "/admin/get_number_user",
@@ -19,4 +21,6 @@ export const API_ROUTES = {
   GET_ALL_PRODUCT: "/products/all",
   GET_PRODUCT_DETAIL: "/products",
   GET_SEARCH_PRODUCTS: "/products/search_products",
+  ADD_PRODUCT_TO_CART: "/cart/update_products",
+  GET_PRODUCT_IN_CART: "/cart/get_cart_details",
 };
