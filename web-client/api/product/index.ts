@@ -20,6 +20,27 @@ class Product {
     return data;
   }
 
+  async getSearchListProduct(input: string): Promise<IProductData[]> {
+    const response = await fetch(
+      `${API_BASE_URL}${API_ROUTES.GET_SEARCH_PRODUCTS}?user_query=${input}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Get search products failed with status ${response.status}`
+      );
+    }
+
+    const data = (await response.json()) as IProductData[];
+    return data;
+  }
+
   async getProductById(id: string): Promise<IProductDetailData> {
     const token = localStorage.getItem("token");
 

@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import SingleComboBoxItem from "@/components/single_combo_box_item";
 import {
   IFilterMenu,
@@ -16,25 +16,33 @@ import productAPIs from "@/api/product";
 
 const ProductPage = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const productlist = productState((state) => state.productList);
   const setProductList = productState((state) => state.setProductList);
 
+  const searchQuery = searchParams.get("search") || "";
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await productAPIs.getAll();
+        setLoading(true);
+
+        // Check if there's a search query
+        const res = searchQuery
+          ? await productAPIs.getSearchListProduct(searchQuery)
+          : await productAPIs.getAll();
 
         setProductList(res);
-        setLoading(false);
       } catch (error) {
         console.error("Failed to fetch products:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    setLoading(true);
     fetchProducts();
-  }, []);
+  }, [searchQuery, setProductList]);
 
   const listFilterOptionForPrice: IOptionMenuFilter[] = [
     { key: "ascending", label: "Ascending" },
@@ -77,14 +85,13 @@ const ProductPage = () => {
           </div>
           <div className="w-1/2 flex justify-between">
             <SearchBar />
-
             <FilterMenu />
           </div>
         </div>
 
         {/* Products */}
         <SectionHeader
-          title={"All Products"}
+          title={searchQuery ? `Results for "${searchQuery}"` : "All Products"}
           content={
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {loading ? (

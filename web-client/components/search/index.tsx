@@ -1,12 +1,35 @@
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Input } from "@nextui-org/react";
 import { Search } from "react-feather";
 
 const SearchBar = () => {
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearchSubmit = () => {
+    if (searchQuery.trim()) {
+      router.push(`/products?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleClear = () => {
+    setSearchQuery("");
+    router.push("/products");
+  };
+
   return (
     <div className="w-10/12">
       <Input
         isClearable
         radius="lg"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleSearchSubmit();
+          }
+        }}
         classNames={{
           input: [
             "bg-transparent",
@@ -30,6 +53,7 @@ const SearchBar = () => {
         startContent={
           <Search className=" mb-0.5 dark:text-white/90 text-black pointer-events-none flex-shrink-0" />
         }
+        onClear={() => handleClear()}
       />
     </div>
   );
