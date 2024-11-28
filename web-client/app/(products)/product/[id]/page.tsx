@@ -61,7 +61,13 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
   //   fetchProduct();
   // }, [params.id]);
 
-  const listIconDataSection: IProductIconDataSection[] = [
+  const listCategoryDataSection: IProductIconDataSection[] =
+    product?.product_category?.map((category) => ({
+      prefix: <Tag />,
+      data: category,
+    })) ?? [];
+
+  const listOtherDataSection: IProductIconDataSection[] = [
     // {
     //   prefix: <Calendar />,
     //   data: new Date(product?.create_at_datetime!).toLocaleString(),
@@ -72,14 +78,15 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
     //   subText: "1823",
     //   isHightlight: true,
     // },
-    {
-      prefix: <Tag />,
-      data: "Electric devices",
-    },
     // {
     //   prefix: <Home />,
     //   data: maxNumberOfProduct.toString(),
     // },
+  ];
+
+  const listIconDataSection: IProductIconDataSection[] = [
+    ...listCategoryDataSection,
+    ...listOtherDataSection,
   ];
 
   const IconDataSection = ({
@@ -168,15 +175,16 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
           <p className="mb-4">{product.product_description}</p>
 
           <div className="grid grid-cols-2 mb-4">
-            {listIconDataSection.map((item, index) => (
-              <IconDataSection
-                key={index}
-                prefix={item.prefix}
-                data={item.data}
-                subText={item.subText}
-                isHightlight={item.isHightlight}
-              />
-            ))}
+            {product.product_category.length > 0 &&
+              listIconDataSection.map((item, index) => (
+                <IconDataSection
+                  key={index}
+                  prefix={item.prefix}
+                  data={item.data}
+                  subText={item.subText}
+                  isHightlight={item.isHightlight}
+                />
+              ))}
           </div>
 
           <ProductNumberPickerSection />

@@ -1,11 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: [
-      "letsenhance.io",
-      "t3.ftcdn.net",
-      "d2sabl064492ta.cloudfront.net",
-    ], // Add the required domain for images
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "letsenhance.io",
+      },
+      {
+        protocol: "https",
+        hostname: "t3.ftcdn.net",
+      },
+      {
+        protocol: "https",
+        hostname: "d2sabl064492ta.cloudfront.net",
+      },
+    ],
   },
   async headers() {
     return [
