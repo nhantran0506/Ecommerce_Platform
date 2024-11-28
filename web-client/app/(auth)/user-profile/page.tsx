@@ -8,9 +8,9 @@ const UserProfilePage = () => {
 
   useEffect(() => {
     router.push("/user-profile/personal-info");
-  }, [router]);
+  }, []);
 
-  return <div>Redirecting to User Profile...</div>;
+  return <></>;
 };
 
 export default UserProfilePage;
