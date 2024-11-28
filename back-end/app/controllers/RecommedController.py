@@ -102,6 +102,10 @@ class RecommendedController:
             result = result.scalars().all()
 
             product_embedding_dict = {"product_name": [], "score": []}
+
+            if not result:
+                return JSONResponse(content=[], status_code=status.HTTP_200_OK)
+
             for product in result or []:
 
                 all_cat_names_query = select(CategoryProduct).where(
@@ -168,4 +172,11 @@ class RecommendedController:
 
 
     async def get_default_recommed(self):
-        pass
+        try:
+            get_product_query = select(Product).limit(256)
+            products = await self.db.execute(get_product_query)
+            products = products.scalars().all()
+            return JSONResponse(content=products, status_code=status.HTTP_200_OK)
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(str(e))

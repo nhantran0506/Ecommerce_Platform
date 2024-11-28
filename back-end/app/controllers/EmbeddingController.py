@@ -25,6 +25,7 @@ from fastapi import status
 from fastapi.responses import JSONResponse
 import weaviate.classes.query as wq
 from llama_index.core.vector_stores import MetadataFilters, ExactMatchFilter
+from llama_index.core.postprocessor import SimilarityPostprocessor
 import logging
 
 
@@ -34,6 +35,7 @@ logger = logging.getLogger(__name__)
 class EmbeddingController:
     faq_collection_name = "FAQ"
     recommend_collection_name = "Recommend"
+
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
         try:
@@ -46,15 +48,13 @@ class EmbeddingController:
             self.embed_model = OllamaEmbedding(
                 model_name=OLLAMA_EMBEDDING_MODEL,
                 base_url=OLLAMA_BASE_URL,
-                request_timeout=500.0, 
+                request_timeout=500.0,
                 show_progress=True,
             )
-
 
             self._create_schema(self.faq_collection_name, is_faq=True)
             self._create_schema(self.recommend_collection_name, is_faq=False)
 
-            
             self.faq_vector_store = WeaviateVectorStore(
                 weaviate_client=self.client,
                 index_name=self.faq_collection_name,
@@ -76,15 +76,16 @@ class EmbeddingController:
                 vector_store=self.recommend_vector_store
             )
 
+            postprocessor = SimilarityPostprocessor(similarity_cutoff=0.0)
             self.faq_index = VectorStoreIndex.from_vector_store(
                 self.faq_vector_store,
                 embed_model=self.embed_model,
-            ).as_retriever()
+            ).as_retriever(similarity_top_k=256, node_postprocessors=[postprocessor])
 
             self.recommend_index = VectorStoreIndex.from_vector_store(
                 self.recommend_vector_store,
                 embed_model=self.embed_model,
-            ).as_retriever()
+            ).as_retriever(similarity_top_k=256, node_postprocessors=[postprocessor])
         except Exception as e:
             logger.error(str(e))
 
@@ -143,14 +144,13 @@ class EmbeddingController:
 
     async def embedding_product(self, product: Product):
         try:
-            
+
             all_cat_names_query = select(CategoryProduct).where(
                 CategoryProduct.product_id == product.product_id
             )
             results = await self.db.execute(all_cat_names_query)
-            results = results.scalars().all()  
+            results = results.scalars().all()
 
-            
             cat_names = ""
             for cat in results:
                 cat = await self.db.execute(
@@ -160,16 +160,13 @@ class EmbeddingController:
                 if cat_data:
                     cat_names += cat_data.cat_name.value
 
-            
             product_text = f"{product.product_name * 3} {cat_names * 2}"
 
-         
             document = Document(
                 text=product_text,
                 metadata={"topic": "product", "product_id": str(product.product_id)},
             )
 
-            
             _index = VectorStoreIndex.from_documents(
                 [document],
                 storage_context=self.recommend_storage_context,
@@ -177,8 +174,7 @@ class EmbeddingController:
                 show_progress=True,
             )
 
-           
-            if hasattr(_index, 'close'):
+            if hasattr(_index, "close"):
                 _index.close()
 
             return True
@@ -186,20 +182,20 @@ class EmbeddingController:
         except Exception as e:
             logger.error(f"Error embedding product: {str(e)}")
             return False
-    
+
     async def delete_product(self, product: Product):
         try:
             filters = MetadataFilters(
-                filters=[ExactMatchFilter(key="product_id", value=str(product.product_id))]
+                filters=[
+                    ExactMatchFilter(key="product_id", value=str(product.product_id))
+                ]
             )
 
             _index = VectorStoreIndex.from_vector_store(
                 self.recommend_vector_store,
                 embed_model=self.embed_model,
             ).as_retriever(
-                similarity_top_k=1,
-                vector_store_query_mode="default",
-                filters=filters
+                similarity_top_k=1, vector_store_query_mode="default", filters=filters
             )
 
             vector_result = _index.retrieve(" ")
@@ -216,12 +212,10 @@ class EmbeddingController:
             logger.error(f"Error removing product from vector store: {str(e)}")
             return False
 
-            
-
     async def search_product(self, user_query: str):
         try:
             vector_result = self.recommend_index.retrieve(user_query)
-            
+
             if not vector_result:
                 return JSONResponse(
                     content={"Message": "No products found"},
@@ -230,7 +224,7 @@ class EmbeddingController:
 
             product_ids = []
             for obj in vector_result:
-                product_id = obj.node.metadata.get("product_id")
+                product_id = obj.node.metadata["product_id"]
                 if product_id:
                     product_ids.append(product_id)
 
@@ -247,11 +241,13 @@ class EmbeddingController:
 
             products = []
             for pro in results.scalars().all():
-                products.append({
-                    "product_id": str(pro.product_id), 
-                    "product_name": pro.product_name, 
-                    "product_price": pro.price
-                })
+                products.append(
+                    {
+                        "product_id": str(pro.product_id),
+                        "product_name": pro.product_name,
+                        "product_price": pro.price,
+                    }
+                )
 
             return JSONResponse(content=products, status_code=status.HTTP_200_OK)
 
@@ -295,14 +291,12 @@ class EmbeddingController:
             self._create_schema(collection_name, is_faq=is_faq)
         except Exception as e:
             logger.error(f"Error clearing collection: {e}")
-    
-    
 
     async def __aenter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if hasattr(self, 'embed_model'):
+        if hasattr(self, "embed_model"):
             del self.embed_model
-        if hasattr(self, 'client'):
+        if hasattr(self, "client"):
             self.client.close()

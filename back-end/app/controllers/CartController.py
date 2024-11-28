@@ -9,6 +9,9 @@ from sqlalchemy.dialects.postgresql import insert
 from models.Cart import Cart
 from models.Products import Product
 from models.CartProduct import CartProduct
+from models.Shop import Shop
+from models.UserInterest import UserInterest, InterestScore
+from models.ShopProduct import ShopProduct
 from sqlalchemy.ext.asyncio import AsyncSession
 import logging
 
@@ -30,34 +33,58 @@ class CartController:
                     user_id=current_user.user_id, created_at=datetime.now()
                 )
                 await self.db.execute(user_cart_create_query)
-                await self.db.commit()
+            
+            get_user_shop_query = select(Shop).where(Shop.owner_id == current_user.user_id)
+            shop = await self.db.execute(get_user_shop_query)
+            shop = shop.scalar_one_or_none()
 
             result = await self.db.execute(user_cart_query)
             user_cart = result.scalar_one_or_none()
             for cart_items in product_list:
                 if cart_items.quantity > 0:
+
+                    if shop:
+                        check_user_shop_product_query = select(ShopProduct).where(ShopProduct.product_id == cart_items.product_id)
+                        check_user_shop_product = await self.db.execute(check_user_shop_product_query)
+                        check_user_shop_product = check_user_shop_product.scalar_one_or_none()
+                        if check_user_shop_product:
+                            return JSONResponse(
+                                content={"error" : "Shopper can not buy their own product."},
+                                status_code=status.HTTP_403_FORBIDDEN
+                            )
+
+
+
                     query = insert(CartProduct).values(
                         cart_id=user_cart.cart_id,
                         product_id=cart_items.product_id,
                         quantity=cart_items.quantity,
-                    )
-
-                    query = query.on_conflict_do_update(
+                    ).on_conflict_do_update(
                         index_elements=["cart_id", "product_id"],
                         set_={"quantity": cart_items.quantity},
                     )
+
+                    await self.db.execute(query)
+
+                    insert_user_interest = insert(UserInterest).values(
+                        user_id=current_user.user_id,
+                        product_id=cart_items.product_id,
+                        score=InterestScore.CART.value
+                    ).on_conflict_do_update(
+                        index_elements=["user_id", "product_id"],
+                        set_={"score": InterestScore.CART.value}
+                    )
+
+                    await self.db.execute(insert_user_interest)
                 else:
                     query = delete(CartProduct).where(
                         CartProduct.cart_id == user_cart.cart_id
                     )
 
-                await self.db.execute(query)
-                await self.db.commit()
+            
+            await self.db.commit()
 
-            return JSONResponse(
-                content={"Adding products successfully!."},
-                status_code=status.HTTP_200_OK,
-            )
+            return await self.get_cart_details(current_user)
 
         except Exception as e:
             await self.db.rollback()
@@ -90,6 +117,7 @@ class CartController:
             cart_items = result.scalars().all()
 
             cart_items_details = []
+            total_price = 0
             for items in cart_items:
                 product_query = select(Product).where(
                     Product.product_id == items.product_id
@@ -112,11 +140,13 @@ class CartController:
                         "total_price": items.quantity * product.price,
                     }
                 )
+                total_price += items.quantity * product.price
 
             return {
                 "cart_details": {
                     "products": cart_items_details,
                     "created_at": datetime.now(),
+                    "total_price": total_price
                 }
             }
         except Exception as e:
@@ -126,3 +156,7 @@ class CartController:
                 content={"Message": f"Error : {e}"},
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
+    
+
+    async def cart_buy(self, cureent_user):
+        pass
