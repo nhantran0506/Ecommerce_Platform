@@ -96,7 +96,7 @@ class RecommendedController:
                 select(UserInterest)
                 .where(UserInterest.user_id == current_user.user_id)
                 .order_by(desc(UserInterest.updated_at), desc(UserInterest.score))
-                .limit(10)
+                .limit(20)
             )
             result = await self.db.execute(query_user_interest)
             result = result.scalars().all()
@@ -118,7 +118,9 @@ class RecommendedController:
                 for cat in results_cat:
                     cat_names_query = select(Category).where(Category.cat_id == cat.cat_id)
                     cat = await self.db.execute(cat_names_query)
-                    cat_names += cat.scalar_one_or_none().cat_name
+                    cat = cat.scalar_one_or_none()
+                    if cat:
+                        cat_names += cat.cat_name.value
 
                 product_name_query = select(Product).where(
                     Product.product_id == product.product_id
@@ -133,6 +135,7 @@ class RecommendedController:
             embedding_vectors = self.embed_model.get_text_embedding_batch(
                 texts=product_embedding_dict["product_name"], show_progress=True
             )
+            embedding_vectors = np.array(embedding_vectors)
             scores = np.array(product_embedding_dict["score"])
             weighted_sum = np.zeros_like(embedding_vectors[0])
 
@@ -142,7 +145,7 @@ class RecommendedController:
             average_vectors = (
                 weighted_sum / np.sum(scores) if np.sum(scores) != 0 else weighted_sum
             )
-
+            
             _index = self.client.collections.get(self.collection_name)
             vector_result = _index.query.near_vector(
                 near_vector=average_vectors,
@@ -161,7 +164,7 @@ class RecommendedController:
             product_get_query = select(Product).where(Product.product_id.in_(product_ids))
             product_results = await self.db.execute(product_get_query)
             products = []
-            for pro in product_results.scalars():
+            for pro in product_results.scalars().all():
                 products.append({"product_id": str(pro.product_id), "product_name" : pro.product_name, "product_price" : pro.price})
            
             return JSONResponse(content=products, status_code=status.HTTP_200_OK)
@@ -175,8 +178,12 @@ class RecommendedController:
         try:
             get_product_query = select(Product).limit(256)
             products = await self.db.execute(get_product_query)
-            products = products.scalars().all()
-            return JSONResponse(content=products, status_code=status.HTTP_200_OK)
+
+            response = []
+            for pro in products.scalars().all():
+                response.append({"product_id": str(pro.product_id), "product_name" : pro.product_name, "product_price" : pro.price})
+           
+            return JSONResponse(content=response, status_code=status.HTTP_200_OK)
         except Exception as e:
             await self.db.rollback()
             logger.error(str(e))

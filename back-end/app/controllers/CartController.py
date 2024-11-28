@@ -14,8 +14,6 @@ from models.UserInterest import UserInterest, InterestScore
 from models.ShopProduct import ShopProduct
 from sqlalchemy.ext.asyncio import AsyncSession
 import logging
-
-
 logger = logging.getLogger(__name__)
 
 

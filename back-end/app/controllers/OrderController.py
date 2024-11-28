@@ -8,76 +8,94 @@ from sqlalchemy.dialects.postgresql import insert
 from models.Order import Order
 from models.OrderItem import OrderItem
 from models.Products import Product
+from models.UserInterest import UserInterest, InterestScore
 from datetime import datetime
 from fastapi.responses import JSONResponse
 from fastapi import HTTPException
 
 
-
 class OrderController:
 
-    def __init__(self, db : AsyncSession = Depends(get_db)):
+    def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
-    
-    async def order_product(self, order_items : list[OderItems], current_user : User):
+
+    async def order_product(self, order_items: list[OderItems], current_user: User):
         try:
             user_order_create_query = (
                 insert(Order)
-                .values(
-                    user_id=current_user.user_id,
-                    created_at=datetime.now()
-                )
-                .returning(Order.order_id)  
+                .values(user_id=current_user.user_id, created_at=datetime.now())
+                .returning(Order.order_id)
             )
             result = await self.db.execute(user_order_create_query)
             order_id = result.scalar_one()
 
             for order_item in order_items:
                 query = insert(OrderItem).values(
-                    order_id = order_id,
-                    product_id = order_item.product_id,
-                    quantity = order_item.quantity,
+                    order_id=order_id,
+                    product_id=order_item.product_id,
+                    quantity=order_item.quantity,
                 )
 
                 query = query.on_conflict_do_update(
-                    index_elements=['order_id', 'product_id'],  
-                    set_={'quantity': order_item.quantity}     
+                    index_elements=["order_id", "product_id"],
+                    set_={"quantity": order_item.quantity},
+                )
+
+                insert_user_interest_query = (
+                    insert(UserInterest)
+                    .values(
+                        product_id=order_item.product_id,
+                        user_id=current_user.user_id,
+                        score=InterestScore.BUY.value,
+                    )
+                    .on_conflict_do_update(
+                        index_elements=["user_id", "product_id"],
+                        set_={"score": InterestScore.CART.value},
+                    )
                 )
 
                 await self.db.execute(query)
-                await self.db.commit()
-            
+                await self.db.execute(insert_user_interest_query)
+
+            await self.db.commit()
             return JSONResponse(
-                content={"Message" : "Order successfully!."},
+                content={"Message": "Order successfully!."},
                 status_code=status.HTTP_200_OK,
             )
-        
+
         except Exception as e:
             await self.db.rollback()
             return JSONResponse(
                 content={"Error": str(e)},
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
-    
-    async def get_order_details(self, order_items : list[OderItems]):
+
+    async def get_order_details(self, order_items: list[OderItems]):
         try:
-            products =[]
+            products = []
             for order_item in order_items:
-                product_query = select(Product).where(Product.product_id == order_item.product_id)
+                product_query = select(Product).where(
+                    Product.product_id == order_item.product_id
+                )
                 result = await self.db.execute(product_query)
                 product = result.scalar_one_or_none()
 
                 if not product:
-                    raise HTTPException(status_code=404, detail=f"Product with id {order_item.product_id} not found")
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Product with id {order_item.product_id} not found",
+                    )
 
-                products.append({
-                    "product_name" : product.product_name,
-                    "product_id" : order_item.product_id,
-                    "quantity" : order_item.quantity,
-                    "price" : product.price,
-                    "total_price" : order_item.quantity * product.price
-                })
-            
+                products.append(
+                    {
+                        "product_name": product.product_name,
+                        "product_id": order_item.product_id,
+                        "quantity": order_item.quantity,
+                        "price": product.price,
+                        "total_price": order_item.quantity * product.price,
+                    }
+                )
+
             return {
                 "order_details": {
                     "products": products,
@@ -89,4 +107,3 @@ class OrderController:
                 content={"Message": f"Error : {e}"},
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
-        
