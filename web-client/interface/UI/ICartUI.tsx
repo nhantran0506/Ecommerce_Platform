@@ -1,11 +1,9 @@
-import { IProductData } from "../Data/IProductData";
-
-export interface ICartItem {
-  product: IProductData;
+interface ICartItem {
+  product: IProductInCart;
   onClick: () => void;
 }
 
-export interface ITableColumProp {
+interface ITableColumProp {
   key: string;
   label: string;
 }
