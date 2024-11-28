@@ -25,11 +25,11 @@ class AdminController:
         self.db = db
 
     async def get_number_user(self, current_user: User):
-        # if current_user.role != UserRoles.ADMIN:
-        #     return JSONResponse(
-        #         content={"Message": "Invalid credentials."},
-        #         status_code=status.HTTP_401_UNAUTHORIZED,
-        #     )
+        if current_user.role != UserRoles.ADMIN:
+            return JSONResponse(
+                content={"Message": "Invalid credentials."},
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
 
         try:
             query = select(User).where(User.deleted_date != None)
@@ -49,19 +49,19 @@ class AdminController:
             )
 
     async def get_number_shops(self, current_user: User):
-        # if current_user.role != UserRoles.ADMIN:
-        #     return JSONResponse(
-        #         content={"Message": "Invalid credentials."},
-        #         status_code=status.HTTP_401_UNAUTHORIZED,
-        #     )
+        if current_user.role != UserRoles.ADMIN:
+            return JSONResponse(
+                content={"Message": "Invalid credentials."},
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
 
         try:
-            query = select(Shop)
+            query = select(func.count(Shop.shop_id))
             result = await self.db.execute(query)
-            shops = result.scalars().all()
+            count = result.scalar()
 
             return JSONResponse(
-                content={"results": str(len(shops))},
+                content={"results": str(count)},
                 status_code=status.HTTP_200_OK,
             )
         except Exception as e:
@@ -73,11 +73,11 @@ class AdminController:
             )
 
     async def get_current_revenue(self, current_user: User):
-        # if current_user.role != UserRoles.ADMIN:
-        #     return JSONResponse(
-        #         content={"Message": "Invalid credentials."},
-        #         status_code=status.HTTP_401_UNAUTHORIZED,
-        #     )
+        if current_user.role != UserRoles.ADMIN:
+            return JSONResponse(
+                content={"Message": "Invalid credentials."},
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
 
         try:
             timestamp_str = datetime.now().strftime("%Y-%m")
@@ -129,11 +129,11 @@ class AdminController:
             )
 
     async def create_admin(self, admin_data: AdminCreate, current_user: User):
-        # if current_user.role != UserRoles.ADMIN:
-        #     return JSONResponse(
-        #         content={"Message": "Invalid credentials."},
-        #         status_code=status.HTTP_401_UNAUTHORIZED,
-        #     )
+        if current_user.role != UserRoles.ADMIN:
+            return JSONResponse(
+                content={"Message": "Invalid credentials."},
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
 
         try:
             query = (
@@ -173,11 +173,11 @@ class AdminController:
             )
 
     async def statistics_income(self, admin_data: AdminGetData, current_user: User):
-        # if current_user.role != UserRoles.ADMIN:
-        #     return JSONResponse(
-        #         content={"Message": "Invalid credentials."},
-        #         status_code=status.HTTP_401_UNAUTHORIZED,
-        #     )
+        if current_user.role != UserRoles.ADMIN:
+            return JSONResponse(
+                content={"Message": "Invalid credentials."},
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
 
         timestamp_dt = admin_data.timestamp
         year = timestamp_dt.year
@@ -262,11 +262,11 @@ class AdminController:
             )
 
     async def statistics_category(self, admin_data: AdminGetData, current_user: User):
-        # if current_user.role != UserRoles.ADMIN:
-        #     return JSONResponse(
-        #         content={"Message": "Invalid credentials."},
-        #         status_code=status.HTTP_401_UNAUTHORIZED,
-        #     )
+        if current_user.role != UserRoles.ADMIN:
+            return JSONResponse(
+                content={"Message": "Invalid credentials."},
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
 
         timestamp_dt = admin_data.timestamp
         year = timestamp_dt.year
@@ -378,7 +378,9 @@ class AdminController:
             logger.error(str(e))
 
             blank_fig = go.Figure()
-            blank_fig.update_layout(xaxis_title="Date", yaxis_title="Percentage of Total Income")
+            blank_fig.update_layout(
+                xaxis_title="Date", yaxis_title="Percentage of Total Income"
+            )
             blank_chart_html = blank_fig.to_html(
                 full_html=False,
                 config={"displaylogo": False},
@@ -392,11 +394,11 @@ class AdminController:
     async def statistics_number_orders(
         self, admin_data: AdminCreate, current_user: User
     ):
-        # if current_user.role != UserRoles.ADMIN:
-        #     return JSONResponse(
-        #         content={"Message": "Invalid credentials."},
-        #         status_code=status.HTTP_401_UNAUTHORIZED,
-        #     )
+        if current_user.role != UserRoles.ADMIN:
+            return JSONResponse(
+                content={"Message": "Invalid credentials."},
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
 
         timestamp_dt = admin_data.timestamp
         year = timestamp_dt.year
@@ -465,9 +467,3 @@ class AdminController:
                 content=blank_chart_html,
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-    async def get_shop_number(self):
-        query = select(func.count()).select_from(Shop)
-        result = await self.db.execute(query)
-        shop_count = result.scalar()
-        return shop_count

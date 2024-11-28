@@ -19,7 +19,7 @@ class OrderStatus(enum.Enum):
 
 class OrderItem(Base):
     __tablename__ = "order_items"
-    order_id : Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("orders.order_id"), primary_key=True)
+    order_id : Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("orders.order_id"), primary_key=True, index=True)
     product_id : Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("products.product_id"), primary_key=True)
     quantity : Mapped[Integer] = mapped_column(Integer, nullable=False, default=0)
 

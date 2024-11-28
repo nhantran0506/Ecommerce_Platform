@@ -23,7 +23,7 @@ class UserRoles(enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    user_id : Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id : Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     first_name: Mapped[String] = mapped_column(String, nullable=False)
     last_name: Mapped[String] = mapped_column(String, nullable=False)
     phone_number: Mapped[String] = mapped_column(String, nullable=True, unique=True)

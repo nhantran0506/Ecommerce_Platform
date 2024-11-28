@@ -1,6 +1,6 @@
 from sqlalchemy import select
 from models.MessageHistory import MessageHistory
-from llama_index.core.llms import ChatMessage
+from llama_index.core.llms import ChatMessage, CompletionResponse, ChatResponse
 from llama_index.llms.ollama import Ollama
 from db_connector import get_db
 from models.Users import User
@@ -20,15 +20,72 @@ from sqlalchemy.dialects.postgresql import insert
 import logging
 from bs4 import BeautifulSoup
 import aiohttp
+import google.generativeai as genai
+from config  import GOOGLE_STUDIO_API, MAX_NUM_CONNECTIONS
 
 logger = logging.getLogger(__name__)
 
 
-class ChatBotController:
-    embedding_engine = EmbeddingController()
 
+class GoogleGemini():
+    def __init__(self, model_name: str ,temperature :int =  0.7, top_p: float = 0.95, top_k : float = 10, num_predict : int = 250):
+        genai.configure(api_key=GOOGLE_STUDIO_API)
+        generation_config = {
+            "temperature": temperature,
+            "top_p": top_p,
+            "top_k": top_k,
+            "max_output_tokens": num_predict,
+            "response_mime_type": "text/plain",
+        }
+
+        self.model = genai.GenerativeModel(
+            model_name=model_name,
+            generation_config=generation_config,
+        )
+    
+    def chat(self, chat_history : list[ChatMessage]):
+        processes_history = []
+        for chat_message in chat_history[:-1]:
+            if chat_message.role == MessageRole.ASSISTANT:
+                processes_history.append({
+                    "role": "model",
+                    "parts": [
+                        chat_message.content + "\n",
+                    ],
+                })
+            
+            if chat_message.role == MessageRole.USER:
+                processes_history.append({
+                    "role": "user",
+                    "parts": [
+                        chat_message.content + "\n",
+                    ],
+                })
+                
+                
+        chat_session = self.model.start_chat(
+            history=processes_history
+        )
+        
+        user_query = chat_history[-1].content
+        response = chat_session.send_message(user_query)
+        return ChatResponse(
+            message=ChatMessage(
+                role=MessageRole.ASSISTANT,
+                content=response._result.candidates[0].content.parts[0].text,
+            )
+        )
+
+    def complete(self, prompt: str):
+        response = self.model.generate_content(prompt)
+        return response
+
+
+class ChatBotController:
+    current_user_llm = []
+        
     def __init__(self, db: AsyncSession = Depends(get_db)):
-        self.llm = Ollama("llama3.2", request_timeout=500)
+        self.llm = GoogleGemini(model_name = "gemini-1.5-pro", num_predict=250)
         self.db = db
         self.embedding_engine = EmbeddingController(self.db)
 
@@ -62,7 +119,7 @@ class ChatBotController:
             return clean_text
         except Exception as e:
             logger.error(f"Error: {str(e)}")
-            return f"Error: {str(e)}"
+            return f"Page content not available right now."
 
     async def add_user(self, user: User, model_name: str):
         try:
@@ -122,6 +179,11 @@ class ChatBotController:
 
     async def answer(self, query_payload: QueryPayload, current_user: User):
         try:
+            # load baclancing
+            self.current_user_llm.append(query_payload.session_id)
+            if len(self.current_user_llm) > MAX_NUM_CONNECTIONS:
+                self.llm = Ollama("llama3.2", request_timeout=500, num_predict = 250)
+                
             query = query_payload.query
             session_id = query_payload.session_id
             model_name = query_payload.model
@@ -172,7 +234,9 @@ class ChatBotController:
             else:
                 intent = "search"
                 llm_response = intent
-
+            
+            
+            self.current_user_llm.pop()
             return JSONResponse(
                 content={
                     "purpose": intent,

@@ -5,9 +5,12 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 import uuid
 
+
 class Shop(Base):
     __tablename__ = "shop"
-    shop_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
+    shop_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4
+    )
     shop_name: Mapped[String] = mapped_column(String, nullable=False)
     shop_address: Mapped[String] = mapped_column(String, nullable=False)
     shop_phone_number: Mapped[String] = mapped_column(String, nullable=False)
@@ -18,4 +21,6 @@ class Shop(Base):
 
     owner: Mapped["User"] = relationship("User", back_populates="shops")
     ratings: Mapped["ShopRating"] = relationship("ShopRating", back_populates="shop")
-    shop_products : Mapped["ShopProduct"] = relationship("ShopProduct", back_populates="shop")
+    shop_products: Mapped["ShopProduct"] = relationship(
+        "ShopProduct", back_populates="shop"
+    )

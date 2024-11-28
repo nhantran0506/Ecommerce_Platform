@@ -5,6 +5,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 import uuid
 
+
 class ShopRating(Base):
     __tablename__ = "shop_rating"
 
@@ -18,7 +19,7 @@ class ShopRating(Base):
     rating_stars: Mapped[Integer] = mapped_column(Integer, nullable=False)
     created_at: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now())
 
-    shop: Mapped["Shop"]= relationship("Shop", back_populates="ratings")
+    shop: Mapped["Shop"] = relationship("Shop", back_populates="ratings")
     user: Mapped["User"] = relationship("User", back_populates="shop_ratings")
 
 
@@ -35,9 +36,5 @@ class ProductRating(Base):
     rating_stars: Mapped[Integer] = mapped_column(Integer, nullable=False)
     created_at: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now())
 
-    product: Mapped["Product"] = relationship(
-        "Product", back_populates="ratings"
-    )
-    user: Mapped["User"] = relationship(
-        "User", back_populates="product_ratings"
-    )
+    product: Mapped["Product"] = relationship("Product", back_populates="ratings")
+    user: Mapped["User"] = relationship("User", back_populates="product_ratings")

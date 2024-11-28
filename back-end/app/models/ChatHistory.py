@@ -17,6 +17,7 @@ class ChatHistory(Base):
         UUID(as_uuid=True),
         ForeignKey("users.user_id"),
         default=uuid.uuid4(),
+        index=True
     )
     model_name: Mapped[String] = mapped_column(String)
 

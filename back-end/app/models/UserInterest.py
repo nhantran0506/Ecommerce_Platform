@@ -24,7 +24,7 @@ class UserInterest(Base):
         UUID(as_uuid=True), ForeignKey("users.user_id"), primary_key=True
     )
     product_id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("products.product_id"), primary_key=True
+        UUID(as_uuid=True), ForeignKey("products.product_id"), primary_key=True, index=True
     )
     score: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     updated_at: Mapped[DateTime] = mapped_column(

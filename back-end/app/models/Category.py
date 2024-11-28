@@ -24,7 +24,7 @@ class Category(Base):
     __tablename__ = "categories"
 
     cat_id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
     )
     cat_name: Mapped[str] = mapped_column(
         Enum(CatTypes, create_type=True, name="cattypes", values_callable=lambda obj: [e.value for e in obj]),

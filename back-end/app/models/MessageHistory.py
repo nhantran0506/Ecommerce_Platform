@@ -15,7 +15,7 @@ class MessageHistory(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     session_id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("chat_history.session_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("chat_history.session_id"), nullable=False, index=True
     )
     content: Mapped[String] = mapped_column(String)
     role: Mapped[String] = mapped_column(
