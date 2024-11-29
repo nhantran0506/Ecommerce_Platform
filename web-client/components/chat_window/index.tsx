@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { Minus } from "react-feather";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import chatIcon from "@/assets/chatbot.png";
 import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
@@ -11,9 +11,7 @@ import { BotIcon } from "lucide-react";
 const hideChatIconPaths = ["/login", "/sign-up"];
 
 export default function ChatWindow() {
-  const [messages, setMessages] = useState<
-    { sender: "You" | "Chatbot"; content: string }[]
-  >([]);
+  const [messages, setMessages] = useState<{ sender: "You" | "Chatbot"; content: string }[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(true);
@@ -21,17 +19,46 @@ export default function ChatWindow() {
   const [fullUrl, setFullUrl] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pathName = usePathname();
+  const router = useRouter();
+  const isInitialMount = useRef(true);
 
+  // Load initial state from localStorage
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (isInitialMount.current) {
+      const storedMessages = localStorage.getItem("chatMessages");
+      const storedMinimizedState = localStorage.getItem("chatMinimized");
+      
+      if (storedMessages) {
+        setMessages(JSON.parse(storedMessages));
+      }
+      
+      if (storedMinimizedState !== null) {
+        setIsMinimized(JSON.parse(storedMinimizedState));
+      }
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const currentUrl = `${window.location.origin}${window.location.pathname}`;
-      setFullUrl(currentUrl);
+      isInitialMount.current = false;
     }
   }, []);
+
+  // Save messages to localStorage
+  useEffect(() => {
+    if (!isInitialMount.current) {
+      localStorage.setItem("chatMessages", JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  // Save minimized state to localStorage
+  useEffect(() => {
+    if (!isInitialMount.current) {
+      localStorage.setItem("chatMinimized", JSON.stringify(isMinimized));
+    }
+  }, [isMinimized]);
+
+  // Handle search navigation
+  const handleSearch = useCallback((searchQuery: string) => {
+    const url = `/products?search=${encodeURIComponent(searchQuery)}`;
+    router.push(url);
+  }, [router]);
 
   const handleSendMessage = useCallback(async () => {
     if (input.trim() && !isLoading) {
@@ -40,12 +67,15 @@ export default function ChatWindow() {
         setIsTyping(true);
 
         setMessages((prev) => [...prev, { sender: "You", content: input }]);
+        setInput("");
+
+        const sessionId = localStorage.getItem("sessionId") || " ";
 
         const payload = {
           model: "llama3.2",
-          session_id: "", //localStorage.getItem("sessionId" || ""),
+          session_id: sessionId,
           query: input,
-          current_route: fullUrl,
+          current_route:`${fullUrl}` ,
         };
 
         const response = await fetch(
@@ -70,26 +100,26 @@ export default function ChatWindow() {
           localStorage.setItem("sessionId", data.session_id);
         }
 
-        if (data.purpose == "search") {
-          // Kelly where mine search ultis ?
-        }
-
-        if (data.response && data.purpose != "search") {
+        // Always add the bot's response to messages
+        if (data.response) {
           setMessages((prev) => [
             ...prev,
             { sender: "Chatbot", content: data.response },
           ]);
         }
 
-        setInput("");
+        // Handle search navigation after adding the message
+        if (data.purpose === "search") {
+          handleSearch(data.response);
+        }
+
       } catch (error) {
         console.error("Error sending message:", error);
         setMessages((prev) => [
           ...prev,
           {
             sender: "Chatbot",
-            content:
-              "The service is not available right now, please try later.",
+            content: "The service is not available right now, please try later.",
           },
         ]);
       } finally {
@@ -97,7 +127,7 @@ export default function ChatWindow() {
         setIsLoading(false);
       }
     }
-  }, [input, isLoading]);
+  }, [input, isLoading, fullUrl, handleSearch]);
 
   const toggleMinimize = () => {
     setIsMinimized(!isMinimized);
@@ -113,14 +143,6 @@ export default function ChatWindow() {
         onClick={toggleMinimize}
         className="fixed bottom-4 right-4 cursor-pointer rounded-full shadow-md bg-black p-2"
       >
-        {/* <Image
-          src={chatIcon}
-          alt="Chat"
-          width={60}
-          height={60}
-          className="rounded-full shadow-lg"
-        /> */}
-
         <BotIcon size={40} color="white" />
       </div>
       {!isMinimized && (

@@ -1,0 +1,113 @@
+[products]
+    *product_id {label:"UUID"}
+    create_at_datetime {label:"TIMESTAMP"}
+    price {label:"DOUBLE PRECISION"}
+    product_description {label:"VARCHAR"}
+    product_name {label:"VARCHAR"}
+[product_rating]
+    *id {label:"UUID"}
+    created_at {label:"TIMESTAMP"}
+    product_id {label:"UUID"}
+    rating_stars {label:"INTEGER"}
+    user_id {label:"UUID"}
+[users]
+    *user_id {label:"UUID"}
+    address {label:"VARCHAR"}
+    deleted_date {label:"TIMESTAMP"}
+    dob {label:"TIMESTAMP"}
+    email {label:"VARCHAR"}
+    first_name {label:"VARCHAR"}
+    last_name {label:"VARCHAR"}
+    phone_number {label:"VARCHAR"}
+    role {label:"VARCHAR(10)"}
+[cart]
+    *cart_id {label:"UUID"}
+    created_at {label:"TIMESTAMP"}
+    user_id {label:"UUID"}
+[orders]
+    *order_id {label:"UUID"}
+    created_at {label:"TIMESTAMP"}
+    user_id {label:"UUID"}
+[image_products]
+    *image_url {label:"VARCHAR"}
+    *product_id {label:"UUID"}
+[user_interest]
+    *product_id {label:"UUID"}
+    *user_id {label:"UUID"}
+    score {label:"INTEGER"}
+    updated_at {label:"TIMESTAMP"}
+[authentication]
+    *auth_id {label:"UUID"}
+    user_id {label:"UUID"}
+    hash_pwd {label:"VARCHAR"}
+    provider {label:"VARCHAR"}
+    provider_user_id {label:"VARCHAR"}
+    temp_code {label:"VARCHAR"}
+    temp_code_expiration {label:"TIMESTAMP"}
+    user_name {label:"VARCHAR"}
+[chat_history]
+    *session_id {label:"UUID"}
+    model_name {label:"VARCHAR"}
+    user_id {label:"UUID"}
+[categories]
+    *cat_id {label:"UUID"}
+    cat_name {label:"VARCHAR(5)"}
+[category_products]
+    *cat_id {label:"UUID"}
+    *product_id {label:"UUID"}
+[shop]
+    *shop_id {label:"UUID"}
+    owner_id {label:"UUID"}
+    shop_address {label:"VARCHAR"}
+    shop_bio {label:"VARCHAR"}
+    shop_name {label:"VARCHAR"}
+    shop_phone_number {label:"VARCHAR"}
+[shop_rating]
+    *id {label:"UUID"}
+    created_at {label:"TIMESTAMP"}
+    rating_stars {label:"INTEGER"}
+    shop_id {label:"UUID"}
+    user_id {label:"UUID"}
+[cart_product]
+    *cart_id {label:"UUID"}
+    *product_id {label:"UUID"}
+    quantity {label:"INTEGER"}
+[order_items]
+    *order_id {label:"UUID"}
+    *product_id {label:"UUID"}
+    modify_at {label:"TIMESTAMP"}
+    order_at {label:"TIMESTAMP"}
+    quantity {label:"INTEGER"}
+    received_at {label:"TIMESTAMP"}
+    status {label:"VARCHAR(10)"}
+[message_history]
+    *message_id {label:"UUID"}
+    content {label:"VARCHAR"}
+    role {label:"VARCHAR(9)"}
+    session_id {label:"UUID"}
+    timestamp {label:"TIMESTAMP"}
+[shop_products]
+    *product_id {label:"UUID"}
+    *shop_id {label:"UUID"}
+
+products."product_id" 1--* product_rating."product_id"
+users."user_id" 1--* product_rating."user_id"
+users."user_id" 1--* cart."user_id"
+users."user_id" 1--* orders."user_id"
+products."product_id" 1--* image_products."product_id"
+products."product_id" 1--* user_interest."product_id"
+users."user_id" 1--* user_interest."user_id"
+authentication."user_id" 1--1 users."user_id"
+users."user_id" 1--* chat_history."user_id"
+categories."cat_id" 1--* category_products."cat_id"
+products."product_id" 1--* category_products."product_id"
+shop."owner_id" 1--1 users."user_id"
+users."user_id" 1--* shop_rating."user_id"
+shop."shop_id" 1--* shop_rating."shop_id"
+cart."cart_id" 1--* cart_product."cart_id"
+products."product_id" 1--* cart_product."product_id"
+orders."order_id" 1--* order_items."order_id"
+products."product_id" 1--* order_items."product_id"
+chat_history."session_id" 1--* message_history."session_id"
+products."product_id" 1--* shop_products."product_id"
+shop."shop_id" 1--* shop_products."shop_id"

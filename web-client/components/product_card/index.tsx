@@ -11,7 +11,11 @@ interface IProductCard {
   onClick: () => void;
 }
 
+const DEFAULT_IMAGE_URL = "https://via.placeholder.com/220x180?text=No+Image";
+
 const ProductCard: React.FC<IProductCard> = ({ product, onClick }) => {
+  const imageUrl = product.image_urls?.[0] || DEFAULT_IMAGE_URL;
+
   return (
     <Card
       className="border-2 rounded-xl w-[220px] h-[280px]"
@@ -19,24 +23,18 @@ const ProductCard: React.FC<IProductCard> = ({ product, onClick }) => {
       onPress={() => onClick()}
     >
       <CardBody className="overflow-visible p-0">
-        {!product.image_urls[0] ? (
-          <div className="h-full w-full">
-            <DefaultImage imgSize={ImageSizeEnum.md} />
-          </div>
-        ) : (
-          <Image
-            shadow="sm"
-            radius="lg"
-            width="100%"
-            alt={product.product_name}
-            className="w-full h-[180px] object-cover"
-            src={product.image_urls[0]}
-            style={{
-              objectFit: "cover",
-              objectPosition: "center",
-            }}
-          />
-        )}
+        <Image
+          shadow="sm"
+          radius="lg"
+          width="100%"
+          alt={product.product_name}
+          className="w-full h-[180px] object-cover"
+          src={imageUrl}
+          style={{
+            objectFit: "cover",
+            objectPosition: "center",
+          }}
+        />
       </CardBody>
       <CardFooter>
         <div className="flex flex-col w-full h-full">

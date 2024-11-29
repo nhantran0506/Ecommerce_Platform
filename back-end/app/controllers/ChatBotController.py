@@ -188,9 +188,10 @@ class ChatBotController:
             session_id = query_payload.session_id
             model_name = query_payload.model
 
-            intent = self.intent_detection(query)
+            intent_check = self.intent_detection(query)
+            intent = ""
             llm_response = ""
-            if intent == "query":
+            if intent_check == "query":
                 nodes = self.embedding_engine.query(query, top_k=5, min_similarity=0.7)
                 context = "".join(node["text"] for node in nodes)
 
@@ -233,7 +234,7 @@ class ChatBotController:
                 llm_response = response.message.content
             else:
                 intent = "search"
-                llm_response = intent
+                llm_response = intent_check
             
             
             self.current_user_llm.pop()

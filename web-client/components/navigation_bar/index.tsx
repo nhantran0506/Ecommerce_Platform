@@ -75,12 +75,14 @@ export default function NavigationBar() {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isVietNamese, setIsVietNamese] = useState<boolean>(false);
   const [isLogin, setIsLogin] = useState<boolean>(false);
-
-  const token = localStorage.getItem("token");
+  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    if (token && token != "") setIsLogin(true);
-  }, [token]);
+    // Access localStorage only in the browser
+    const storedToken = localStorage.getItem("token");
+    setToken(storedToken);
+    if (storedToken && storedToken !== "") setIsLogin(true);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
