@@ -14,6 +14,8 @@ from models.Products import Product
 import plotly.graph_objs as go
 import calendar
 import pandas as pd
+from config import REDIS_TTL
+from redis_config import get_redis
 import logging
 
 
@@ -23,6 +25,8 @@ logger = logging.getLogger(__name__)
 class AdminController:
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
+        self.redis = get_redis()
+        self.redis_ttl = 15
 
     async def get_number_user(self, current_user: User):
         if current_user.role != UserRoles.ADMIN:
@@ -32,12 +36,26 @@ class AdminController:
             )
 
         try:
+            cache_key = "admin:user_count"
+            cached_data = self.redis.get(cache_key)
+            
+            if cached_data:
+                return JSONResponse(
+                    content={"results": cached_data},
+                    status_code=status.HTTP_200_OK,
+                )
+
+         
             query = select(User).where(User.deleted_date != None)
             result = await self.db.execute(query)
             users = result.scalars().all()
+            count = str(len(users))
+
+            
+            self.redis.setex(cache_key, self.redis_ttl, count)
 
             return JSONResponse(
-                content={"results": str(len(users))},
+                content={"results": count},
                 status_code=status.HTTP_200_OK,
             )
         except Exception as e:
@@ -180,25 +198,37 @@ class AdminController:
             )
 
         timestamp_dt = admin_data.timestamp
-        year = timestamp_dt.year
-        month = timestamp_dt.month
-        day = timestamp_dt.day
-        today = datetime.today()
-        start_of_month = datetime(year, month, 1)
-        if year == today.year and month == today.month and day == today.day:
-            end_of_month = datetime(year, month, day, 23, 59, 59)
-        else:
-            _, last_day_of_month = calendar.monthrange(year, month)
-            end_of_month = datetime(year, month, last_day_of_month, 23, 59, 59)
-        date_range = pd.date_range(
-            start=start_of_month,
-            end=end_of_month,
-        )
-        daily_revenue = {date.date(): 0 for date in date_range}
+        cache_key = f"admin:income_stats:{timestamp_dt.strftime('%Y-%m')}"
 
         try:
+            # Try to get cached statistics
+            cached_html = self.redis.get(cache_key)
+            if cached_html:
+                return HTMLResponse(content=cached_html)
+
+            # If no cache, calculate statistics
+            year = timestamp_dt.year
+            month = timestamp_dt.month
+            day = timestamp_dt.day
+            today = datetime.today()
+            start_of_month = datetime(year, month, 1)
+            
+            if year == today.year and month == today.month and day == today.day:
+                end_of_month = datetime(year, month, day, 23, 59, 59)
+            else:
+                _, last_day_of_month = calendar.monthrange(year, month)
+                end_of_month = datetime(year, month, last_day_of_month, 23, 59, 59)
+            
+            date_range = pd.date_range(
+                start=start_of_month,
+                end=end_of_month,
+            )
+            daily_revenue = {date.date(): 0 for date in date_range}
+
+            # Get orders and calculate revenue
             query = select(OrderItem).where(
-                OrderItem.order_at >= start_of_month, OrderItem.order_at <= end_of_month
+                OrderItem.order_at >= start_of_month, 
+                OrderItem.order_at <= end_of_month
             )
             result = await self.db.execute(query)
             orders_in_month = result.scalars().all()
@@ -219,22 +249,24 @@ class AdminController:
                     daily_revenue[order_day] = 0
                 daily_revenue[order_day] += total_price
 
+            # Create the chart
             dates = sorted(daily_revenue.keys())
             revenues = [daily_revenue[date] for date in dates]
 
             fig = go.Figure()
             fig.add_trace(go.Scatter(x=dates, y=revenues, mode="lines", name="Revenue"))
-
             fig.update_layout(xaxis_title="Date", yaxis_title="Income")
 
             chart_html = fig.to_html(
                 full_html=False,
-                config={
-                    "displaylogo": False,
-                },
+                config={"displaylogo": False},
             )
 
+            
+            self.redis.setex(cache_key, self.redis_ttl, chart_html)
+
             return HTMLResponse(content=chart_html)
+
         except Exception as e:
             await self.db.rollback()
             logger.error(str(e))
@@ -269,22 +301,29 @@ class AdminController:
             )
 
         timestamp_dt = admin_data.timestamp
-        year = timestamp_dt.year
-        month = timestamp_dt.month
-        day = timestamp_dt.day
-        today = datetime.today()
-        start_of_month = datetime(year, month, 1)
-        if year == today.year and month == today.month and day == today.day:
-            end_of_month = datetime(year, month, day, 23, 59, 59)
-        else:
-            _, last_day_of_month = calendar.monthrange(year, month)
-            end_of_month = datetime(year, month, last_day_of_month, 23, 59, 59)
-        date_range = pd.date_range(
-            start=start_of_month,
-            end=end_of_month,
-        )
+        cache_key = f"admin:category_stats:{timestamp_dt.strftime('%Y-%m')}"
 
         try:
+            # Try to get cached statistics
+            cached_html = self.redis.get(cache_key)
+            if cached_html:
+                return HTMLResponse(content=cached_html)
+
+            year = timestamp_dt.year
+            month = timestamp_dt.month
+            day = timestamp_dt.day
+            today = datetime.today()
+            start_of_month = datetime(year, month, 1)
+            if year == today.year and month == today.month and day == today.day:
+                end_of_month = datetime(year, month, day, 23, 59, 59)
+            else:
+                _, last_day_of_month = calendar.monthrange(year, month)
+                end_of_month = datetime(year, month, last_day_of_month, 23, 59, 59)
+            date_range = pd.date_range(
+                start=start_of_month,
+                end=end_of_month,
+            )
+
             query = select(OrderItem).where(
                 OrderItem.order_at >= start_of_month, OrderItem.order_at <= end_of_month
             )
@@ -370,6 +409,9 @@ class AdminController:
                 full_html=False,
                 config={"displaylogo": False},
             )
+
+            
+            self.redis.setex(cache_key, self.redis_ttl, chart_html)
 
             return HTMLResponse(content=chart_html)
 

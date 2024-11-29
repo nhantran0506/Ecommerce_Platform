@@ -47,3 +47,8 @@ HOST_DB_PASSWORD = str(os.getenv("HOST_DB_PASSWORD"))
 HOST_DB_URL = str(os.getenv("HOST_DB_URL"))
 HOST_DB_PORT = str(os.getenv("HOST_DB_PORT"))
 HOST_DB_DBNAME = str(os.getenv("HOST_DB_DBNAME"))
+
+REDIS_HOST = str(os.getenv("REDIS_HOST"))
+REDIS_PORT = int(os.getenv("REDIS_PORT"))
+REDIS_PASSWORD = str(os.getenv("REDIS_PASSWORD"))
+REDIS_TTL = int(os.getenv("REDIS_TTL", 3600))  

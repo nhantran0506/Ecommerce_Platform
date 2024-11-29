@@ -20,8 +20,11 @@ from config import (
     WEAVIATE_URL,
     OLLAMA_EMBEDDING_MODEL,
     OLLAMA_BASE_URL,
+    REDIS_TTL
 )
 import logging
+from redis_config import get_redis
+import json
 
 
 logger = logging.getLogger(__name__)
@@ -32,6 +35,7 @@ class RecommendedController:
 
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
+        self.redis = get_redis()
         try:
             self.client = weaviate.connect_to_local(
                 host=WEAVIATE_URL,
@@ -91,7 +95,14 @@ class RecommendedController:
 
     async def get_recommed(self, current_user: User):
         try:
-            self.client.connect()
+            # Try to get cached recommendations
+            cache_key = f"user_recommendations:{current_user.user_id}"
+            cached_data = self.redis.get(cache_key)
+            
+            if cached_data:
+                return JSONResponse(content=json.loads(cached_data), status_code=status.HTTP_200_OK)
+
+            # If no cache, proceed with your existing recommendation logic
             query_user_interest = (
                 select(UserInterest)
                 .where(UserInterest.user_id == current_user.user_id)
@@ -167,6 +178,13 @@ class RecommendedController:
             for pro in product_results.scalars().all():
                 products.append({"product_id": str(pro.product_id), "product_name" : pro.product_name, "product_price" : pro.price})
            
+            # Before returning, cache the results
+            self.redis.setex(
+                cache_key,
+                REDIS_TTL,
+                json.dumps(products)
+            )
+
             return JSONResponse(content=products, status_code=status.HTTP_200_OK)
 
         except Exception as e:

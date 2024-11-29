@@ -12,7 +12,8 @@ from config import (
     OLLAMA_BASE_URL,
     WEAVIATE_URL,
     OLLAMA_EMBEDDING_MODEL,
-    VECTOR_DIMENSIONS
+    VECTOR_DIMENSIONS,
+    REDIS_TTL
 )
 from models.CategoryProduct import CategoryProduct
 from models.Category import Category
@@ -28,6 +29,8 @@ import weaviate.classes.query as wq
 from llama_index.core.vector_stores import MetadataFilters, ExactMatchFilter
 from llama_index.core.postprocessor import SimilarityPostprocessor
 import logging
+from redis_config import get_redis
+import json
 
 
 logger = logging.getLogger(__name__)
@@ -39,6 +42,7 @@ class EmbeddingController:
 
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
+        self.redis = get_redis()
         try:
             self.client = weaviate.connect_to_local(
                 host=WEAVIATE_URL,
@@ -216,6 +220,14 @@ class EmbeddingController:
 
     async def search_product(self, user_query: str):
         try:
+            # Try to get cached search results
+            cache_key = f"product_search:{hash(user_query)}"
+            cached_data = self.redis.get(cache_key)
+            
+            if cached_data:
+                return JSONResponse(content=json.loads(cached_data), status_code=status.HTTP_200_OK)
+
+            # If no cache, proceed with your existing search logic
             vector_result = self.recommend_index.retrieve(user_query)
 
             if not vector_result:
@@ -250,6 +262,13 @@ class EmbeddingController:
                         "product_price": pro.price,
                     }
                 )
+
+            # Before returning, cache the results
+            self.redis.setex(
+                cache_key,
+                REDIS_TTL,
+                json.dumps(products)
+            )
 
             return JSONResponse(content=products, status_code=status.HTTP_200_OK)
 
