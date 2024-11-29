@@ -12,6 +12,7 @@ from config import (
     OLLAMA_BASE_URL,
     WEAVIATE_URL,
     OLLAMA_EMBEDDING_MODEL,
+    VECTOR_DIMENSIONS
 )
 from models.CategoryProduct import CategoryProduct
 from models.Category import Category
@@ -49,6 +50,7 @@ class EmbeddingController:
                 model_name=OLLAMA_EMBEDDING_MODEL,
                 base_url=OLLAMA_BASE_URL,
                 request_timeout=500.0,
+                dimensions = VECTOR_DIMENSIONS,
                 show_progress=True,
             )
 
@@ -160,7 +162,7 @@ class EmbeddingController:
                 if cat_data:
                     cat_names += cat_data.cat_name.value
 
-            product_text = f"{product.product_name * 3} {cat_names * 2}"
+            product_text = f"{' '.join([product.product_name] * 2)} {' '.join(cat_names * 1)}"
 
             document = Document(
                 text=product_text,

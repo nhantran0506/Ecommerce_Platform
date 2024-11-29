@@ -127,7 +127,7 @@ class RecommendedController:
                 )
                 product_obj = await self.db.execute(product_name_query)
                 product_obj = product_obj.scalar_one_or_none()
-                product_text = f"{product_obj.product_name * 3} {cat_names * 2}"
+                product_text = f"{' '.join([product.product_name] * 2)} {' '.join(cat_names * 1)}"
 
                 product_embedding_dict["product_name"].append(product_text)
                 product_embedding_dict["score"].append(product.score)

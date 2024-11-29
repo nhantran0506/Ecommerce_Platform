@@ -21,14 +21,25 @@ import logging
 from bs4 import BeautifulSoup
 import aiohttp
 import google.generativeai as genai
-from config  import GOOGLE_STUDIO_API, MAX_NUM_CONNECTIONS
+from config import (
+    GOOGLE_STUDIO_API,
+    MAX_NUM_CONNECTIONS,
+    GOOGLE_CHAT_MODEL,
+    OLLAMA_CHAT_MODEL,
+)
 
 logger = logging.getLogger(__name__)
 
 
-
-class GoogleGemini():
-    def __init__(self, model_name: str ,temperature :int =  0.7, top_p: float = 0.95, top_k : float = 10, num_predict : int = 250):
+class GoogleGemini:
+    def __init__(
+        self,
+        model_name: str,
+        temperature: int = 0.7,
+        top_p: float = 0.95,
+        top_k: float = 10,
+        num_predict: int = 250,
+    ):
         genai.configure(api_key=GOOGLE_STUDIO_API)
         generation_config = {
             "temperature": temperature,
@@ -42,31 +53,32 @@ class GoogleGemini():
             model_name=model_name,
             generation_config=generation_config,
         )
-    
-    def chat(self, chat_history : list[ChatMessage]):
+
+    def chat(self, chat_history: list[ChatMessage]):
         processes_history = []
         for chat_message in chat_history[:-1]:
             if chat_message.role == MessageRole.ASSISTANT:
-                processes_history.append({
-                    "role": "model",
-                    "parts": [
-                        chat_message.content + "\n",
-                    ],
-                })
-            
+                processes_history.append(
+                    {
+                        "role": "model",
+                        "parts": [
+                            chat_message.content + "\n",
+                        ],
+                    }
+                )
+
             if chat_message.role == MessageRole.USER:
-                processes_history.append({
-                    "role": "user",
-                    "parts": [
-                        chat_message.content + "\n",
-                    ],
-                })
-                
-                
-        chat_session = self.model.start_chat(
-            history=processes_history
-        )
-        
+                processes_history.append(
+                    {
+                        "role": "user",
+                        "parts": [
+                            chat_message.content + "\n",
+                        ],
+                    }
+                )
+
+        chat_session = self.model.start_chat(history=processes_history)
+
         user_query = chat_history[-1].content
         response = chat_session.send_message(user_query)
         return ChatResponse(
@@ -83,9 +95,9 @@ class GoogleGemini():
 
 class ChatBotController:
     current_user_llm = []
-        
+
     def __init__(self, db: AsyncSession = Depends(get_db)):
-        self.llm = GoogleGemini(model_name = "gemini-1.5-pro", num_predict=250)
+        self.llm = Ollama(OLLAMA_CHAT_MODEL, request_timeout=500, num_predict=250)
         self.db = db
         self.embedding_engine = EmbeddingController(self.db)
 
@@ -182,8 +194,8 @@ class ChatBotController:
             # load baclancing
             self.current_user_llm.append(query_payload.session_id)
             if len(self.current_user_llm) > MAX_NUM_CONNECTIONS:
-                self.llm = Ollama("llama3.2", request_timeout=500, num_predict = 250)
-                
+                self.llm = GoogleGemini(model_name=GOOGLE_CHAT_MODEL, num_predict=250)
+
             query = query_payload.query
             session_id = query_payload.session_id
             model_name = query_payload.model
@@ -235,8 +247,7 @@ class ChatBotController:
             else:
                 intent = "search"
                 llm_response = intent_check
-            
-            
+
             self.current_user_llm.pop()
             return JSONResponse(
                 content={
