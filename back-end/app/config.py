@@ -32,10 +32,16 @@ OLLAMA_EMBEDDING_MODEL = str(os.getenv("OLLAMA_EMBEDDING_MODEL"))
 OLLAMA_BASE_URL = str(os.getenv("OLLAMA_BASE_URL"))
 WEAVIATE_URL = str(os.getenv("WEAVIATE_URL"))
 
-CDN_BASE_URL = str(os.getenv("CDN_BASE_URL"))
+CDN_SERVER_URL = str(os.getenv("CDN_SERVER_URL"))
 CDN_UPLOAD_URL = str(os.getenv("CDN_UPLOAD_URL"))
 CDN_GET_URL = str(os.getenv("CDN_GET_URL"))
 CDN_DELETE_URL = str(os.getenv("CDN_DELETE_URL"))
 
 GOOGLE_STUDIO_API = str(os.getenv("GOOGLE_STUDIO_API"))
 MAX_NUM_CONNECTIONS = int(os.getenv("MAX_NUM_CONNECTIONS"))
+
+HOST_DB_USERNAME = str(os.getenv("HOST_DB_USERNAME"))
+HOST_DB_PASSWORD = str(os.getenv("HOST_DB_PASSWORD"))
+HOST_DB_URL = str(os.getenv("HOST_DB_URL"))
+HOST_DB_PORT = str(os.getenv("HOST_DB_PORT"))
+HOST_DB_DBNAME = str(os.getenv("HOST_DB_DBNAME"))

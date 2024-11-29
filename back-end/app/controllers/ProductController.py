@@ -16,7 +16,7 @@ from models.ImageProduct import ImageProduct
 from controllers.EmbeddingController import EmbeddingController
 import aiohttp
 import asyncio
-from config import CDN_BASE_URL, CDN_UPLOAD_URL, CDN_GET_URL, CDN_DELETE_URL
+from config import CDN_SERVER_URL, CDN_UPLOAD_URL, CDN_GET_URL, CDN_DELETE_URL
 import logging
 
 logger = logging.getLogger(__name__)
@@ -194,11 +194,11 @@ class ProductController:
                     content_type=image.content_type,
                 )
                 async with session.post(
-                    url=f"{CDN_BASE_URL}/{CDN_UPLOAD_URL}", data=form
+                    url=f"{CDN_SERVER_URL}/{CDN_UPLOAD_URL}", data=form
                 ) as response:
                     if response.status == 200:
                         result = await response.json()
-                        logger.info(f"{CDN_BASE_URL}/{CDN_UPLOAD_URL}")
+                        logger.info(f"{CDN_SERVER_URL}/{CDN_UPLOAD_URL}")
                         return {
                             "success": True,
                             "product_image": result["product_image"],
@@ -215,7 +215,7 @@ class ProductController:
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    f"{CDN_BASE_URL}/{CDN_GET_URL}/{image_url}"
+                    f"{CDN_SERVER_URL}/{CDN_GET_URL}/{image_url}"
                 ) as response:
                     if response.status == 200:
                         result = await response.json()
@@ -232,7 +232,7 @@ class ProductController:
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.delete(
-                    f"{CDN_BASE_URL}/{CDN_DELETE_URL}/{image_url}"
+                    f"{CDN_SERVER_URL}/{CDN_DELETE_URL}/{image_url}"
                 ) as response:
                     if response.status == 200:
                         result = await response.json()
