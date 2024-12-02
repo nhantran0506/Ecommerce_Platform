@@ -41,15 +41,15 @@ class CartController:
             for cart_items in product_list:
                 if cart_items.quantity > 0:
 
-                    if shop:
-                        check_user_shop_product_query = select(ShopProduct).where(ShopProduct.product_id == cart_items.product_id)
-                        check_user_shop_product = await self.db.execute(check_user_shop_product_query)
-                        check_user_shop_product = check_user_shop_product.scalar_one_or_none()
-                        if check_user_shop_product:
-                            return JSONResponse(
-                                content={"error" : "Shopper can not buy their own product."},
-                                status_code=status.HTTP_403_FORBIDDEN
-                            )
+                    # if shop:
+                    #     check_user_shop_product_query = select(ShopProduct).where(ShopProduct.product_id == cart_items.product_id)
+                    #     check_user_shop_product = await self.db.execute(check_user_shop_product_query)
+                    #     check_user_shop_product = check_user_shop_product.scalar_one_or_none()
+                    #     if check_user_shop_product:
+                    #         return JSONResponse(
+                    #             content={"error" : "Shopper can not buy their own product."},
+                    #             status_code=status.HTTP_403_FORBIDDEN
+                    #         )
 
 
 

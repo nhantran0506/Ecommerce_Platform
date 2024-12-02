@@ -52,3 +52,9 @@ REDIS_HOST = str(os.getenv("REDIS_HOST"))
 REDIS_PORT = int(os.getenv("REDIS_PORT"))
 REDIS_PASSWORD = str(os.getenv("REDIS_PASSWORD"))
 REDIS_TTL = int(os.getenv("REDIS_TTL", 3600))  
+
+
+VNPAY_TMN_CODE = str(os.getenv("VNPAY_TMN_CODE"))
+VNPAY_HASH_SECRET_KEY = str(os.getenv("VNPAY_HASH_SECRET_KEY"))
+VNPAY_PAYMENT_URL = str(os.getenv("VNPAY_PAYMENT_URL"))
+VNPAY_RETURN_URL = str(os.getenv("VNPAY_RETURN_URL"))

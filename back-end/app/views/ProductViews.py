@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, Depends, File, Form, UploadFile
+from fastapi import APIRouter, status, Depends, File, Form, UploadFile, Request
 from fastapi.responses import JSONResponse
 import logging
 from middlewares import token_config
@@ -7,6 +7,8 @@ from controllers.ProductController import ProductController
 from controllers.EmbeddingController import EmbeddingController
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
+from datetime import datetime
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/products", tags=["products"])
@@ -51,7 +53,8 @@ async def create_product(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-@router.post("/product_update") 
+
+@router.post("/product_update")
 async def product_update(
     product_name: str = Form(...),
     product_id: uuid.UUID = Form(...),
@@ -62,7 +65,7 @@ async def product_update(
     product_controller: ProductController = Depends(),
     current_user=Depends(token_config.get_current_user),
 ):
-    try: 
+    try:
         product = ProductUpdateSerializer(
             product_id=product_id,
             product_name=product_name,
@@ -70,11 +73,9 @@ async def product_update(
             price=price,
             category=category,
         )
-        
+
         return await product_controller.update_product(
-            product_update=product, 
-            image_list=images, 
-            current_user=current_user
+            product_update=product, image_list=images, current_user=current_user
         )
     except Exception as e:
         logger.error(str(e))
@@ -82,7 +83,6 @@ async def product_update(
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-
 
 
 @router.get("/search_products")
@@ -97,8 +97,6 @@ async def product_search(
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-
-
 
 
 @router.delete("/{product_id}")
@@ -119,8 +117,6 @@ async def product_delete(
         )
 
 
-
-
 @router.get("/{product_id}")
 async def get_product(
     product_id: uuid.UUID,
@@ -137,3 +133,5 @@ async def get_product(
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+

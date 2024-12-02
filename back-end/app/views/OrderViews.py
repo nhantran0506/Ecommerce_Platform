@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, status, Depends, Request
 from fastapi.responses import JSONResponse
 import logging
 from middlewares import token_config
@@ -22,9 +22,9 @@ async def get_order_details(order_items : List[OderItems], order_controller : Or
         )
 
 @router.post("/order_products")
-async def order_products(order_items : List[OderItems], order_controller : OrderController = Depends(), current_user = Depends(token_config.get_current_user)):
+async def order_products(order_items : List[OderItems], request: Request, order_controller : OrderController = Depends(), current_user = Depends(token_config.get_current_user)):
     try:
-        return await order_controller.order_product(order_items, current_user)
+        return await order_controller.order_product(order_items=order_items, request=request, current_user=current_user)
     except Exception as e:
         logger.error(str(e))
 
@@ -35,9 +35,9 @@ async def order_products(order_items : List[OderItems], order_controller : Order
 
 
 @router.post("/order_products_all")
-async def order_products_all(order_controller : OrderController = Depends(), current_user = Depends(token_config.get_current_user)):
+async def order_products_all(request: Request, order_controller : OrderController = Depends(), current_user = Depends(token_config.get_current_user)):
     try:
-        return await order_controller.order_products_all(current_user)
+        return await order_controller.order_products_all(request=request, current_user=current_user)
     except Exception as e:
         logger.error(str(e))
 

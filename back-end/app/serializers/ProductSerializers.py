@@ -55,3 +55,19 @@ class ProductUpdateSerializer(ProductBase):
     class ConfigDict:
         orm_mode = True 
         from_attributes=True
+
+class VNPayPaymentCreate(BaseModel):
+    order_id: str
+    amount: int
+    order_desc: str
+    language: Optional[str] = "vn"
+
+class VNPayQueryRequest(BaseModel):
+    order_id: str
+    trans_date: str
+
+class VNPayRefundRequest(BaseModel):
+    order_id: str
+    amount: int
+    trans_date: str
+    order_desc: str
