@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
 
 export default function ForgotPasswordPage() {
@@ -10,6 +10,8 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = pathname.split("/")[1];
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -17,13 +19,16 @@ export default function ForgotPasswordPage() {
     setSuccess(false);
 
     try {
-      const response = await fetch(`${API_BASE_URL}${API_ROUTES.FORGOT_PASSWORD}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}${API_ROUTES.FORGOT_PASSWORD}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to send reset password email");
@@ -32,7 +37,7 @@ export default function ForgotPasswordPage() {
       localStorage.setItem("userEmail", email);
       setSuccess(true);
       setTimeout(() => {
-        router.push("/validate-code");
+        router.push(`/${locale}/validate-code`);
       }, 3000);
     } catch (error) {
       setError("Failed to send reset password email. Please try again.");

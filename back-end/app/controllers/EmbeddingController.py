@@ -82,7 +82,7 @@ class EmbeddingController:
                 vector_store=self.recommend_vector_store
             )
 
-            postprocessor = SimilarityPostprocessor(similarity_cutoff=0.0)
+            postprocessor = SimilarityPostprocessor(similarity_cutoff=0.4)
             self.faq_index = VectorStoreIndex.from_vector_store(
                 self.faq_vector_store,
                 embed_model=self.embed_model,

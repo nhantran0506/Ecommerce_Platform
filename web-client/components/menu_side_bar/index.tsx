@@ -5,9 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 const MenuSideBar: React.FC<IMenuSideBar> = ({ listTabs, parentEndPoint }) => {
   const pathname = usePathname();
   const router = useRouter();
+  const locale = pathname.split("/")[1];
 
   const handleTabClick = (endpoint: string) => {
-    router.replace(`/${parentEndPoint}/${endpoint}`);
+    router.replace(`/${locale}/${parentEndPoint}/${endpoint}`);
   };
 
   console.log(pathname);
@@ -17,7 +18,7 @@ const MenuSideBar: React.FC<IMenuSideBar> = ({ listTabs, parentEndPoint }) => {
       {listTabs.map((item, index) => (
         <div
           className={`flex gap-2 mb-8 items-center cursor-pointer ${
-            pathname === `/${parentEndPoint}/${item.endpoint}`
+            pathname === `/${locale}/${parentEndPoint}/${item.endpoint}`
               ? "text-black"
               : "text-gray-400"
           }`}

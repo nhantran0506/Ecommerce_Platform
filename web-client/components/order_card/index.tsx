@@ -1,6 +1,5 @@
 "use client";
 import { OrderStatus } from "@/constant/enum";
-import { IProductData } from "@/interface/Data/IProductData";
 import {
   Card,
   CardHeader,
@@ -10,7 +9,7 @@ import {
   Button,
 } from "@nextui-org/react";
 import { Calendar, Clock } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ReactNode } from "react";
 
 interface IOrderCardInfo {
@@ -32,6 +31,8 @@ interface IOrderCard {
 
 const OrderCard: React.FC<IOrderCard> = ({ id, status, listOrderItem }) => {
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = pathname.split("/")[1];
 
   const listOrderCardOption: IOrderCardInfo[] = [
     {
@@ -47,7 +48,7 @@ const OrderCard: React.FC<IOrderCard> = ({ id, status, listOrderItem }) => {
   ];
 
   const navigateToOrderDetail = () => {
-    router.push(`/order/${id}`);
+    router.push(`/${locale}/order/${id}`);
   };
 
   return (

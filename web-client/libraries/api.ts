@@ -23,4 +23,5 @@ export const API_ROUTES = {
   GET_SEARCH_PRODUCTS: "/products/search_products",
   ADD_PRODUCT_TO_CART: "/cart/update_products",
   GET_PRODUCT_IN_CART: "/cart/get_cart_details",
+  ORDER_PRODUCT: "/order/order_products",
 };
