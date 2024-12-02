@@ -11,7 +11,9 @@ import { BotIcon } from "lucide-react";
 const hideChatIconPaths = ["/login", "/sign-up"];
 
 export default function ChatWindow() {
-  const [messages, setMessages] = useState<{ sender: "You" | "Chatbot"; content: string }[]>([]);
+  const [messages, setMessages] = useState<
+    { sender: "You" | "Chatbot"; content: string }[]
+  >([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(true);
@@ -20,6 +22,8 @@ export default function ChatWindow() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pathName = usePathname();
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = pathname.split("/")[1];
   const isInitialMount = useRef(true);
 
   // Load initial state from localStorage
@@ -27,11 +31,11 @@ export default function ChatWindow() {
     if (isInitialMount.current) {
       const storedMessages = localStorage.getItem("chatMessages");
       const storedMinimizedState = localStorage.getItem("chatMinimized");
-      
+
       if (storedMessages) {
         setMessages(JSON.parse(storedMessages));
       }
-      
+
       if (storedMinimizedState !== null) {
         setIsMinimized(JSON.parse(storedMinimizedState));
       }
@@ -55,10 +59,13 @@ export default function ChatWindow() {
   }, [isMinimized]);
 
   // Handle search navigation
-  const handleSearch = useCallback((searchQuery: string) => {
-    const url = `/products?search=${encodeURIComponent(searchQuery)}`;
-    router.push(url);
-  }, [router]);
+  const handleSearch = useCallback(
+    (searchQuery: string) => {
+      const url = `/products?search=${encodeURIComponent(searchQuery)}`;
+      router.push(`/${locale}${url}`);
+    },
+    [router]
+  );
 
   const handleSendMessage = useCallback(async () => {
     if (input.trim() && !isLoading) {
@@ -75,7 +82,7 @@ export default function ChatWindow() {
           model: "llama3.2",
           session_id: sessionId,
           query: input,
-          current_route:`${fullUrl}` ,
+          current_route: `${fullUrl}`,
         };
 
         const response = await fetch(
@@ -112,14 +119,14 @@ export default function ChatWindow() {
         if (data.purpose === "search") {
           handleSearch(data.response);
         }
-
       } catch (error) {
         console.error("Error sending message:", error);
         setMessages((prev) => [
           ...prev,
           {
             sender: "Chatbot",
-            content: "The service is not available right now, please try later.",
+            content:
+              "The service is not available right now, please try later.",
           },
         ]);
       } finally {

@@ -150,7 +150,7 @@ export default function NavigationBar() {
               isActive={pathname == item.link ? true : false}
               key={index}
             >
-              <Link color="foreground" href={item.link}>
+              <Link color="foreground" href={`/${locale}${item.link}`}>
                 {item.name}
               </Link>
             </NavbarItem>
