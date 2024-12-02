@@ -45,3 +45,15 @@ async def order_products_all(request: Request, order_controller : OrderControlle
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+@router.post("/get_order_history")
+async def get_order_history(order_controller : OrderController = Depends(), current_user = Depends(token_config.get_current_user)):
+    try:
+        return await order_controller.get_order_history(current_user=current_user)
+    except Exception as e:
+        logger.error(str(e))
+
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )

@@ -29,8 +29,6 @@ import {
 import productAPIs from "@/api/product";
 import cartAPIs from "@/api/cart";
 import { CircleCheck } from "lucide-react";
-// import { IProductData } from "@/interface/Data/IProductData";
-// import { productlist } from "@/data/data";
 
 const ProductDetailPage = ({ params }: { params: { id: string } }) => {
   const maxNumberOfProduct = 10;
@@ -38,36 +36,38 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
   const [loading, setLoading] = useState(false);
   const [numberOfProduct, setNumberOfProduct] = useState<number>(1);
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const productId = params?.id;
 
   useEffect(() => {
     const fetchProductDetail = async () => {
+      if (!productId) return;
+      
       try {
-        const res = await productAPIs.getProductById(params.id);
+        setLoading(true);
+        const res = await productAPIs.getProductById(productId);
         setProduct(res);
-        setLoading(false);
       } catch (error) {
         console.error("Failed to fetch products:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    setLoading(true);
     fetchProductDetail();
-  }, [params.id]);
+  }, [productId]);
 
   const handleAddToCart = async () => {
     try {
-      // const reqBody: IReqAddToCart = {
-      //   product_id: params.id,
-      //   quantity: numberOfProduct,
-      // };
+      setLoading(true);
+      const reqBody: ICartModify[] = [{
+        product_id: productId,
+        quantity: numberOfProduct,
+      }];
 
-      // const res = await cartAPIs.addToCart(reqBody);
-
-      // if (res) {
-      onOpen();
-      // }
+      await cartAPIs.updateCart(reqBody);
+      onOpen(); // Show success modal
     } catch (error) {
-      console.error("Failed to fetch products:", error);
+      console.error("Failed to add to cart:", error);
     } finally {
       setLoading(false);
     }

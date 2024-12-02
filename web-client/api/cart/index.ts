@@ -49,6 +49,28 @@ class Cart {
     const data = (await response.json()) as IResCartProductList;
     return data;
   }
+
+  async updateCart(cartItems: ICartModify[]): Promise<boolean> {
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(
+      `${API_BASE_URL}${API_ROUTES.UPDATE_CART}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(cartItems),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Update cart failed with status ${response.status}`);
+    }
+
+    return true;
+  }
 }
 
 export const cartAPIs = new Cart();

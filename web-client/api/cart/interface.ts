@@ -15,5 +15,15 @@ interface IResCartProductList {
   cart_details: {
     products: IProductInCart[];
     created_at: string;
+    total_price: number;
   };
+}
+
+interface ICartModify {
+  product_id: string;
+  quantity: number;
+}
+
+interface IUpdateCartRequest {
+  cart_items: ICartModify[];
 }

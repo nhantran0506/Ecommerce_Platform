@@ -25,37 +25,41 @@ const CartPage = () => {
 
   const [loading, setLoading] = useState(false);
   const [productlist, setProductList] = useState<IProductInCart[]>();
+  const [cartData, setCartData] = useState<IResCartProductList | null>(null);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchCart = async () => {
       try {
         setLoading(true);
-
-        const res = await cartAPIs.getProductInCart();
-
-        setProductList(res.cart_details.products);
+        const data = await cartAPIs.getProductInCart();
+        setCartData(data);
+        setProductList(data.cart_details.products);
       } catch (error) {
-        console.error("Failed to fetch products in cart:", error);
+        console.error("Failed to fetch cart:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchCart();
   }, []);
 
   const handleAddToCart = async (id: string, val: number) => {
     try {
-      const reqBody: IReqAddToCart = {
+      setLoading(true);
+      const cartModify: ICartModify[] = [{
         product_id: id,
         quantity: val,
-      };
+      }];
 
-      await cartAPIs.addToCart(reqBody);
-
-      console.log(`Update ${id} with value ${val}`);
+      await cartAPIs.updateCart(cartModify);
+      
+      // Refresh cart data after update
+      const updatedCart = await cartAPIs.getProductInCart();
+      setCartData(updatedCart);
+      setProductList(updatedCart.cart_details.products);
     } catch (error) {
-      console.error("Failed to fetch products:", error);
+      console.error("Failed to update cart:", error);
     } finally {
       setLoading(false);
     }
@@ -101,33 +105,29 @@ const CartPage = () => {
     },
   ];
 
-  const totalPriceOfAllCart = (
-    productlist: IProductInCart[] | undefined
-  ): number => {
-    if (productlist)
-      return productlist?.reduce((sum, item) => sum + item.total_price, 0);
-
-    return 0;
-  };
-
   const handleCheckOut = async () => {
     try {
-      setLoading(true);
+      if (!productlist || productlist.length === 0) {
+        console.error("Cart is empty");
+        return;
+      }
 
-      const reqBody: IOrderProduct[] = productlist
-        ? productlist.map(({ product_id, quantity }) => ({
-            product_id,
-            quantity,
-          }))
-        : [];
+      setLoading(true);
+      const reqBody: IOrderProduct[] = productlist.map(({ product_id, quantity }) => ({
+        product_id,
+        quantity,
+      }));
 
       const res = await orderAPIs.checkout(reqBody);
 
-      if (res) {
-        router.push("/cart/complete");
+      if (res.payment_url) {
+        // Force redirect to payment URL
+        window.location.replace(res.payment_url);
+      } else {
+        console.error("No payment URL received");
       }
     } catch (error) {
-      console.error("Failed to fetch products:", error);
+      console.error("Failed to process checkout:", error);
     } finally {
       setLoading(false);
     }
@@ -194,19 +194,15 @@ const CartPage = () => {
           <p className="text-[#939699] font-bold">Back to shopping</p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <p>
-            Total Price:{" "}
-            <span className="font-bold">
-              ${totalPriceOfAllCart(productlist)}
-            </span>
-          </p>
-
+        <div className="flex justify-between items-center mt-4">
+          <div className="text-xl font-bold">
+            Total: ${cartData?.cart_details.total_price.toFixed(2) || "0.00"}
+          </div>
           <Button
-            onClick={() => handleCheckOut()}
-            className="text-white bg-black rounded-full py-2 px-8 font-bold"
+            className="bg-black text-white px-8 rounded-full"
+            onClick={handleCheckOut}
           >
-            Checkout
+            Check out
           </Button>
         </div>
       </div>

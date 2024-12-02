@@ -154,7 +154,3 @@ class CartController:
                 content={"Message": f"Error : {e}"},
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
-    
-
-    async def cart_buy(self, cureent_user):
-        pass

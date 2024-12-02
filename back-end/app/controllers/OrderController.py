@@ -292,3 +292,52 @@ class OrderController:
                 content={"Error": str(e)},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+    
+
+    async def get_order_history(self, current_user : User):
+        try:
+            get_all_order_query = select(Order).where(Order.user_id == current_user.user_id)
+            all_orders = await self.db.execute(get_all_order_query)
+            all_orders = all_orders.scalars().all()
+
+            response = {}
+
+            for order in all_orders or []:
+                get_orderItems = select(OrderItem).where(OrderItem.order_id == order.order_id)
+                orderItems = await self.db.execute(get_orderItems)
+                orderItems = orderItems.scalars().all()
+
+                product_list_info = []
+
+                for orderItem in orderItems or []:
+                    get_product_query = select(Product).where(Product.product_id == orderItem.product_id)
+                    product = await self.db.execute(get_product_query)
+                    product = product.scalar_one_or_none()
+                    if product:
+                        product_list_info.append(
+                            {
+                                "product_id" : str(product.product_id),
+                                "product_name" : product.product_name,
+                                "product_description" : product.product_description,
+                                "price" : product.price,
+                                "quantity" : orderItem.quantity,
+                                "total" : orderItem.quantity * product.price
+                            }
+                            
+                        )
+
+                response[str(order.order_id)] = {
+                    "order_id" : str(order.order_id),
+                    "product" : product_list_info,
+                    "created_at" : str(order.created_at),
+                }
+
+            return JSONResponse(content=response, status_code=status.HTTP_200_OK)
+        except Exception as e:
+            await self.db.rollback()
+            print(str(e))
+            return JSONResponse(
+                content={"error" :"Unable to get order history."},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
