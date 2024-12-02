@@ -72,6 +72,8 @@ const userDropdownOption: IDropDownOption[] = [
 export default function NavigationBar() {
   const router = useRouter();
   const pathname = usePathname();
+  const locale = pathname.split("/")[1];
+
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isVietNamese, setIsVietNamese] = useState<boolean>(false);
   const [isLogin, setIsLogin] = useState<boolean>(false);
@@ -88,22 +90,22 @@ export default function NavigationBar() {
     localStorage.removeItem("token");
     setIsLogin(false);
 
-    router.push(MenuEnum.LogIn);
+    router.push(`/${locale}${MenuEnum.LogIn}`);
   };
 
   const handleNavigate = (key: string) => {
     switch (key) {
       case MenuEnum.UserProfile:
-        router.push(MenuEnum.UserProfile);
+        router.push(`/${locale}${MenuEnum.UserProfile}`);
         break;
       case MenuEnum.Cart:
-        router.push(MenuEnum.Cart);
+        router.push(`/${locale}${MenuEnum.Cart}`);
         break;
       case MenuEnum.Logout:
         handleLogout();
         break;
       case MenuEnum.LogIn:
-        router.push(MenuEnum.LogIn);
+        router.push(`/${locale}${MenuEnum.LogIn}`);
         break;
       default:
         break;

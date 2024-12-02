@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, FormEvent, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
 import PasswordInput from "@/components/password_input";
 import SectionHeader from "@/components/section_header";
@@ -16,6 +16,9 @@ export default function ChangePasswordPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = pathname.split("/")[1];
+
   const [email, setEmail] = useState<string | null>(null);
   const [tempCode, setTempCode] = useState<string | null>(null);
 
@@ -65,7 +68,11 @@ export default function ChangePasswordPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}${API_ROUTES.CHANGE_PASSWORD_WITH_CODE}?temp_code=${encodeURIComponent(tempCode)}&user_email=${encodeURIComponent(email)}`,
+        `${API_BASE_URL}${
+          API_ROUTES.CHANGE_PASSWORD_WITH_CODE
+        }?temp_code=${encodeURIComponent(
+          tempCode
+        )}&user_email=${encodeURIComponent(email)}`,
         {
           method: "POST",
           headers: {
@@ -85,7 +92,7 @@ export default function ChangePasswordPage() {
       setSuccess(true);
       clearForm();
       setTimeout(() => {
-        router.push("/login");
+        router.push(`/${locale}/login`);
       }, 3000);
     } catch (error) {
       setError("Failed to change password. Please try again.");
@@ -124,8 +131,14 @@ export default function ChangePasswordPage() {
                 </div>
               </div>
 
-              {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
-              {success && <div className="text-green-500 text-sm mt-2">Password changed successfully.</div>}
+              {error && (
+                <div className="text-red-500 text-sm mt-2">{error}</div>
+              )}
+              {success && (
+                <div className="text-green-500 text-sm mt-2">
+                  Password changed successfully.
+                </div>
+              )}
 
               <div className="flex gap-4 mt-4">
                 <Button

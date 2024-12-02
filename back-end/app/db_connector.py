@@ -12,7 +12,7 @@ URL_DATABASE = f'postgresql+asyncpg://postgres:{DATABASE_PASS}@localhost:{PORT}/
 if HOST_DATBASE:
     URL_DATABASE = HOST_DATBASE
 
-
+# ssl_context = ""
 ssl_context = ssl.create_default_context(cafile="security_folder\ca.pem")
 engine = create_async_engine(
     URL_DATABASE,
