@@ -17,8 +17,12 @@ import { ChevronLeft, X } from "react-feather";
 import ProductNumberPicker from "@/components/product_number_picker";
 import { useEffect, useState } from "react";
 import cartAPIs from "@/api/cart";
+import orderAPIs from "@/api/order";
+import { useRouter } from "next/navigation";
 
 const CartPage = () => {
+  const router = useRouter();
+
   const [loading, setLoading] = useState(false);
   const [productlist, setProductList] = useState<IProductInCart[]>();
 
@@ -97,7 +101,41 @@ const CartPage = () => {
     },
   ];
 
-  return (
+  const totalPriceOfAllCart = (
+    productlist: IProductInCart[] | undefined
+  ): number => {
+    if (productlist)
+      return productlist?.reduce((sum, item) => sum + item.total_price, 0);
+
+    return 0;
+  };
+
+  const handleCheckOut = async () => {
+    try {
+      setLoading(true);
+
+      const reqBody: IOrderProduct[] = productlist
+        ? productlist.map(({ product_id, quantity }) => ({
+            product_id,
+            quantity,
+          }))
+        : [];
+
+      const res = await orderAPIs.checkout(reqBody);
+
+      if (res) {
+        router.push("/cart/complete");
+      }
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return loading ? (
+    <div className="text-center">Loading...</div>
+  ) : (
     <div className="flex flex-col justify-center mx-64">
       <h1 className="flex gap-2 font-bold text-xl mb-4 mt-12">
         Cart
@@ -158,10 +196,16 @@ const CartPage = () => {
 
         <div className="flex items-center gap-4">
           <p>
-            Total Price: <span className="font-bold">$99.99</span>
+            Total Price:{" "}
+            <span className="font-bold">
+              ${totalPriceOfAllCart(productlist)}
+            </span>
           </p>
 
-          <Button className="text-white bg-black rounded-full py-2 px-8 font-bold">
+          <Button
+            onClick={() => handleCheckOut()}
+            className="text-white bg-black rounded-full py-2 px-8 font-bold"
+          >
             Checkout
           </Button>
         </div>
