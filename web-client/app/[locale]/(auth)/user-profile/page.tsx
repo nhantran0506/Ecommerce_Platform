@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const UserProfilePage = () => {
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = pathname.split("/")[1];
 
-  useEffect(() => {
-    router.push("/user-profile/personal-info");
-  }, []);
+  router.push(`/${locale}/user-profile/personal-info`);
 
   return <></>;
 };

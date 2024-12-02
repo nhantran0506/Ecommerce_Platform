@@ -1,21 +1,25 @@
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Input } from "@nextui-org/react";
 import { Search } from "react-feather";
 
 const SearchBar = () => {
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = pathname.split("/")[1];
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearchSubmit = () => {
     if (searchQuery.trim()) {
-      router.push(`/products?search=${encodeURIComponent(searchQuery)}`);
+      router.push(
+        `/${locale}/products?search=${encodeURIComponent(searchQuery)}`
+      );
     }
   };
 
   const handleClear = () => {
     setSearchQuery("");
-    router.push("/products");
+    router.push(`/${locale}/products`);
   };
 
   return (

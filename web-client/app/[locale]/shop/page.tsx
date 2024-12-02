@@ -1,16 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const ShopPage = () => {
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = pathname.split("/")[1];
 
-  useEffect(() => {
-    router.push("/shop/dashboard");
-  }, [router]);
+  router.push(`/${locale}/shop/dashboard`);
 
-  return <div>Redirecting to Dashboard...</div>;
+  return <></>;
 };
 
 export default ShopPage;
