@@ -1,11 +1,11 @@
 "use client";
 import SectionHeader from "@/components/section_header";
-import { IInputItem } from "@/interface/UI/IProfile";
 import { useState, FormEvent } from "react";
 import { Button, Input } from "@nextui-org/react";
 import { X } from "react-feather";
 import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
 import PasswordInput from "@/components/password_input";
+import { useTranslations } from "next-intl";
 
 const LoginAndSecurityPage = () => {
   const [formData, setFormData] = useState({
@@ -15,28 +15,29 @@ const LoginAndSecurityPage = () => {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const t = useTranslations();
 
   const listFormInput: IInputItem[] = [
     {
       type: "password",
-      label: "Current password",
-      placeholder: "Enter your current password",
+      label: t("input_current_password"),
+      placeholder: t("placefolder_password"),
       value: formData.old_password,
-      name: "old_password",
+      // name: "old_password",
     },
     {
       type: "password",
-      label: "New password",
-      placeholder: "Enter your new password",
+      label: t("input_current_password"),
+      placeholder: t("placefolder_password"),
       value: formData.new_password,
-      name: "new_password",
+      // name: "new_password",
     },
     {
       type: "password",
-      label: "Confirm new password",
-      placeholder: "Confirm your new password",
+      label: t("input_confirm_password"),
+      placeholder: t("placefolder_password"),
       value: formData.confirm_password,
-      name: "confirm_password",
+      // name: "confirm_password",
     },
   ];
 
@@ -65,43 +66,48 @@ const LoginAndSecurityPage = () => {
 
     // Validate form data
     if (!formData.old_password || !formData.new_password) {
-        setError("Both old and new passwords are required.");
-        return;
+      setError("Both old and new passwords are required.");
+      return;
     }
 
     if (formData.new_password !== formData.confirm_password) {
-        setError("New password and confirmation do not match.");
-        return;
+      setError("New password and confirmation do not match.");
+      return;
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}${API_ROUTES.CHANGE_PASSWORD}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${localStorage.getItem("token")}`,
-            },
-            body: JSON.stringify({
-                "old_password": formData.old_password,
-                "new_password": formData.new_password,
-            }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || "Failed to change password");
+      const response = await fetch(
+        `${API_BASE_URL}${API_ROUTES.CHANGE_PASSWORD}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            old_password: formData.old_password,
+            new_password: formData.new_password,
+          }),
         }
+      );
 
-        setSuccess("Password changed successfully");
-        clearForm();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to change password");
+      }
+
+      setSuccess("Password changed successfully");
+      clearForm();
     } catch (error) {
-        setError("Failed to change password. Please check your current password and try again.");
+      setError(
+        "Failed to change password. Please check your current password and try again."
+      );
     }
   };
 
   return (
     <SectionHeader
-      title={"Login and Security"}
+      title={t("user_profile_login_security_title")}
       content={
         <>
           <form onSubmit={handleSubmit}>
@@ -120,7 +126,7 @@ const LoginAndSecurityPage = () => {
                     labelPlacement={"outside"}
                     placeholder={item.placeholder}
                     value={(item.value ?? "").toString()}
-                    name={item.name}
+                    name={item.label}
                     onChange={handleChange}
                     isClearable
                     className="font-bold"
@@ -130,20 +136,22 @@ const LoginAndSecurityPage = () => {
             </div>
 
             {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
-            {success && <div className="text-green-500 text-sm mt-2">{success}</div>}
+            {success && (
+              <div className="text-green-500 text-sm mt-2">{success}</div>
+            )}
 
             <div className="flex gap-4 mt-4">
               <Button
                 type="submit"
                 variant="solid"
                 radius="full"
-                className="text-white bg-black"
+                className="text-white bg-black font-bold"
               >
-                Update password
+                {t("btn_submit")}
               </Button>
               <Button variant="light" radius="full" onClick={clearForm}>
                 <X size={15} />
-                <div>Clear all</div>
+                <div>{t("btn_clear")}</div>
               </Button>
             </div>
           </form>
