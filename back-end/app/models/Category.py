@@ -16,8 +16,25 @@ import uuid
 import enum
 
 
-class CatTypes(enum.Enum):
-    SHIRT = "SHIRT"
+class CatTypes(Enum):
+    SHIRT = "Shirt"
+    PANTS = "Pants"
+    SHOES = "Shoes"
+    HATS = "Hats"
+    ACCESSORIES = "Accessories"
+    ELECTRONICS = "Electronics"
+    BOOKS = "Books"
+    TOYS = "Toys"
+    HOME_DECOR = "Home Decor"
+    SPORTS = "Sports"
+    BEAUTY = "Beauty"
+    HEALTH = "Health"
+    GROCERIES = "Groceries"
+    FURNITURE = "Furniture"
+    JEWELRY = "Jewelry"
+    PET_SUPPLIES = "Pet Supplies"
+    OUTDOOR = "Outdoor"
+    AUTOMOTIVE = "Automotive"
 
 
 class Category(Base):

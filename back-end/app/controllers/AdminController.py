@@ -513,3 +513,59 @@ class AdminController:
                 content=blank_chart_html,
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+    async def create_category(self, category_data: CategoryCreate, current_user: User):
+        if current_user.role != UserRoles.ADMIN:
+            return JSONResponse(
+                content={"Message": "Invalid credentials."},
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        try:
+            # Check if category already exists
+            check_category = select(Category).where(
+                Category.cat_name == category_data.cat_name
+            )
+            result = await self.db.execute(check_category)
+            exist_category = result.scalar_one_or_none()
+
+            if exist_category:
+                return JSONResponse(
+                    content={"Message": "Category already exists"},
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Create new category
+            query = (
+                insert(Category)
+                .values(
+                    cat_name=category_data.cat_name,
+                    cat_description=category_data.cat_description,
+                )
+                .returning(Category)
+            )
+
+            result = await self.db.execute(query)
+            await self.db.commit()
+            
+            new_category = result.scalar_one()
+
+            return JSONResponse(
+                content={
+                    "Message": "Category created successfully",
+                    "category": {
+                        "cat_id": str(new_category.cat_id),
+                        "cat_name": new_category.cat_name.value,
+                        "cat_description": new_category.cat_description
+                    }
+                },
+                status_code=status.HTTP_201_CREATED,
+            )
+
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(str(e))
+            return JSONResponse(
+                content={"Message": "Error creating category"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

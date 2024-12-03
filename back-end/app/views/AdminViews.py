@@ -100,4 +100,20 @@ async def statistics_number_orders(admin_data : AdminGetData, admin_controller :
         )
 
 
+@router.post('/create_category')
+async def create_category(
+    category_data: CategoryCreate, 
+    admin_controller: AdminController = Depends(), 
+    current_user = Depends(token_config.get_current_user)
+):
+    try:
+        return await admin_controller.create_category(category_data, current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
 
