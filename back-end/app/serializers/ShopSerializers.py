@@ -31,3 +31,7 @@ class ShopRatingSerializer(BaseModel):
     shop_id: uuid.UUID
     rating: int
     comment: Optional[str] = ""
+
+
+class ShopGetData(BaseModel):
+    timestamp: datetime

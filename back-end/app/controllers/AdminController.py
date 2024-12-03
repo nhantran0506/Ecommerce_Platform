@@ -38,20 +38,18 @@ class AdminController:
         try:
             cache_key = "admin:user_count"
             cached_data = self.redis.get(cache_key)
-            
+
             if cached_data:
                 return JSONResponse(
                     content={"results": cached_data},
                     status_code=status.HTTP_200_OK,
                 )
 
-         
             query = select(User).where(User.deleted_date != None)
             result = await self.db.execute(query)
             users = result.scalars().all()
             count = str(len(users))
 
-            
             self.redis.setex(cache_key, self.redis_ttl, count)
 
             return JSONResponse(
@@ -198,37 +196,28 @@ class AdminController:
             )
 
         timestamp_dt = admin_data.timestamp
-        cache_key = f"admin:income_stats:{timestamp_dt.strftime('%Y-%m')}"
 
         try:
-            # Try to get cached statistics
-            cached_html = self.redis.get(cache_key)
-            if cached_html:
-                return HTMLResponse(content=cached_html)
-
-            # If no cache, calculate statistics
             year = timestamp_dt.year
             month = timestamp_dt.month
             day = timestamp_dt.day
             today = datetime.today()
             start_of_month = datetime(year, month, 1)
-            
+
             if year == today.year and month == today.month and day == today.day:
                 end_of_month = datetime(year, month, day, 23, 59, 59)
             else:
                 _, last_day_of_month = calendar.monthrange(year, month)
                 end_of_month = datetime(year, month, last_day_of_month, 23, 59, 59)
-            
+
             date_range = pd.date_range(
                 start=start_of_month,
                 end=end_of_month,
             )
             daily_revenue = {date.date(): 0 for date in date_range}
 
-            # Get orders and calculate revenue
             query = select(OrderItem).where(
-                OrderItem.order_at >= start_of_month, 
-                OrderItem.order_at <= end_of_month
+                OrderItem.order_at >= start_of_month, OrderItem.order_at <= end_of_month
             )
             result = await self.db.execute(query)
             orders_in_month = result.scalars().all()
@@ -249,21 +238,36 @@ class AdminController:
                     daily_revenue[order_day] = 0
                 daily_revenue[order_day] += total_price
 
-            # Create the chart
             dates = sorted(daily_revenue.keys())
             revenues = [daily_revenue[date] for date in dates]
 
             fig = go.Figure()
-            fig.add_trace(go.Scatter(x=dates, y=revenues, mode="lines", name="Revenue"))
-            fig.update_layout(xaxis_title="Date", yaxis_title="Income")
+            fig.add_trace(
+                go.Scatter(
+                    x=dates,
+                    y=revenues,
+                    mode="lines",
+                    name="Revenue",
+                    line=dict(color="#8E44AD", width=2),
+                )
+            )
+            fig.update_layout(
+                title="Total Platform Revenue",
+                title_x=0.5,
+                xaxis_title="Date",
+                yaxis_title="Income ($)",
+                plot_bgcolor="white",
+                paper_bgcolor="white",
+                font=dict(size=12),
+                margin=dict(l=50, r=50, t=70, b=50),
+                yaxis=dict(gridcolor="#E5E5E5", zerolinecolor="#E5E5E5"),
+                xaxis=dict(gridcolor="#E5E5E5", zerolinecolor="#E5E5E5"),
+            )
 
             chart_html = fig.to_html(
                 full_html=False,
                 config={"displaylogo": False},
             )
-
-            
-            self.redis.setex(cache_key, self.redis_ttl, chart_html)
 
             return HTMLResponse(content=chart_html)
 
@@ -301,14 +305,8 @@ class AdminController:
             )
 
         timestamp_dt = admin_data.timestamp
-        cache_key = f"admin:category_stats:{timestamp_dt.strftime('%Y-%m')}"
 
         try:
-            # Try to get cached statistics
-            cached_html = self.redis.get(cache_key)
-            if cached_html:
-                return HTMLResponse(content=cached_html)
-
             year = timestamp_dt.year
             month = timestamp_dt.month
             day = timestamp_dt.day
@@ -395,23 +393,34 @@ class AdminController:
                         mode="lines",
                         stackgroup="one",
                         name=cat,
+                        line=dict(width=1),
                     )
                 )
 
             fig.update_layout(
+                title="Category Distribution Over Time",
+                title_x=0.5,
                 xaxis_title="Date",
                 yaxis_title="Percentage of Total Income",
-                yaxis=dict(range=[0, 100], tickformat=".0f"),
+                plot_bgcolor="white",
+                paper_bgcolor="white",
+                font=dict(size=12),
+                margin=dict(l=50, r=50, t=70, b=50),
+                yaxis=dict(
+                    gridcolor="#E5E5E5",
+                    zerolinecolor="#E5E5E5",
+                    range=[0, 100],
+                    tickformat=".0f",
+                ),
+                xaxis=dict(gridcolor="#E5E5E5", zerolinecolor="#E5E5E5"),
                 showlegend=True,
+                legend=dict(yanchor="top", y=0.99, xanchor="left", x=1.05),
             )
 
             chart_html = fig.to_html(
                 full_html=False,
                 config={"displaylogo": False},
             )
-
-            
-            self.redis.setex(cache_key, self.redis_ttl, chart_html)
 
             return HTMLResponse(content=chart_html)
 

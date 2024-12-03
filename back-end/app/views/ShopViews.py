@@ -91,3 +91,48 @@ async def shop_rating(
             content={"error": "Failing to rate shop"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+@router.post("/statistics/revenue")
+async def shop_statistics_revenue(
+    shop_data: ShopGetData,
+    shop_controller: ShopController = Depends(),
+    current_user=Depends(token_config.get_current_user),
+):
+    try:
+        return await shop_controller.statistics_revenue(shop_data, current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+@router.post("/statistics/top_products")
+async def shop_statistics_top_products(
+    shop_data: ShopGetData,
+    shop_controller: ShopController = Depends(),
+    current_user=Depends(token_config.get_current_user),
+):
+    try:
+        return await shop_controller.statistics_top_products(shop_data, current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+@router.post("/statistics/categories")
+async def shop_statistics_categories(
+    shop_data: ShopGetData,
+    shop_controller: ShopController = Depends(),
+    current_user=Depends(token_config.get_current_user),
+):
+    try:
+        return await shop_controller.statistics_categories(shop_data, current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
