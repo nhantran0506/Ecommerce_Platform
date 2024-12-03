@@ -41,13 +41,13 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
   useEffect(() => {
     const fetchProductDetail = async () => {
       if (!productId) return;
-      
+
       try {
         setLoading(true);
         const res = await productAPIs.getProductById(productId);
         setProduct(res);
       } catch (error) {
-        console.error("Failed to fetch products:", error);
+        console.log("Failed to fetch products:", error);
       } finally {
         setLoading(false);
       }
@@ -59,15 +59,17 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
   const handleAddToCart = async () => {
     try {
       setLoading(true);
-      const reqBody: ICartModify[] = [{
-        product_id: productId,
-        quantity: numberOfProduct,
-      }];
+      const reqBody: ICartModify[] = [
+        {
+          product_id: productId,
+          quantity: numberOfProduct,
+        },
+      ];
 
       await cartAPIs.updateCart(reqBody);
       onOpen(); // Show success modal
     } catch (error) {
-      console.error("Failed to add to cart:", error);
+      console.log("Failed to add to cart:", error);
     } finally {
       setLoading(false);
     }
@@ -227,6 +229,7 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
             <Button
               className="bg-black text-white px-24 font-bold"
               radius="full"
+              onClick={() => handleAddToCart()}
             >
               Order Now
             </Button>

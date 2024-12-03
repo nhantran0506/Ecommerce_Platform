@@ -3,7 +3,7 @@
 import { useState, FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
 import loginImage from "@/assets/login-image.jpg";
 import PasswordInput from "@/components/password_input";
@@ -20,6 +20,8 @@ export default function SignUpPage() {
   });
   const [error, set_error] = useState("");
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = pathname.split("/")[1];
 
   const handle_change = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -137,7 +139,7 @@ export default function SignUpPage() {
           </form>
           <div className="mt-6 text-center">
             <Link
-              href="/login"
+              href={`/${locale}/login`}
               className="font-medium text-indigo-600 hover:text-indigo-500"
             >
               Already have an account? Sign in

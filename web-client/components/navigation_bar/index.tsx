@@ -27,8 +27,6 @@ import vietNamImg from "@/assets/vietnam.png";
 import usImg from "@/assets/united-states-of-america.png";
 import { useTranslations } from "next-intl";
 
-const hideNavigationPaths = ["/admin"];
-
 export default function NavigationBar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -39,6 +37,14 @@ export default function NavigationBar() {
   const [isLogin, setIsLogin] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
   const t = useTranslations();
+
+  const hideNavigationPaths = [
+    `/${locale}/admin`,
+    `/${locale}/login`,
+    `/${locale}/sign-up`,
+    `/${locale}/forgot-password`,
+    `/${locale}/validate-code`,
+  ];
 
   const pageNavigation: IHomePageOption[] = [
     {

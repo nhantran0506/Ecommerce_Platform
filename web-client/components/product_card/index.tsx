@@ -18,7 +18,7 @@ const ProductCard: React.FC<IProductCard> = ({ product, onClick }) => {
 
   return (
     <Card
-      className="border-2 rounded-xl w-[220px] h-[280px]"
+      className="border-2 rounded-xl w-[220px] h-[300px]"
       isPressable
       onPress={() => onClick()}
     >
@@ -38,14 +38,19 @@ const ProductCard: React.FC<IProductCard> = ({ product, onClick }) => {
       </CardBody>
       <CardFooter>
         <div className="flex flex-col w-full h-full">
-          <p className="text-md line-clamp-1 text-start">
-            {truncateText(product.product_name)}
+          <p className="text-lg line-clamp-1 text-start">
+            {product.product_name}
           </p>
 
           <div className="flex justify-between items-center">
             <div className="flex flex-col items-start">
               <p className="font-bold text-lg">$ {product.product_price}</p>
-              {/* <StarRating totalStars={5} initStart={4} /> */}
+              <StarRating totalStars={5} initStart={4} />
+              <p className="text-sm">
+                Sold{" "}
+                <span className="font-semibold text-primary-300">1209</span>{" "}
+                items
+              </p>
             </div>
 
             <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center">
