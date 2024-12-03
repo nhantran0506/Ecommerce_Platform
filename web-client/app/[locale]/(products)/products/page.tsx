@@ -13,6 +13,7 @@ import FilterMenu from "@/components/filter_menu";
 import { Suspense, useEffect, useState } from "react";
 import { productState } from "@/state/state";
 import productAPIs from "@/api/product";
+import { useTranslations } from "next-intl";
 
 const ProductPage = () => {
   const router = useRouter();
@@ -20,6 +21,7 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(false);
   const productlist = productState((state) => state.productList);
   const setProductList = productState((state) => state.setProductList);
+  const t = useTranslations();
 
   const searchQuery = searchParams.get("search") || "";
 
@@ -91,7 +93,11 @@ const ProductPage = () => {
 
         {/* Products */}
         <SectionHeader
-          title={searchQuery ? `Results for "${searchQuery}"` : "All Products"}
+          title={
+            searchQuery
+              ? `${t("products_search_result")} "${searchQuery}"`
+              : t("products_all_product")
+          }
           content={
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {loading ? (

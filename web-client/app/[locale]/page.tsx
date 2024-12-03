@@ -4,15 +4,10 @@ import { Image } from "@nextui-org/react";
 import bannerImg from "@/assets/banner-bg.jpg";
 import SectionHeader from "@/components/section_header";
 import ProductCard from "@/components/product_card";
-import { useTranslations } from "next-intl";
 
 export default function Home() {
-  const router = useRouter();
-  const t = useTranslations();
-
   return (
     <div className="flex flex-col mx-64">
-      <div>{t("sys_home")}</div>
       {/* Banner Section */}
       <div className="relative mx-auto my-8 w-full">
         {/* Overlay content */}

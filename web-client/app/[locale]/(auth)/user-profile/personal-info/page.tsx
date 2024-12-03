@@ -2,12 +2,14 @@
 import authAPIs from "@/api/auth";
 import SectionHeader from "@/components/section_header";
 import { Button, Input } from "@nextui-org/react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { X } from "react-feather";
 
 const PersonalInfomationPage = () => {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<IResGetUser | null>(null); // Initial state as null
+  const t = useTranslations();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -43,43 +45,43 @@ const PersonalInfomationPage = () => {
   }[] = [
     {
       type: "text",
-      label: "First name",
-      placeholder: "Enter your first name",
+      label: t("input_first_name"),
+      placeholder: t("placeholder_first_name"),
       value: user?.first_name || "",
       field: "first_name",
     },
     {
       type: "text",
-      label: "Last name",
-      placeholder: "Enter your last name",
+      label: t("input_last_name"),
+      placeholder: t("placeholder_last_name"),
       value: user?.last_name || "",
       field: "last_name",
     },
     {
       type: "text",
-      label: "Phone",
-      placeholder: "Phone number",
+      label: t("input_phone"),
+      placeholder: t("placeholder_phone"),
       value: user?.phone_number || "",
       field: "phone_number",
     },
     {
       type: "email",
-      label: "Email",
-      placeholder: "Example@email.com",
+      label: t("input_email"),
+      placeholder: t("placeholder_email"),
       value: user?.email || "",
       field: "email",
     },
     {
       type: "text",
-      label: "Address",
-      placeholder: "Enter your full address",
+      label: t("input_address"),
+      placeholder: t("placeholder_address"),
       value: user?.address || "",
       field: "address",
     },
     {
       type: "date",
-      label: "Date of Birth",
-      placeholder: "Enter your date of birth",
+      label: t("input_dob"),
+      placeholder: "",
       value: user?.dob || "",
       field: "dob",
     },
@@ -105,7 +107,7 @@ const PersonalInfomationPage = () => {
 
   return (
     <SectionHeader
-      title={"Personal Information"}
+      title={t("user_profile_personal_info_title")}
       // action={
       //   <Button variant="bordered" radius="full" className="font-bold">
       //     View profile
@@ -149,10 +151,10 @@ const PersonalInfomationPage = () => {
             <Button
               variant="solid"
               radius="full"
-              className="text-white bg-black"
+              className="text-white bg-black font-bold"
               onClick={() => handleUpdateUser()}
             >
-              Update profile
+              {t("btn_submit")}
             </Button>
             <Button
               variant="light"
@@ -171,7 +173,7 @@ const PersonalInfomationPage = () => {
               }
             >
               <X size={15} />
-              <div>Clear all</div>
+              <div>{t("btn_clear")}</div>
             </Button>
           </div>
         </div>

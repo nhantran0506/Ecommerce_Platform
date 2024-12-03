@@ -25,49 +25,9 @@ import { MenuEnum } from "./enum";
 import { Moon, Sun } from "lucide-react";
 import vietNamImg from "@/assets/vietnam.png";
 import usImg from "@/assets/united-states-of-america.png";
+import { useTranslations } from "next-intl";
 
 const hideNavigationPaths = ["/admin"];
-
-const pageNavigation: IHomePageOption[] = [
-  {
-    name: "Home",
-    link: MenuEnum.Home,
-  },
-  {
-    name: "Products",
-    link: MenuEnum.Product,
-  },
-  {
-    name: "Shop",
-    link: MenuEnum.Shop,
-  },
-];
-
-const pageMenu: IHomePageOption[] = [
-  ...pageNavigation,
-  {
-    name: "Log In",
-    link: "/login",
-  },
-  {
-    name: "Log Out",
-    link: "#",
-  },
-];
-
-const userDropdownOption: IDropDownOption[] = [
-  {
-    key: MenuEnum.UserProfile,
-    prefix: <User />,
-    name: "Profile",
-  },
-  {
-    key: MenuEnum.Logout,
-    prefix: <LogOut />,
-    name: "Log Out",
-    color: "danger",
-  },
-];
 
 export default function NavigationBar() {
   const router = useRouter();
@@ -78,12 +38,56 @@ export default function NavigationBar() {
   const [isVietNamese, setIsVietNamese] = useState<boolean>(false);
   const [isLogin, setIsLogin] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
+  const t = useTranslations();
+
+  const pageNavigation: IHomePageOption[] = [
+    {
+      name: t("nav_bar_home"),
+      link: MenuEnum.Home,
+    },
+    {
+      name: t("nav_bar_product"),
+      link: MenuEnum.Product,
+    },
+    {
+      name: t("nav_bar_shop"),
+      link: MenuEnum.Shop,
+    },
+  ];
+
+  const pageMenu: IHomePageOption[] = [
+    ...pageNavigation,
+    {
+      name: "Log In",
+      link: "/login",
+    },
+    {
+      name: "Log Out",
+      link: "#",
+    },
+  ];
+
+  const userDropdownOption: IDropDownOption[] = [
+    {
+      key: MenuEnum.UserProfile,
+      prefix: <User />,
+      name: "Profile",
+    },
+    {
+      key: MenuEnum.Logout,
+      prefix: <LogOut />,
+      name: "Log Out",
+      color: "danger",
+    },
+  ];
 
   useEffect(() => {
     // Access localStorage only in the browser
     const storedToken = localStorage.getItem("token");
     setToken(storedToken);
     if (storedToken && storedToken !== "") setIsLogin(true);
+
+    setIsVietNamese(locale == "vi" ? true : false);
   }, []);
 
   const handleLogout = () => {
@@ -119,9 +123,10 @@ export default function NavigationBar() {
   };
 
   const handleSwitchLanguages = () => {
+    const newLocale = isVietNamese ? "en" : "vi";
     setIsVietNamese(!isVietNamese);
-
-    // TODO: change Languages
+    const newPathname = `/${newLocale}${pathname.slice(locale.length + 1)}`;
+    router.push(newPathname);
   };
 
   if (hideNavigationPaths.some((path) => pathname.startsWith(path))) {

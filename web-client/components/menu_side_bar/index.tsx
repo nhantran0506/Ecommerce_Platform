@@ -14,7 +14,7 @@ const MenuSideBar: React.FC<IMenuSideBar> = ({ listTabs, parentEndPoint }) => {
   console.log(pathname);
 
   return (
-    <div className="rounded-lg px-10 pt-10 border-2 shadow-lg h-full">
+    <div className="rounded-lg px-10 pt-8 border-2 shadow-lg h-full">
       {listTabs.map((item, index) => (
         <div
           className={`flex gap-2 mb-8 items-center cursor-pointer ${
