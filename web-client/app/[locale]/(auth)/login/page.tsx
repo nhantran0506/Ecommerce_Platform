@@ -12,6 +12,7 @@ import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import authAPIs from "@/api/auth";
 import PasswordInput from "@/components/password_input";
 import { Input } from "@nextui-org/react";
+import { useTranslations } from "use-intl";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -22,6 +23,7 @@ export default function LoginPage() {
   const pathname = usePathname();
   const locale = pathname.split("/")[1];
   const { handleGoogleLogin } = useGoogleAuth();
+  const t = useTranslations();
 
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUsername(e.target.value);
@@ -82,7 +84,7 @@ export default function LoginPage() {
       <div className="w-1/2 flex items-center justify-center bg-white">
         <div className="max-w-md w-full p-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-8">
-            Welcome back!
+            {t("auth_welcome_back")}
           </h2>
           {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
           <form className="space-y-5" onSubmit={handleSubmit}>

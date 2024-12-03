@@ -13,6 +13,7 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import ListProductCardSkeleton from "@/components/list_product_card_skeleton";
+import { useTranslations } from "next-intl";
 
 export default function Home() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [productlist, setProductList] = useState<IProductData[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const t = useTranslations();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -108,10 +110,10 @@ export default function Home() {
 
       {/* Content Section */}
       <SectionHeader
-        title={"All Products"}
+        title={t("products_all_product")}
         content={
           loading ? (
-            <ListProductCardSkeleton />
+            <ListProductCardSkeleton gridCols={4} count={4} />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {productlist.map((item: IProductData, index: number) => (

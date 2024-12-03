@@ -6,7 +6,7 @@ import {
   IFilterMenuItem,
 } from "../../interface/UI/IFilterMenuUI";
 import ListCheckBox from "./list_checkbox";
-import { Button, Input } from "@nextui-org/react";
+import { Button, Input, Checkbox } from "@nextui-org/react";
 
 const FilterMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,91 +15,44 @@ const FilterMenu = () => {
     setIsOpen(!isOpen);
   };
 
-  const listCheckboxCategories: ICheckBoxItem[] = [
-    { name: "Devices" },
-    { name: "Cloths" },
-    { name: "Food" },
-    { name: "Others" },
-  ];
-
-  const listFilterMenuItem: IFilterMenuItem[] = [
+  const categories = [
     {
       title: "Categories",
-      content: <ListCheckBox listCheckBox={listCheckboxCategories} />,
+      items: [
+        { name: "Devices (12k+)", checked: false },
+        { name: "Cloths (12k+)", checked: false },
+        { name: "Food (11k+)", checked: false },
+        { name: "Others (10k+)", checked: false },
+      ],
     },
     {
-      title: "Price",
-      content: (
-        <div className="flex items-center gap-4">
-          <Input
-            type="number"
-            placeholder="0.00"
-            labelPlacement="outside"
-            aria-label="Filter price input"
-            startContent={
-              <div className="pointer-events-none flex items-center">
-                <span className="text-default-400 text-small">$</span>
-              </div>
-            }
-          />
-          <p className="font-bold">-</p>
-          <Input
-            type="number"
-            placeholder="0.00"
-            labelPlacement="outside"
-            aria-label="Filter price input"
-            startContent={
-              <div className="pointer-events-none flex items-center">
-                <span className="text-default-400 text-small">$</span>
-              </div>
-            }
-          />
-        </div>
-      ),
+      title: "Location",
+      items: [
+        { name: "Ha Noi", checked: false },
+        { name: "Ho Chi Minh", checked: false },
+        { name: "Thai Nguyen", checked: false },
+        { name: "Vinh Phuc", checked: false },
+      ],
     },
   ];
 
   return (
-    <div className="relative">
-      <Button
-        isIconOnly
-        aria-label="Filter button"
-        radius="sm"
-        className="w-10 h-10 bg-black"
-        onClick={togglePopup}
-      >
-        <Filter className="text-white" aria-label="Filter icon" />
-      </Button>
+    <div className="w-64 border rounded-lg p-4">
+      <h2 className="text-lg font-semibold mb-4">FILTER</h2>
 
-      {/* Filter pop-up */}
-      {isOpen && (
-        <div className="absolute right-0 top-12 w-64 bg-white shadow-lg rounded-md p-4 z-50">
-          {listFilterMenuItem.map((item, index) => (
-            <div key={index} className="mb-4">
-              <FilterSection title={item.title} content={item.content} />
-            </div>
-          ))}
-          <div className="flex justify-between gap-2">
-            <Button
-              className="mt-2 w-full text-white"
-              color="primary"
-              aria-label="Apply button"
-              onClick={() => {}}
-            >
-              Apply
-            </Button>
-            <Button
-              className="mt-2"
-              color="default"
-              isIconOnly
-              aria-label="Close button"
-              onClick={togglePopup}
-            >
-              <X />
-            </Button>
+      {categories.map((category, index) => (
+        <div key={index} className="mb-6">
+          <h3 className="font-medium mb-2">{category.title}</h3>
+          <div className="flex flex-col gap-2">
+            {category.items.map((item, itemIndex) => (
+              <div key={itemIndex} className="flex items-center gap-2">
+                <Checkbox size="sm">{item.name}</Checkbox>
+              </div>
+            ))}
           </div>
+          <button className="text-sm text-gray-600 mt-2">More</button>
         </div>
-      )}
+      ))}
     </div>
   );
 };

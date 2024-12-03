@@ -77,49 +77,36 @@ const ProductPage = () => {
 
   return (
     <div className="px-72 my-8 w-full">
-      <div className="flex flex-col">
-        {/* Filter and search bar */}
-        <div className="mb-8 flex">
-          <div className="w-1/2 flex justify-start gap-4 pr-4">
-            {listFilterMenu.map((item, index) => (
-              <SingleComboBoxItem
-                key={index}
-                prefix={item.prefix}
-                listFilterOption={item.listFilterOption}
-              />
-            ))}
-          </div>
-          <div className="w-1/2 flex justify-between">
-            <SearchBar />
-            <FilterMenu />
-          </div>
+      <div className="flex gap-8">
+        <FilterMenu />
+        <div className="flex-1">
+          <SectionHeader
+            title={
+              searchQuery
+                ? `${t("products_search_result")} "${searchQuery}"`
+                : t("products_all_product")
+            }
+            content={
+              loading ? (
+                <ListProductCardSkeleton gridCols={3} count={6} />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {productlist?.map((item: IProductData, index: number) => (
+                    <ProductCard
+                      key={index}
+                      product={item}
+                      onClick={() =>
+                        router.push(
+                          "/" + locale + "/product/" + item.product_id
+                        )
+                      }
+                    />
+                  ))}
+                </div>
+              )
+            }
+          />
         </div>
-
-        {/* Products */}
-        <SectionHeader
-          title={
-            searchQuery
-              ? `${t("products_search_result")} "${searchQuery}"`
-              : t("products_all_product")
-          }
-          content={
-            loading ? (
-              <ListProductCardSkeleton />
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                {productlist?.map((item: IProductData, index: number) => (
-                  <ProductCard
-                    key={index}
-                    product={item}
-                    onClick={() =>
-                      router.push("/" + locale + "/product/" + item.product_id)
-                    }
-                  />
-                ))}{" "}
-              </div>
-            )
-          }
-        />
       </div>
     </div>
   );

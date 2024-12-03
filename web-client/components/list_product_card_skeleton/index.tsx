@@ -1,9 +1,17 @@
 import { Card, CardFooter, Skeleton } from "@nextui-org/react";
 
-const ListProductCardSkeleton = () => {
+interface ListProductCardSkeletonProps {
+  gridCols?: number;
+  count?: number;
+}
+
+const ListProductCardSkeleton = ({
+  gridCols = 4,
+  count = 4,
+}: ListProductCardSkeletonProps) => {
   return (
-    <div className="grid grid-cols-4 gap-6">
-      {Array.from({ length: 4 }).map((_, index) => (
+    <div className={`grid grid-cols-${gridCols} gap-6`}>
+      {Array.from({ length: count }).map((_, index) => (
         <Card className="border-2 rounded-xl w-[220px] h-[300px]" key={index}>
           <Skeleton className="overflow-visible p-0">
             <div className="w-full h-[180px] rounded-t-xl bg-default-300"></div>
