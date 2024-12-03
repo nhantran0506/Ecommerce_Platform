@@ -99,6 +99,21 @@ async def product_search(
         )
 
 
+@router.post("/get_all_products_shop")
+async def get_all_products_shop(
+    product_controller: ProductController = Depends(), current_user = Depends(token_config.get_current_user)
+):
+    try:
+        return await product_controller.get_all_products_shop(current_user=current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+    
+
+
 @router.post("/product_rating")
 async def product_rating(
     product_rating: ProductRatingSerializer,

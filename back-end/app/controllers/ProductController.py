@@ -109,7 +109,7 @@ class ProductController:
 
     async def get_single_product(self, product_id, current_user: User):
         try:
-            # Check if product exists
+            
             product_check_query = select(Product).where(
                 Product.product_id == product_id
             )
@@ -126,7 +126,7 @@ class ProductController:
             cat_names = cat_name.scalars().all()
             cat_names = [cat.cat_name.value for cat in cat_names]
 
-            # Record user interest
+            
             interest_query = (
                 insert(UserInterest)
                 .values(
@@ -145,12 +145,12 @@ class ProductController:
             await self.db.execute(interest_query)
             
 
-            # Get product images
+            
             image_query = select(ImageProduct).where(ImageProduct.product_id == product_id)
             image_results = await self.db.execute(image_query)
             product_images = image_results.scalars().all()
 
-            # Get image URLs from CDN
+            
             image_urls = []
             if product_images:
                 image_url_tasks = [
@@ -171,7 +171,7 @@ class ProductController:
             shop_result = await self.db.execute(get_shop_query)
             shop = shop_result.scalar_one_or_none()
 
-            # Prepare response
+           
             response = {
                 "product_id": str(product.product_id),
                 "product_name": product.product_name,
@@ -275,7 +275,7 @@ class ProductController:
         current_user: User,
     ):
         try:
-            # Check user's shop
+         
             get_shop = select(Shop).where(Shop.owner_id == current_user.user_id)
             shop_result = await self.db.execute(get_shop)
             shop = shop_result.scalar_one_or_none()
@@ -286,7 +286,7 @@ class ProductController:
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
 
-            # Get existing product
+            
             product_query = select(Product).where(
                 Product.product_id == product_update.product_id
             )
@@ -299,18 +299,18 @@ class ProductController:
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
 
-            # Update product basic info
+          
             existing_product.product_name = product_update.product_name
             existing_product.product_description = product_update.product_description
             existing_product.price = product_update.price
 
-            # Remove existing categories
+         
             delete_cat_query = delete(CategoryProduct).where(
                 CategoryProduct.product_id == product_update.product_id
             )
             await self.db.execute(delete_cat_query)
 
-            # Add new categories
+          
             for cat_name in product_update.category:
                 cat_query = select(Category).where(
                     Category.cat_name == CatTypes(cat_name)
@@ -329,32 +329,32 @@ class ProductController:
                 )
                 self.db.add(cat_product)
 
-            # Handle existing images
+           
             existing_images_query = select(ImageProduct).where(
                 ImageProduct.product_id == existing_product.product_id
             )
             existing_images_result = await self.db.execute(existing_images_query)
             existing_images = existing_images_result.scalars().all()
 
-            # Prepare image deletion tasks
+           
             image_deletion_tasks = []
             if existing_images:
                 image_deletion_tasks = [
                     self._delete_image(img.image_url) for img in existing_images
                 ]
 
-            # Delete existing image entries from database
+         
             delete_images_query = delete(ImageProduct).where(
                 ImageProduct.product_id == existing_product.product_id
             )
             await self.db.execute(delete_images_query)
 
-            # Upload new images
+        
             new_image_tasks = []
             if image_list:
                 new_image_tasks = [self._upload_image(img) for img in image_list]
 
-            # Concurrently delete old images and upload new images
+           
             deletion_results = []
             if image_deletion_tasks:
                 deletion_results = await asyncio.gather(*image_deletion_tasks)
@@ -363,7 +363,7 @@ class ProductController:
             if new_image_tasks:
                 upload_results = await asyncio.gather(*new_image_tasks)
 
-            # Log any failed deletions or uploads
+           
             failed_deletions = [
                 result for result in deletion_results if not result["success"]
             ]
@@ -377,7 +377,7 @@ class ProductController:
             if failed_uploads:
                 logger.warning(f"Failed to upload some images: {failed_uploads}")
 
-            # Add new image entries to database
+          
             for upload_result in upload_results:
                 if upload_result["success"]:
                     new_image = ImageProduct(
@@ -386,7 +386,6 @@ class ProductController:
                     )
                     self.db.add(new_image)
 
-            # Commit changes
             await self.db.commit()
 
             return JSONResponse(
@@ -536,7 +535,7 @@ class ProductController:
 
     async def delete_product(self, product_id: uuid.UUID, current_user: User):
         try:
-            # Get the shop associated with the current user
+         
             get_shop = select(Shop).where(Shop.owner_id == current_user.user_id)
             shop_result = await self.db.execute(get_shop)
             shop = shop_result.scalar_one_or_none()
@@ -547,21 +546,21 @@ class ProductController:
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
 
-            # First, get all image URLs associated with the product
+          
             get_image_urls = select(ImageProduct).where(
                 ImageProduct.product_id == product_id
             )
             image_result = await self.db.execute(get_image_urls)
             product_images = image_result.scalars().all()
 
-            # Prepare to delete images concurrently
+          
             image_deletion_tasks = []
             if product_images:
                 image_deletion_tasks = [
                     self._delete_image(img.image_url) for img in product_images
                 ]
 
-            # Delete from dependent tables first
+        
             product_shop_query = delete(ShopProduct).where(
                 ShopProduct.product_id == product_id
             )
@@ -572,13 +571,13 @@ class ProductController:
             )
             await self.db.execute(product_cat_query)
 
-            # Delete image entries from database
+           
             image_delete_query = delete(ImageProduct).where(
                 ImageProduct.product_id == product_id
             )
             await self.db.execute(image_delete_query)
 
-            # Now delete the product itself
+            
             product_delete_query = (
                 delete(Product)
                 .where(Product.product_id == product_id)
@@ -659,7 +658,7 @@ class ProductController:
 
     async def product_rating(self, product_rating: ProductRatingSerializer, current_user: User):
         try:
-            # First check if product exists
+          
             get_product_query = select(Product).where(Product.product_id == product_rating.product_id)
             product_result = await self.db.execute(get_product_query)
             product = product_result.scalar_one_or_none()
@@ -670,7 +669,7 @@ class ProductController:
                     status_code=status.HTTP_404_NOT_FOUND
                 )
 
-            # Check if user has purchased and completed the order for this product
+      
             purchase_check_query = select(Order).join(OrderItem).where(
                 Order.user_id == current_user.user_id,
                 OrderItem.product_id == product_rating.product_id,
@@ -684,7 +683,7 @@ class ProductController:
                     status_code=status.HTTP_403_FORBIDDEN
                 )
 
-            # Check if user has already rated this product
+            
             existing_rating_query = select(ProductRating).where(
                 ProductRating.product_id == product_rating.product_id,
                 ProductRating.user_id == current_user.user_id
@@ -693,7 +692,6 @@ class ProductController:
             existing_rating = existing_rating_result.scalar_one_or_none()
 
             if existing_rating:
-                # Update existing rating without changing timestamp
                 update_rating_query = update(ProductRating).where(
                     ProductRating.product_id == product_rating.product_id,
                     ProductRating.user_id == current_user.user_id
@@ -703,7 +701,7 @@ class ProductController:
                 )
                 await self.db.execute(update_rating_query)
 
-                # Recalculate average rating
+                
                 rating_query = (
                     select(func.sum(ProductRating.rating_stars), func.count(ProductRating.rating_stars))
                     .where(ProductRating.product_id == product_rating.product_id)
@@ -713,7 +711,7 @@ class ProductController:
                 total_stars, count_stars = rating_result.one_or_none()
                 new_avg = float(total_stars / count_stars) if count_stars else 0.0
                 
-                # Update product's average rating without changing total_ratings
+               
                 update_product_query = update(Product).where(
                     Product.product_id == product_rating.product_id
                 ).values(
@@ -721,7 +719,7 @@ class ProductController:
                 )
                 await self.db.execute(update_product_query)
             else:
-                # Insert new rating
+             
                 new_rating = ProductRating(
                     product_id=product_rating.product_id,
                     user_id=current_user.user_id,
@@ -730,7 +728,7 @@ class ProductController:
                 )
                 self.db.add(new_rating)
 
-                # Update product's average rating and increment total_ratings
+               
                 new_avg = (product.avg_stars * product.total_ratings + product_rating.rating) / (product.total_ratings + 1)
                 update_product_query = update(Product).where(
                     Product.product_id == product_rating.product_id
@@ -752,3 +750,81 @@ class ProductController:
                 content={"error": "Failed to rate product"},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    async def get_all_products_shop(self, current_user: User):
+        try:
+            get_shop_query = select(Shop).where(Shop.owner_id == current_user.user_id)
+            shop_result = await self.db.execute(get_shop_query)
+            shop = shop_result.scalar_one_or_none()
+
+            if not shop:
+                return JSONResponse(content={"Message" : "User doesn't have a shop"}, status_code=status.HTTP_404_NOT_FOUND)
+            
+            get_products_query = select(ShopProduct).where(ShopProduct.shop_id == shop.shop_id)
+            shop_products_result = await self.db.execute(get_products_query)
+            shop_products = shop_products_result.scalars().all()
+
+            response = []
+            for shop_product in shop_products:
+                product_check_query = select(Product).where(
+                    Product.product_id == shop_product.product_id
+                )
+                product_check_result = await self.db.execute(product_check_query)
+                product = product_check_result.scalar_one_or_none()
+
+                if not product:
+                    raise ValueError(f"Product with id {shop_product.product_id} does not exist.")
+
+                cat = await self.db.execute(select(CategoryProduct).where(CategoryProduct.product_id == product.product_id))
+                cat = cat.scalar_one_or_none()
+                
+                cat_name = await self.db.execute(select(Category).where(Category.cat_id == cat.cat_id))
+                cat_names = cat_name.scalars().all()
+                cat_names = [cat.cat_name.value for cat in cat_names]
+
+                
+
+                
+                image_query = select(ImageProduct).where(ImageProduct.product_id == shop_product.product_id)
+                image_results = await self.db.execute(image_query)
+                product_images = image_results.scalars().all()
+
+                
+                image_urls = []
+                if product_images:
+                    image_url_tasks = [
+                        self._get_image(img.image_url) for img in product_images
+                    ]
+                    image_url_results = await asyncio.gather(*image_url_tasks)
+                    image_urls = [
+                        result["image_url"]
+                        for result in image_url_results
+                        if result["success"]
+                    ]
+                
+                get_shop_name = select(ShopProduct).where(ShopProduct.product_id == product.product_id)
+                shop_product_result = await self.db.execute(get_shop_name)
+                shop_product = shop_product_result.scalar_one_or_none()
+
+                print(product.product_id)
+                response.append({
+                    "product_id": str(product.product_id),
+                    "product_name": product.product_name,
+                    "product_description": product.product_description,
+                    "product_category" : cat_names,
+                    "product_avg_stars" : product.avg_stars,
+                    "product_total_ratings" : product.total_ratings,
+                    "product_total_sales" : product.total_sales,
+                    "price": product.price,
+                    "image_urls": image_urls,
+                    "shop_name" : {
+                        "shop_id": str(shop.shop_id),
+                        "shop_name": shop.shop_name,
+                    }
+                }) 
+            
+            return JSONResponse(content=response, status_code=status.HTTP_200_OK)
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(str(e))
+            return JSONResponse(content={"Message" : "Unexpected error"}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

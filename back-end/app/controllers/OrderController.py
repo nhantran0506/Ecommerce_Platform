@@ -18,6 +18,7 @@ from models.Cart import Cart
 from models.CartProduct import CartProduct
 from helper_collections.VNPAY import get_vnpay_url
 from serializers.ProductSerializers import VNPayPaymentCreate
+import uuid
 
 
 class OrderController:
@@ -29,27 +30,26 @@ class OrderController:
         self, order_items: list[OderItems], request, current_user: User
     ):
         try:
-            # Get user's cart
+
             cart_query = select(Cart).where(Cart.user_id == current_user.user_id)
             result = await self.db.execute(cart_query)
             user_cart = result.scalar_one_or_none()
 
             if user_cart:
-                # Get cart items to update
+
                 cart_items_query = select(CartProduct).where(
                     CartProduct.cart_id == user_cart.cart_id
                 )
                 result = await self.db.execute(cart_items_query)
                 cart_items = {item.product_id: item for item in result.scalars().all()}
 
-                # Update cart quantities based on ordered items
                 for order_item in order_items:
                     if order_item.product_id in cart_items:
                         cart_product = cart_items[order_item.product_id]
                         remaining_quantity = cart_product.quantity - order_item.quantity
 
                         if remaining_quantity > 0:
-                            # Update cart quantity
+
                             update_query = (
                                 update(CartProduct)
                                 .where(
@@ -60,14 +60,13 @@ class OrderController:
                             )
                             await self.db.execute(update_query)
                         else:
-                            # Remove item from cart if no quantity remains
+
                             delete_query = delete(CartProduct).where(
                                 CartProduct.cart_id == user_cart.cart_id,
                                 CartProduct.product_id == order_item.product_id,
                             )
                             await self.db.execute(delete_query)
 
-            # Create new order
             user_order_create_query = (
                 insert(Order)
                 .values(user_id=current_user.user_id, created_at=datetime.now())
@@ -76,10 +75,9 @@ class OrderController:
             result = await self.db.execute(user_order_create_query)
             order_id = result.scalar_one()
 
-            # Process order items
             total_amount = 0
             for order_item in order_items:
-                # Create order item
+
                 query = insert(OrderItem).values(
                     order_id=order_id,
                     product_id=order_item.product_id,
@@ -91,7 +89,6 @@ class OrderController:
                     set_={"quantity": order_item.quantity},
                 )
 
-                # Update user interest
                 insert_user_interest_query = (
                     insert(UserInterest)
                     .values(
@@ -105,16 +102,17 @@ class OrderController:
                     )
                 )
 
-                get_product_query = (
-                    select(Product)
-                    .where(Product.product_id == order_item.product_id)
+                get_product_query = select(Product).where(
+                    Product.product_id == order_item.product_id
                 )
                 product = await self.db.execute(get_product_query)
                 product = product.scalar_one_or_none()
                 if product:
                     total_amount += product.price * order_item.quantity
-                    update_product_query = update(Product).where(Product.product_id == order_item.product_id).values(
-                        total_sales = product.total_sales + order_item.quantity
+                    update_product_query = (
+                        update(Product)
+                        .where(Product.product_id == order_item.product_id)
+                        .values(total_sales=product.total_sales + order_item.quantity)
                     )
                     await self.db.execute(update_product_query)
 
@@ -134,7 +132,6 @@ class OrderController:
                     content={"Error": str(e)},
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
-            
 
             await self.db.commit()
             return JSONResponse(
@@ -189,7 +186,7 @@ class OrderController:
 
     async def order_products_all(self, request, current_user: User):
         try:
-            # Get user's cart
+
             cart_query = select(Cart).where(Cart.user_id == current_user.user_id)
             result = await self.db.execute(cart_query)
             user_cart = result.scalar_one_or_none()
@@ -200,7 +197,6 @@ class OrderController:
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
 
-            # Get cart items
             cart_items_query = select(CartProduct).where(
                 CartProduct.cart_id == user_cart.cart_id
             )
@@ -213,7 +209,6 @@ class OrderController:
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
 
-            # Create new order
             user_order_create_query = (
                 insert(Order)
                 .values(user_id=current_user.user_id, created_at=datetime.now())
@@ -222,10 +217,9 @@ class OrderController:
             result = await self.db.execute(user_order_create_query)
             order_id = result.scalar_one()
 
-            # Process each cart item
             total_amount = 0
             for cart_item in cart_items:
-                # Create order item
+
                 query = insert(OrderItem).values(
                     order_id=order_id,
                     product_id=cart_item.product_id,
@@ -237,7 +231,6 @@ class OrderController:
                     set_={"quantity": cart_item.quantity},
                 )
 
-                # Update user interest
                 insert_user_interest_query = (
                     insert(UserInterest)
                     .values(
@@ -251,31 +244,28 @@ class OrderController:
                     )
                 )
 
-                get_product_query = (
-                    select(Product)
-                    .where(Product.product_id == cart_item.product_id)
+                get_product_query = select(Product).where(
+                    Product.product_id == cart_item.product_id
                 )
                 product = await self.db.execute(get_product_query)
                 product = product.scalar_one_or_none()
-                
 
                 if product:
                     total_amount += product.price * cart_item.quantity
-                    update_product_query = update(Product).where(Product.product_id == cart_item.product_id).values(
-                        total_sales = product.total_sales + cart_item.quantity
+                    update_product_query = (
+                        update(Product)
+                        .where(Product.product_id == cart_item.product_id)
+                        .values(total_sales=product.total_sales + cart_item.quantity)
                     )
                     await self.db.execute(update_product_query)
 
                 await self.db.execute(query)
                 await self.db.execute(insert_user_interest_query)
 
-            # Remove items from cart
             delete_cart_items_query = delete(CartProduct).where(
                 CartProduct.cart_id == user_cart.cart_id
             )
             await self.db.execute(delete_cart_items_query)
-
-            
 
             try:
                 payment = VNPayPaymentCreate(
@@ -290,7 +280,7 @@ class OrderController:
                     content={"Error": str(e)},
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
-            
+
             await self.db.commit()
             return JSONResponse(
                 content={"payment_url": payment_url},
@@ -303,52 +293,108 @@ class OrderController:
                 content={"Error": str(e)},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-    
 
-    async def get_order_history(self, current_user : User):
+    async def get_order_history(self, current_user: User):
         try:
-            get_all_order_query = select(Order).where(Order.user_id == current_user.user_id)
+            get_all_order_query = select(Order).where(
+                Order.user_id == current_user.user_id
+            )
             all_orders = await self.db.execute(get_all_order_query)
             all_orders = all_orders.scalars().all()
 
-            response = {}
+            response = []
 
             for order in all_orders or []:
-                get_orderItems = select(OrderItem).where(OrderItem.order_id == order.order_id)
+                get_orderItems = select(OrderItem).where(
+                    OrderItem.order_id == order.order_id
+                )
                 orderItems = await self.db.execute(get_orderItems)
                 orderItems = orderItems.scalars().all()
 
                 product_list_info = []
 
                 for orderItem in orderItems or []:
-                    get_product_query = select(Product).where(Product.product_id == orderItem.product_id)
+                    get_product_query = select(Product).where(
+                        Product.product_id == orderItem.product_id
+                    )
                     product = await self.db.execute(get_product_query)
                     product = product.scalar_one_or_none()
                     if product:
                         product_list_info.append(
                             {
-                                "product_id" : str(product.product_id),
-                                "product_name" : product.product_name,
-                                "product_description" : product.product_description,
-                                "price" : product.price,
-                                "quantity" : orderItem.quantity,
-                                "total" : orderItem.quantity * product.price
+                                "product_id": str(product.product_id),
+                                "product_name": product.product_name,
+                                "product_description": product.product_description,
+                                "price": product.price,
+                                "quantity": orderItem.quantity,
+                                "total": orderItem.quantity * product.price,
                             }
-                            
                         )
 
-                response[str(order.order_id)] = {
-                    "order_id" : str(order.order_id),
-                    "product" : product_list_info,
-                    "created_at" : str(order.created_at),
+                response.append(
+                    {
+                    "order_id": str(order.order_id),
+                    "product": product_list_info,
+                    "created_at": str(order.created_at),
                 }
+                ) 
 
             return JSONResponse(content=response, status_code=status.HTTP_200_OK)
         except Exception as e:
             await self.db.rollback()
             print(str(e))
             return JSONResponse(
-                content={"error" :"Unable to get order history."},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                content={"error": "Unable to get order history."},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    async def get_order_by_id(self, order_id: uuid.UUID, current_user: User):
+        try:
+            get_order_query = select(Order).where(Order.order_id == order_id)
+            order = await self.db.execute(get_order_query)
+            order = order.scalar_one_or_none()
+
+            if not order:
+                return JSONResponse(
+                    content={"Message": "Order not found"},
+                    status_code=status.HTTP_404_NOT_FOUND,
+                )
+
+            get_order_items_query = select(OrderItem).where(
+                OrderItem.order_id == order_id
+            )
+            order_items = await self.db.execute(get_order_items_query)
+            order_items = order_items.scalars().all()
+
+            product_list_info = []
+            for order_item in order_items or []:
+                get_product_query = select(Product).where(
+                    Product.product_id == order_item.product_id
+                )
+                product = await self.db.execute(get_product_query)
+                product = product.scalar_one_or_none()
+
+                if product:
+                    product_list_info.append(
+                        {
+                            "product_id": str(product.product_id),
+                            "product_name": product.product_name,
+                            "quantity": order_item.quantity,
+                            "total": order_item.quantity * product.price,
+                        }
+                    )
+
+            return JSONResponse(
+                content={
+                    "order_id": str(order.order_id),
+                    "product": product_list_info,
+                    "created_at": str(order.created_at),
+                },
+                status_code=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            await self.db.rollback()
+            return JSONResponse(
+                content={"Message": "Unexpected error"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
