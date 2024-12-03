@@ -97,7 +97,7 @@ class ChatBotController:
     current_user_llm = []
 
     def __init__(self, db: AsyncSession = Depends(get_db)):
-        self.llm = Ollama(OLLAMA_CHAT_MODEL, request_timeout=500, num_predict=250)
+        self.llm = GoogleGemini(model_name=GOOGLE_CHAT_MODEL, num_predict=250)
         self.db = db
         self.embedding_engine = EmbeddingController(self.db)
 

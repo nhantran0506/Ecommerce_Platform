@@ -610,3 +610,23 @@ class ProductController:
                 content={"message": f"Error deleting product: {str(e)}"},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+    
+    
+    async def get_all_products_cat(self):
+        try:
+            get_cat_query = select(Category)
+            cats = await self.db.execute(get_cat_query)
+            cats = cats.scalars().all()
+            
+            response = []
+            for cat in cats:
+                response.append({
+                    "category_id": str(cat.cat_id),
+                    "category_name": cat.cat_name.value,
+                })        
+            
+            return JSONResponse(content=response,status_code=status.HTTP_200_OK)
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(str(e))
+            return JSONResponse(content={"error" : "Fail to get all category."},status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

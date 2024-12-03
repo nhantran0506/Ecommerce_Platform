@@ -116,6 +116,17 @@ async def product_delete(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+@router.get("/get_all_products_cat")
+async def get_all_products_cat(product_controller: ProductController = Depends()):
+    try:
+        return await product_controller.get_all_products_cat()
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
 
 @router.get("/{product_id}")
 async def get_product(
@@ -133,5 +144,7 @@ async def get_product(
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
 
 
