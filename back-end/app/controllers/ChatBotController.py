@@ -20,6 +20,7 @@ from sqlalchemy.dialects.postgresql import insert
 import logging
 from bs4 import BeautifulSoup
 import aiohttp
+import re
 import google.generativeai as genai
 from config import (
     GOOGLE_STUDIO_API,
@@ -98,6 +99,7 @@ class ChatBotController:
 
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.llm = GoogleGemini(model_name=GOOGLE_CHAT_MODEL, num_predict=250)
+        self.name = GOOGLE_CHAT_MODEL
         self.db = db
         self.embedding_engine = EmbeddingController(self.db)
 
@@ -195,10 +197,10 @@ class ChatBotController:
             self.current_user_llm.append(query_payload.session_id)
             if len(self.current_user_llm) > MAX_NUM_CONNECTIONS:
                 self.llm = GoogleGemini(model_name=GOOGLE_CHAT_MODEL, num_predict=250)
+                self.name = GOOGLE_CHAT_MODEL
 
             query = query_payload.query
             session_id = query_payload.session_id
-            model_name = query_payload.model
 
             intent_check = self.intent_detection(query)
             intent = ""
@@ -227,7 +229,7 @@ class ChatBotController:
                     content=default_prompt,
                     session_id=session_id,
                     current_user=current_user,
-                    model_name=model_name,
+                    model_name=self.name,
                 )
 
                 system_msg = [
@@ -241,11 +243,13 @@ class ChatBotController:
                     content=response.message.content,
                     session_id=session_id,
                     current_user=current_user,
-                    model_name=model_name,
+                    model_name=self.name,
                 )
                 llm_response = response.message.content
             else:
                 intent = "search"
+                intent_check = intent_check.replace("SEARCH:", "")
+                intent_check = intent_check.strip()
                 llm_response = intent_check
 
             self.current_user_llm.pop()
