@@ -13,11 +13,14 @@ from datetime import datetime
 from models.CategoryProduct import CategoryProduct
 from models.ShopProduct import ShopProduct
 from models.ImageProduct import ImageProduct
+from models.Ratings import ProductRating
 from controllers.EmbeddingController import EmbeddingController
 import aiohttp
 import asyncio
 from config import CDN_SERVER_URL, CDN_UPLOAD_URL, CDN_GET_URL, CDN_DELETE_URL
 import logging
+from models.Order import Order
+from models.OrderItem import OrderItem
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +87,9 @@ class ProductController:
                         "image_urls": image_urls,
                         "product_description" : pro.product_description,
                         "product_category" : cat_names,
+                        "product_avg_stars" : pro.avg_stars,
+                        "product_total_ratings" : pro.total_ratings,
+                        "product_total_sales" : pro.total_sales,
                         "shop_name" : {
                             "shop_id": str(shop.shop_id),
                             "shop_name": shop.shop_name,
@@ -137,7 +143,7 @@ class ProductController:
                 )
             )
             await self.db.execute(interest_query)
-            await self.db.commit()
+            
 
             # Get product images
             image_query = select(ImageProduct).where(ImageProduct.product_id == product_id)
@@ -156,6 +162,14 @@ class ProductController:
                     for result in image_url_results
                     if result["success"]
                 ]
+            
+            get_shop_name = select(ShopProduct).where(ShopProduct.product_id == product.product_id)
+            shop_product_result = await self.db.execute(get_shop_name)
+            shop_product = shop_product_result.scalar_one_or_none()
+
+            get_shop_query = select(Shop).where(Shop.shop_id == shop_product.shop_id)
+            shop_result = await self.db.execute(get_shop_query)
+            shop = shop_result.scalar_one_or_none()
 
             # Prepare response
             response = {
@@ -163,10 +177,18 @@ class ProductController:
                 "product_name": product.product_name,
                 "product_description": product.product_description,
                 "product_category" : cat_names,
+                "product_avg_stars" : product.avg_stars,
+                "product_total_ratings" : product.total_ratings,
+                "product_total_sales" : product.total_sales,
                 "price": product.price,
-                "image_urls": image_urls
+                "image_urls": image_urls,
+                "shop_name" : {
+                    "shop_id": str(shop.shop_id),
+                    "shop_name": shop.shop_name,
+                }
             }
 
+            await self.db.commit()
             return JSONResponse(content=response, status_code=status.HTTP_200_OK)
 
         except ValueError as e:
@@ -500,11 +522,13 @@ class ProductController:
 
         except ValueError as e:
             await self.db.rollback()
+            logger.error(f"Error creating product: {str(e)}")
             return JSONResponse(
                 content={"message": str(e)}, status_code=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:
             await self.db.rollback()
+            logger.error(f"Error creating product: {str(e)}")
             return JSONResponse(
                 content={"message": "An error occurred while creating the product"},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -631,3 +655,100 @@ class ProductController:
             await self.db.rollback()
             logger.error(str(e))
             return JSONResponse(content={"error" : "Fail to get all category."},status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+    async def product_rating(self, product_rating: ProductRatingSerializer, current_user: User):
+        try:
+            # First check if product exists
+            get_product_query = select(Product).where(Product.product_id == product_rating.product_id)
+            product_result = await self.db.execute(get_product_query)
+            product = product_result.scalar_one_or_none()
+
+            if not product:
+                return JSONResponse(
+                    content={"error": "Product not found"}, 
+                    status_code=status.HTTP_404_NOT_FOUND
+                )
+
+            # Check if user has purchased and completed the order for this product
+            purchase_check_query = select(Order).join(OrderItem).where(
+                Order.user_id == current_user.user_id,
+                OrderItem.product_id == product_rating.product_id,
+            )
+            purchase_result = await self.db.execute(purchase_check_query)
+            has_purchased = purchase_result.scalar_one_or_none()
+
+            if not has_purchased:
+                return JSONResponse(
+                    content={"error": "You can only rate products you have purchased and received"}, 
+                    status_code=status.HTTP_403_FORBIDDEN
+                )
+
+            # Check if user has already rated this product
+            existing_rating_query = select(ProductRating).where(
+                ProductRating.product_id == product_rating.product_id,
+                ProductRating.user_id == current_user.user_id
+            )
+            existing_rating_result = await self.db.execute(existing_rating_query)
+            existing_rating = existing_rating_result.scalar_one_or_none()
+
+            if existing_rating:
+                # Update existing rating without changing timestamp
+                update_rating_query = update(ProductRating).where(
+                    ProductRating.product_id == product_rating.product_id,
+                    ProductRating.user_id == current_user.user_id
+                ).values(
+                    rating_stars=product_rating.rating,
+                    comment=product_rating.comment
+                )
+                await self.db.execute(update_rating_query)
+
+                # Recalculate average rating
+                rating_query = (
+                    select(func.sum(ProductRating.rating_stars), func.count(ProductRating.rating_stars))
+                    .where(ProductRating.product_id == product_rating.product_id)
+                )
+                rating_result = await self.db.execute(rating_query)
+
+                total_stars, count_stars = rating_result.one_or_none()
+                new_avg = float(total_stars / count_stars) if count_stars else 0.0
+                
+                # Update product's average rating without changing total_ratings
+                update_product_query = update(Product).where(
+                    Product.product_id == product_rating.product_id
+                ).values(
+                    avg_stars=new_avg
+                )
+                await self.db.execute(update_product_query)
+            else:
+                # Insert new rating
+                new_rating = ProductRating(
+                    product_id=product_rating.product_id,
+                    user_id=current_user.user_id,
+                    rating_stars=product_rating.rating,
+                    comment=product_rating.comment
+                )
+                self.db.add(new_rating)
+
+                # Update product's average rating and increment total_ratings
+                new_avg = (product.avg_stars * product.total_ratings + product_rating.rating) / (product.total_ratings + 1)
+                update_product_query = update(Product).where(
+                    Product.product_id == product_rating.product_id
+                ).values(
+                    avg_stars=new_avg,
+                    total_ratings=product.total_ratings + 1
+                )
+                await self.db.execute(update_product_query)
+
+            await self.db.commit()
+            return JSONResponse(
+                content={"message": "Product rated successfully"},
+                status_code=status.HTTP_200_OK
+            )
+        except Exception as e:
+            logger.error(str(e))
+            await self.db.rollback()
+            return JSONResponse(
+                content={"error": "Failed to rate product"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

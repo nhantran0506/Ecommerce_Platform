@@ -8,6 +8,7 @@ from controllers.ShopController import ShopController
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/shops", tags=["shops"])
 
+
 @router.get("/all")
 async def get_shops(shop_controller: ShopController = Depends()):
     try:
@@ -20,6 +21,7 @@ async def get_shops(shop_controller: ShopController = Depends()):
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
 
 @router.get("/{shop_id}")
 async def get_shop(shop_id: int, shop_controller: ShopController = Depends()):
@@ -34,10 +36,17 @@ async def get_shop(shop_id: int, shop_controller: ShopController = Depends()):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+
 @router.post("/create_shop", status_code=status.HTTP_201_CREATED)
-async def create_shop(shop: ShopCreate, current_user = Depends(token_config.get_current_user), shop_controller: ShopController = Depends()):
+async def create_shop(
+    shop: ShopCreate,
+    current_user=Depends(token_config.get_current_user),
+    shop_controller: ShopController = Depends(),
+):
     try:
-        return await shop_controller.create_new_shop(shop=shop, current_user=current_user)
+        return await shop_controller.create_new_shop(
+            shop=shop, current_user=current_user
+        )
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -47,15 +56,38 @@ async def create_shop(shop: ShopCreate, current_user = Depends(token_config.get_
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+
 @router.post("/delete_shop")
-def delete_shop(shop_id: int, current_user = Depends(token_config.get_current_user), shop_controller : ShopController = Depends()):
+def delete_shop(
+    shop_id: int,
+    current_user=Depends(token_config.get_current_user),
+    shop_controller: ShopController = Depends(),
+):
     try:
-        return shop_controller.delete_existing_shop(shop_id=shop_id, current_user=current_user)
+        return shop_controller.delete_existing_shop(
+            shop_id=shop_id, current_user=current_user
+        )
     except HTTPException as e:
         raise e
     except Exception as e:
         logger.error(str(e))
         return JSONResponse(
             content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@router.post("/shop_rating")
+async def shop_rating(
+    shop_rating: ShopRatingSerializer,
+    shop_controller: ShopController = Depends(),
+    current_user=Depends(token_config.get_current_user),
+):
+    try:
+        return await shop_controller.shop_rating(shop_rating, current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"error": "Failing to rate shop"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )

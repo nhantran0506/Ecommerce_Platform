@@ -18,6 +18,8 @@ class Shop(Base):
     owner_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False
     )
+    avg_stars: Mapped[Float] = mapped_column(Float, nullable=True, default=0.0)
+    total_ratings: Mapped[Integer] = mapped_column(Integer, nullable=True, default=0)
 
     owner: Mapped["User"] = relationship("User", back_populates="shops")
     ratings: Mapped["ShopRating"] = relationship("ShopRating", back_populates="shop")

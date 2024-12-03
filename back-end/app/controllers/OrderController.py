@@ -113,6 +113,10 @@ class OrderController:
                 product = product.scalar_one_or_none()
                 if product:
                     total_amount += product.price * order_item.quantity
+                    update_product_query = update(Product).where(Product.product_id == order_item.product_id).values(
+                        total_sales = product.total_sales + order_item.quantity
+                    )
+                    await self.db.execute(update_product_query)
 
                 await self.db.execute(query)
                 await self.db.execute(insert_user_interest_query)
@@ -253,7 +257,14 @@ class OrderController:
                 )
                 product = await self.db.execute(get_product_query)
                 product = product.scalar_one_or_none()
-                total_amount += product.price * cart_item.quantity
+                
+
+                if product:
+                    total_amount += product.price * cart_item.quantity
+                    update_product_query = update(Product).where(Product.product_id == cart_item.product_id).values(
+                        total_sales = product.total_sales + cart_item.quantity
+                    )
+                    await self.db.execute(update_product_query)
 
                 await self.db.execute(query)
                 await self.db.execute(insert_user_interest_query)

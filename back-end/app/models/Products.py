@@ -16,7 +16,10 @@ class Product(Base):
     product_name: Mapped[String] = mapped_column(String)
     product_description: Mapped[String] = mapped_column(String)
     create_at_datetime: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
-    price: Mapped[Float] = mapped_column(Float)
+    price: Mapped[Float] = mapped_column(Float, nullable=False, default=0.0)
+    avg_stars: Mapped[Float] = mapped_column(Float, nullable=True, default=0.0)
+    total_ratings: Mapped[Integer] = mapped_column(Integer, nullable=True, default=0)
+    total_sales: Mapped[Integer] = mapped_column(Integer, nullable=True, default=0)
 
     ratings: Mapped["ProductRating"] = relationship(
         "ProductRating", back_populates="product"

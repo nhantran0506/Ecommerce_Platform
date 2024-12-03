@@ -99,6 +99,22 @@ async def product_search(
         )
 
 
+@router.post("/product_rating")
+async def product_rating(
+    product_rating: ProductRatingSerializer,
+    product_controller: ProductController = Depends(),
+    current_user=Depends(token_config.get_current_user),
+):
+    try:
+        return await product_controller.product_rating(product_rating, current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
 @router.delete("/{product_id}")
 async def product_delete(
     product_id: uuid.UUID,
@@ -115,6 +131,7 @@ async def product_delete(
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
 
 @router.get("/get_all_products_cat")
 async def get_all_products_cat(product_controller: ProductController = Depends()):
@@ -144,7 +161,3 @@ async def get_product(
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-
-
-
-

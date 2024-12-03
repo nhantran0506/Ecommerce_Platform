@@ -17,7 +17,7 @@ from config import (
     VECTOR_DIMENSIONS,
     REDIS_TTL,
     CDN_GET_URL,
-    CDN_SERVER_URL
+    CDN_SERVER_URL,
 )
 from models.CategoryProduct import CategoryProduct
 from models.Category import Category
@@ -46,7 +46,6 @@ class EmbeddingController:
     faq_collection_name = "FAQ"
     recommend_collection_name = "Recommend"
 
-
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
         self.redis = get_redis()
@@ -61,7 +60,7 @@ class EmbeddingController:
                 model_name=OLLAMA_EMBEDDING_MODEL,
                 base_url=OLLAMA_BASE_URL,
                 request_timeout=500.0,
-                dimensions = VECTOR_DIMENSIONS,
+                dimensions=VECTOR_DIMENSIONS,
                 show_progress=True,
             )
 
@@ -101,7 +100,6 @@ class EmbeddingController:
             ).as_retriever(similarity_top_k=256, node_postprocessors=[postprocessor])
         except Exception as e:
             logger.error(str(e))
-    
 
     async def _get_image(self, image_url: str) -> dict:
         try:
@@ -191,7 +189,9 @@ class EmbeddingController:
                 if cat_data:
                     cat_names += cat_data.cat_name.value
 
-            product_text = f"{' '.join([product.product_name] * 2)} {' '.join(cat_names * 1)}"
+            product_text = (
+                f"{' '.join([product.product_name] * 2)} {' '.join(cat_names * 1)}"
+            )
 
             document = Document(
                 text=product_text,
@@ -248,9 +248,11 @@ class EmbeddingController:
             # Try to get cached search results
             cache_key = f"product_search:{hash(user_query)}"
             cached_data = self.redis.get(cache_key)
-            
+
             if cached_data:
-                return JSONResponse(content=json.loads(cached_data), status_code=status.HTTP_200_OK)
+                return JSONResponse(
+                    content=json.loads(cached_data), status_code=status.HTTP_200_OK
+                )
 
             # If no cache, proceed with your existing search logic
             vector_result = self.recommend_index.retrieve(user_query)
@@ -272,13 +274,14 @@ class EmbeddingController:
                     content={"Message": "No valid product IDs found"},
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
-            
-            products= []
+
+            products = []
             for pro_id in product_ids:
-                get_image_query = select(ImageProduct).where(ImageProduct.product_id == pro_id)
+                get_image_query = select(ImageProduct).where(
+                    ImageProduct.product_id == pro_id
+                )
                 image_results = await self.db.execute(get_image_query)
                 product_images = image_results.scalars().all()
-
 
                 image_urls = []
                 if product_images or []:
@@ -292,28 +295,35 @@ class EmbeddingController:
                         if result["success"]
                     ]
 
-            
                 get_product_query = select(Product).where(Product.product_id == pro_id)
                 product_result = await self.db.execute(get_product_query)
                 product = product_result.scalar_one_or_none()
 
                 if product:
-                    get_shop_name = select(ShopProduct).where(ShopProduct.product_id == pro_id)
+                    get_shop_name = select(ShopProduct).where(
+                        ShopProduct.product_id == pro_id
+                    )
                     shop_product_result = await self.db.execute(get_shop_name)
                     shop_product = shop_product_result.scalar_one_or_none()
                     print("dmm", pro_id)
 
-                    get_shop_query = select(Shop).where(Shop.shop_id == shop_product.shop_id)
+                    get_shop_query = select(Shop).where(
+                        Shop.shop_id == shop_product.shop_id
+                    )
                     shop_result = await self.db.execute(get_shop_query)
                     shop = shop_result.scalar_one_or_none()
 
-                    get_cat_name = select(CategoryProduct).where(CategoryProduct.product_id == pro_id)
+                    get_cat_name = select(CategoryProduct).where(
+                        CategoryProduct.product_id == pro_id
+                    )
                     cat_product_result = await self.db.execute(get_cat_name)
                     cat_product_names = cat_product_result.scalars().all()
 
-                    cat_names =[]
+                    cat_names = []
                     for cat in cat_product_names:
-                        get_cat_name = select(Category).where(Category.cat_id == cat.cat_id)
+                        get_cat_name = select(Category).where(
+                            Category.cat_id == cat.cat_id
+                        )
                         cat_name_result = await self.db.execute(get_cat_name)
                         cat_name = cat_name_result.scalar_one_or_none()
                         cat_names.append(cat_name.cat_name.value)
@@ -323,21 +333,20 @@ class EmbeddingController:
                             "product_id": str(product.product_id),
                             "product_name": product.product_name,
                             "product_price": product.price,
+                            "product_total_sales": product.total_sales,
                             "image_urls": image_urls,
-                            "product_description" : product.product_description,
-                            "product_category" : cat_names,
-                            "shop_name" : {
+                            "product_description": product.product_description,
+                            "product_category": cat_names,
+                            "product_avg_stars": product.avg_stars,
+                            "product_total_ratings": product.total_ratings,
+                            "shop_name": {
                                 "shop_id": str(shop.shop_id),
                                 "shop_name": shop.shop_name,
-                            }
+                            },
                         }
                     )
-                    
-            self.redis.setex(
-                cache_key,
-                REDIS_TTL,
-                json.dumps(products)
-            )
+
+            self.redis.setex(cache_key, REDIS_TTL, json.dumps(products))
 
             return JSONResponse(content=products, status_code=status.HTTP_200_OK)
 
