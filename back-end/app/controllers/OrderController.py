@@ -19,6 +19,9 @@ from models.CartProduct import CartProduct
 from helper_collections.VNPAY import get_vnpay_url
 from serializers.ProductSerializers import VNPayPaymentCreate
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class OrderController:
@@ -397,4 +400,78 @@ class OrderController:
             return JSONResponse(
                 content={"Message": "Unexpected error"},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    async def restore_order(self, order_id: uuid.UUID, current_user: User):
+        try:
+            # Get the order
+            get_order_query = select(Order).where(
+                Order.order_id == order_id,
+                Order.user_id == current_user.user_id
+            )
+            order = await self.db.execute(get_order_query)
+            order = order.scalar_one_or_none()
+
+            if not order:
+                return JSONResponse(
+                    content={"Message": "Order not found"},
+                    status_code=status.HTTP_404_NOT_FOUND,
+                )
+
+            # Get order items
+            get_order_items_query = select(OrderItem).where(
+                OrderItem.order_id == order_id
+            )
+            order_items = await self.db.execute(get_order_items_query)
+            order_items = order_items.scalars().all()
+
+            # Get or create user cart
+            cart_query = select(Cart).where(Cart.user_id == current_user.user_id)
+            result = await self.db.execute(cart_query)
+            user_cart = result.scalar_one_or_none()
+
+            if user_cart is None:
+                user_cart_create_query = insert(Cart).values(
+                    user_id=current_user.user_id,
+                    created_at=datetime.now()
+                )
+                await self.db.execute(user_cart_create_query)
+                result = await self.db.execute(cart_query)
+                user_cart = result.scalar_one_or_none()
+
+            # Restore each order item to cart
+            for order_item in order_items:
+                cart_product_query = insert(CartProduct).values(
+                    cart_id=user_cart.cart_id,
+                    product_id=order_item.product_id,
+                    quantity=order_item.quantity
+                ).on_conflict_do_update(
+                    index_elements=["cart_id", "product_id"],
+                    set_={"quantity": CartProduct.quantity + order_item.quantity}
+                )
+                await self.db.execute(cart_product_query)
+
+                # Update user interest
+                insert_user_interest = insert(UserInterest).values(
+                    user_id=current_user.user_id,
+                    product_id=order_item.product_id,
+                    score=InterestScore.CART.value
+                ).on_conflict_do_update(
+                    index_elements=["user_id", "product_id"],
+                    set_={"score": InterestScore.CART.value}
+                )
+                await self.db.execute(insert_user_interest)
+
+            await self.db.commit()
+            return JSONResponse(
+                content={"Message": "Order successfully restored to cart"},
+                status_code=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(str(e))
+            return JSONResponse(
+                content={"Message": "Unexpected error"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

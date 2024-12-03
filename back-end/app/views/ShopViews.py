@@ -136,3 +136,15 @@ async def shop_statistics_categories(
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+@router.post("/get_sale_history")
+async def get_sale_history(
+    shop_controller: ShopController = Depends(),
+    current_user=Depends(token_config.get_current_user),
+):
+    try:
+        return await shop_controller.get_sale_history(current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(content={"Message": "Unexpected error"}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

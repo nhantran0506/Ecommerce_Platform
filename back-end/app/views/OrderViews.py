@@ -68,3 +68,15 @@ async def get_order_history(order_controller : OrderController = Depends(), curr
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+@router.post("/restore_order")
+async def restore_order(order_id : uuid.UUID, order_controller : OrderController = Depends(), current_user = Depends(token_config.get_current_user)):
+    try:
+        return await order_controller.restore_order(order_id=order_id, current_user=current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )

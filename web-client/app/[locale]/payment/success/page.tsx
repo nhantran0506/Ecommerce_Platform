@@ -1,22 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@nextui-org/react";
 import { CheckCircle } from "react-feather";
+import orderAPIs from "@/api/order";
 
 const PaymentSuccessPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [orderId, setOrderId] = useState<string>("");
 
   useEffect(() => {
-    // Get order ID from URL params if provided by payment gateway
-    const orderIdParam = searchParams.get("order_id");
-    if (orderIdParam) {
-      setOrderId(orderIdParam);
-    }
-  }, [searchParams]);
+    const handlePaymentResult = async () => {
+      const responseCode = searchParams.get("vnp_ResponseCode");
+      const orderId = searchParams.get("vnp_TxnRef");
+
+      if (!responseCode || !orderId) {
+        router.push("/products");
+        return;
+      }
+
+      // Only response code "00" indicates success
+      // All other codes indicate various types of failures
+      if (responseCode !== "00") {
+        router.push("/payment/failed" + window.location.search);
+        return;
+      }
+
+      try {
+        // Get order details using the order ID
+        const orderDetails = await orderAPIs.getOrderById(orderId);
+        // You can use orderDetails here if needed
+      } catch (error) {
+        console.error("Failed to fetch order details:", error);
+      }
+    };
+
+    handlePaymentResult();
+  }, [searchParams, router]);
+
+  const orderId = searchParams.get("vnp_TxnRef");
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -31,7 +54,7 @@ const PaymentSuccessPage = () => {
         
         {orderId && (
           <p className="text-gray-600">
-            Order ID: <span className="font-semibold">{orderId}</span>
+            Order ID: <span className="font-semibold">#{orderId}</span>
           </p>
         )}
 

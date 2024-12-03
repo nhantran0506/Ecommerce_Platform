@@ -28,4 +28,6 @@ export const API_ROUTES = {
   SHOP_REVENUE_STATS: "/shops/statistics/revenue",
   SHOP_TOP_PRODUCTS_STATS: "/shops/statistics/top_products",
   SHOP_CATEGORIES_STATS: "/shops/statistics/categories",
+  GET_ORDER_BY_ID: "/order/get_order_by_id",
+  RESTORE_ORDER: "/order/restore",
 };
