@@ -88,7 +88,7 @@ export default function ForgotPasswordPage() {
         </form>
         <div className="text-center">
           <Link
-            href="/login"
+            href={`/${locale}/login`}
             className="font-medium text-indigo-600 hover:text-indigo-500"
           >
             Back to Login

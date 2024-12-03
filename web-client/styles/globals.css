@@ -27,52 +27,53 @@
   scrollbar-color: #888 #f1f1f1; /* Thumb color and background */
 }
 
-
 .dot-flashing {
-    position: relative;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
+  position: relative;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #000;
+  color: #000;
+  animation: dotFlashing 1s infinite linear alternate;
+  animation-delay: 0.5s;
+}
+.dot-flashing::before,
+.dot-flashing::after {
+  content: "";
+  display: inline-block;
+  position: absolute;
+  top: 0;
+}
+.dot-flashing::before {
+  left: -10px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #000;
+  color: #000;
+  animation: dotFlashing 1s infinite alternate;
+  animation-delay: 0s;
+}
+.dot-flashing::after {
+  left: 10px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #000;
+  color: #000;
+  animation: dotFlashing 1s infinite alternate;
+  animation-delay: 1s;
+}
+@keyframes dotFlashing {
+  0% {
     background-color: #000;
-    color: #000;
-    animation: dotFlashing 1s infinite linear alternate;
-    animation-delay: .5s;
   }
-  .dot-flashing::before, .dot-flashing::after {
-    content: '';
-    display: inline-block;
-    position: absolute;
-    top: 0;
+  50%,
+  100% {
+    background-color: #fff;
   }
-  .dot-flashing::before {
-    left: -10px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: #000;
-    color: #000;
-    animation: dotFlashing 1s infinite alternate;
-    animation-delay: 0s;
-  }
-  .dot-flashing::after {
-    left: 10px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: #000;
-    color: #000;
-    animation: dotFlashing 1s infinite alternate;
-    animation-delay: 1s;
-  }
-  @keyframes dotFlashing {
-    0% {
-      background-color: #000;
-    }
-    50%, 100% {
-      background-color: #fff;
-    }
-  }
-  @layer base {
+}
+@layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
@@ -127,7 +128,7 @@
     --chart-5: 340 75% 55%;
   }
 }
-  @layer base {
+@layer base {
   * {
     @apply border-border;
   }
@@ -135,4 +136,20 @@
     @apply bg-background text-foreground;
   }
 }
-  
+
+/* Custom styles for the slider dots */
+.custom-dots li {
+  margin: 0 6px;
+}
+
+.custom-dots li button:before {
+  color: white;
+  font-size: 10px !important;
+  opacity: 0.7;
+}
+
+.custom-dots li.slick-active button:before {
+  color: white;
+  opacity: 1;
+  font-size: 10px !important;
+}

@@ -3,7 +3,7 @@
 import { useState, FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import loginImage from "@/assets/login-image.jpg";
 import googleIcon from "@/assets/google-icon.png";
 import zaloIcon from "@/assets/zalo-icon.png";
@@ -11,6 +11,7 @@ import facebookIcon from "@/assets/facebook-icon.png";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import authAPIs from "@/api/auth";
 import PasswordInput from "@/components/password_input";
+import { Input } from "@nextui-org/react";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -18,6 +19,8 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = pathname.split("/")[1];
   const { handleGoogleLogin } = useGoogleAuth();
 
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,7 +70,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(91vh)] flex">
+    <div className="min-h-[calc(100vh)] flex">
       <div className="w-1/2 relative">
         <Image
           src={loginImage}
@@ -78,29 +81,22 @@ export default function LoginPage() {
       </div>
       <div className="w-1/2 flex items-center justify-center bg-white">
         <div className="max-w-md w-full p-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">
             Welcome back!
           </h2>
           {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                E-mail or phone number
-              </label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                required
-                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="Type your e-mail or phone number"
-                value={username}
-                onChange={handleUsernameChange}
-              />
-            </div>
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <Input
+              id="username"
+              name="username"
+              type="text"
+              required
+              placeholder="Type your e-mail"
+              value={username}
+              onChange={handleUsernameChange}
+              className="mb-2"
+              fullWidth
+            />
 
             <PasswordInput
               id="password"
@@ -114,7 +110,7 @@ export default function LoginPage() {
 
             <div className="flex items-center justify-end">
               <Link
-                href="/forgot-password"
+                href={`/${locale}/forgot-password`}
                 className="text-sm text-indigo-600 hover:text-indigo-500"
               >
                 Forgot Password?
@@ -129,7 +125,7 @@ export default function LoginPage() {
               </button>
             </div>
           </form>
-          <div className="mt-6">
+          {/* <div className="mt-6">
             <p className="text-center text-sm text-gray-500">
               or do it via other accounts
             </p>
@@ -159,12 +155,12 @@ export default function LoginPage() {
                 />
               </button>
             </div>
-          </div>
+          </div> */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               {"Don't have an account? "}
               <Link
-                href="/sign-up"
+                href={`/${locale}/sign-up`}
                 className="font-medium text-indigo-600 hover:text-indigo-500"
               >
                 Sign Up

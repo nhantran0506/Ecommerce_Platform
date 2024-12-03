@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, FormEvent, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
 
 export default function ValidateCodePage() {
@@ -9,6 +9,8 @@ export default function ValidateCodePage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = pathname.split("/")[1];
   const [email, setEmail] = useState<string | null>(null);
   const [canResend, setCanResend] = useState(false);
   const [countdown, setCountdown] = useState(60);
@@ -23,13 +25,16 @@ export default function ValidateCodePage() {
     setSuccess(false);
 
     try {
-      const response = await fetch(`${API_BASE_URL}${API_ROUTES.PASSWORD_CODE_VALIDATE}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, temp_code: code }),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}${API_ROUTES.PASSWORD_CODE_VALIDATE}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, temp_code: code }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Invalid code. Please try again.");
@@ -37,7 +42,7 @@ export default function ValidateCodePage() {
 
       setSuccess(true);
       setTimeout(() => {
-        router.push("/change-password"); // Redirect to change password page
+        router.push(`/${locale}/change-password`);
       }, 3000);
     } catch (error) {
       setError("Failed to validate code. Please try again.");
@@ -50,13 +55,16 @@ export default function ValidateCodePage() {
     setCountdown(60); // Reset countdown
 
     try {
-      const response = await fetch(`${API_BASE_URL}${API_ROUTES.FORGOT_PASSWORD}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }), // Use email from local storage
-      });
+      const response = await fetch(
+        `${API_BASE_URL}${API_ROUTES.FORGOT_PASSWORD}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }), // Use email from local storage
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to resend code. Please try again.");
@@ -83,12 +91,20 @@ export default function ValidateCodePage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Validate Code</h2>
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          Validate Code
+        </h2>
         {error && <p className="text-center text-red-500 text-sm">{error}</p>}
-        {success && <p className="text-center text-green-500 text-sm">Code validated successfully.</p>}
+        {success && (
+          <p className="text-center text-green-500 text-sm">
+            Code validated successfully.
+          </p>
+        )}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="code" className="sr-only">Verification Code</label>
+            <label htmlFor="code" className="sr-only">
+              Verification Code
+            </label>
             <input
               id="code"
               name="code"
@@ -112,11 +128,15 @@ export default function ValidateCodePage() {
         <button
           onClick={handleResendCode}
           disabled={!canResend}
-          className={`group relative w-full flex justify-center py-1 px-2 border border-transparent text-sm font-medium rounded-md text-white ${canResend ? 'bg-black hover:bg-gray-800' : 'bg-gray-400 cursor-not-allowed'}`}
+          className={`group relative w-full flex justify-center py-1 px-2 border border-transparent text-sm font-medium rounded-md text-white ${
+            canResend
+              ? "bg-black hover:bg-gray-800"
+              : "bg-gray-400 cursor-not-allowed"
+          }`}
         >
           Resend Code {countdown > 0 && `(${countdown})`}
         </button>
       </div>
     </div>
   );
-} 
+}

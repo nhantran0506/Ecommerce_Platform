@@ -1,5 +1,5 @@
 "use client";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import SingleComboBoxItem from "@/components/single_combo_box_item";
 import {
   IFilterMenu,
@@ -17,6 +17,9 @@ import { useTranslations } from "next-intl";
 
 const ProductPage = () => {
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = pathname.split("/")[1];
+
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const productlist = productState((state) => state.productList);
@@ -107,7 +110,9 @@ const ProductPage = () => {
                   <ProductCard
                     key={index}
                     product={item}
-                    onClick={() => router.push("/product/" + item.product_id)}
+                    onClick={() =>
+                      router.push("/" + locale + "/product/" + item.product_id)
+                    }
                   />
                 ))
               )}
