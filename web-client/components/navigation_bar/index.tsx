@@ -26,6 +26,7 @@ import { Moon, Sun } from "lucide-react";
 import vietNamImg from "@/assets/vietnam.png";
 import usImg from "@/assets/united-states-of-america.png";
 import { useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
 
 export default function NavigationBar() {
   const router = useRouter();
@@ -37,6 +38,7 @@ export default function NavigationBar() {
   const [isLogin, setIsLogin] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
   const t = useTranslations();
+  const { theme, setTheme } = useTheme();
 
   const hideNavigationPaths = [
     `/${locale}/admin`,
@@ -54,10 +56,6 @@ export default function NavigationBar() {
     {
       name: t("nav_bar_product"),
       link: MenuEnum.Product,
-    },
-    {
-      name: t("nav_bar_shop"),
-      link: MenuEnum.Shop,
     },
   ];
 
@@ -80,10 +78,14 @@ export default function NavigationBar() {
       name: "Profile",
     },
     {
+      key: MenuEnum.Shop,
+      prefix: <ShoppingCart />,
+      name: "Shop",
+    },
+    {
       key: MenuEnum.Logout,
       prefix: <LogOut />,
       name: "Log Out",
-      color: "danger",
     },
   ];
 
@@ -111,6 +113,9 @@ export default function NavigationBar() {
       case MenuEnum.Cart:
         router.push(`/${locale}${MenuEnum.Cart}`);
         break;
+      case MenuEnum.Shop:
+        router.push(`/${locale}${MenuEnum.Shop}`);
+        break;
       case MenuEnum.Logout:
         handleLogout();
         break;
@@ -123,9 +128,8 @@ export default function NavigationBar() {
   };
 
   const handleSwitchTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
     setIsDarkMode(!isDarkMode);
-
-    // TODO: change theme
   };
 
   const handleSwitchLanguages = () => {
