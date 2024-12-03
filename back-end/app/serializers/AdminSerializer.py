@@ -24,15 +24,14 @@ class AdminCreate(BaseModel):
         arbitrary_types_allowed = True
         from_attributes = True
 
-    @field_validator("password")
-    def validate_password(cls, value):
-        pattern = r"^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*().]).+$"
-        if len(value) < 8:
-            raise ValueError("Password must be at least 8 characters")
+    @field_validator('username')
+    def validate_username(cls, v):
+        if not v or len(v.strip()) == 0:
+            raise ValueError('Username cannot be empty')
+        return v.strip()
 
-        if not re.match(pattern, value):
-            raise ValueError(
-                "Password must contain at least one uppercase letter, one digit, and one special character"
-            )
-
-        return value
+    @field_validator('password')
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        return v

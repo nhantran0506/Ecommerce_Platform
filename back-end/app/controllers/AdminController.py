@@ -152,6 +152,12 @@ class AdminController:
         #     )
 
         try:
+            if not admin_data.username or len(admin_data.username.strip()) == 0:
+                return JSONResponse(
+                    content={"Message": "Username cannot be empty"},
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
             query = (
                 insert(User)
                 .values(
@@ -169,7 +175,7 @@ class AdminController:
 
             query_auth = insert(Authentication).values(
                 user_id=user.user_id,
-                user_name=user.phone_number,
+                user_name=admin_data.username.strip(),
                 hash_pwd=await Authentication.hash_password(admin_data.password),
             )
 
@@ -331,7 +337,7 @@ class AdminController:
             cat_query = select(Category)
             result = await self.db.execute(cat_query)
             all_categories = result.scalars().all()
-            cats_name = [cat.cat_name for cat in all_categories]
+            cats_name = [cat.cat_name.value for cat in all_categories]
 
             cats_income = {
                 date.date(): {cat: 0 for cat in cats_name} for date in date_range
@@ -367,8 +373,7 @@ class AdminController:
 
                 total_price = order.quantity * product.price
                 order_day = order.order_at.date()
-
-                cats_income[order_day][cat.cat_name] += total_price
+                cats_income[order_day][cat.cat_name.value] += total_price
 
             dates = sorted(cats_income.keys())
             percentage_incomes_by_cat = {cat: [] for cat in cats_name}
@@ -392,7 +397,7 @@ class AdminController:
                         y=percentage_incomes_by_cat[cat],
                         mode="lines",
                         stackgroup="one",
-                        name=cat,
+                        name=str(cat),
                         line=dict(width=1),
                     )
                 )
@@ -427,18 +432,8 @@ class AdminController:
         except Exception as e:
             await self.db.rollback()
             logger.error(str(e))
-
-            blank_fig = go.Figure()
-            blank_fig.update_layout(
-                xaxis_title="Date", yaxis_title="Percentage of Total Income"
-            )
-            blank_chart_html = blank_fig.to_html(
-                full_html=False,
-                config={"displaylogo": False},
-            )
-
             return HTMLResponse(
-                content=blank_chart_html,
+                content="<div>Error generating category statistics</div>",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 

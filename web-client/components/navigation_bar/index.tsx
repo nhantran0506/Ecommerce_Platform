@@ -98,6 +98,8 @@ export default function NavigationBar() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("sessionId");
+    localStorage.removeItem("chatMessages");
     setIsLogin(false);
 
     router.push(`/${locale}${MenuEnum.LogIn}`);

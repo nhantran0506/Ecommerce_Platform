@@ -14,7 +14,13 @@ class Auth {
       throw new Error(`Login failed with status ${response.status}`);
     }
 
-    const data = (await response.json()) as IResLogin;
+    const data = await response.json() as IResLogin;
+    
+    document.cookie = `token=${data.token}; path=/; max-age=2592000`;
+    localStorage.setItem("token", data.token);
+    
+    localStorage.removeItem("chatMessages");
+    
     return data;
   }
 

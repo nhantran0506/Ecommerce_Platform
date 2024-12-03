@@ -8,8 +8,6 @@ import chatIcon from "@/assets/chatbot.png";
 import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
 import { BotIcon } from "lucide-react";
 
-const hideChatIconPaths = ["/login", "/sign-up"];
-
 export default function ChatWindow() {
   const [messages, setMessages] = useState<
     { sender: "You" | "Chatbot"; content: string }[]
@@ -67,7 +65,29 @@ export default function ChatWindow() {
     [router]
   );
 
+  // Add effect to clear chat when token is removed
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      localStorage.removeItem("sessionId");
+      localStorage.removeItem("chatMessages");
+      setMessages([]);
+    }
+  }, []);
+
   const handleSendMessage = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "Chatbot",
+          content: "Please login to continue the conversation.",
+        },
+      ]);
+      return;
+    }
+
     if (input.trim() && !isLoading) {
       try {
         setIsLoading(true);
@@ -79,7 +99,6 @@ export default function ChatWindow() {
         const sessionId = localStorage.getItem("sessionId") || " ";
 
         const payload = {
-          model: "llama3.2",
           session_id: sessionId,
           query: input,
           current_route: `${fullUrl}`,
@@ -139,10 +158,6 @@ export default function ChatWindow() {
   const toggleMinimize = () => {
     setIsMinimized(!isMinimized);
   };
-
-  if (hideChatIconPaths.includes(pathName)) {
-    return null;
-  }
 
   return (
     <div>
