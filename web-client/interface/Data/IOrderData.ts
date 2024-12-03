@@ -6,3 +6,14 @@ export interface IOrder {
   status: OrderStatus;
   listOrderItem: IOrderItem[];
 }
+
+export interface IOrderHistory {
+  order_id: string;
+  created_at: string;
+  product: {
+    product_id: string;
+    product_name: string;
+    price: number;
+    quantity: number;
+  }[];
+}

@@ -28,11 +28,8 @@ export const API_ROUTES = {
   SHOP_REVENUE_STATS: "/shops/statistics/revenue",
   SHOP_TOP_PRODUCTS_STATS: "/shops/statistics/top_products",
   SHOP_CATEGORIES_STATS: "/shops/statistics/categories",
-<<<<<<< Updated upstream
   GET_ORDER_BY_ID: "/order/get_order_by_id",
   RESTORE_ORDER: "/order/restore",
-=======
   GET_ALL_PRODUCTS_SHOP: "/products/get_all_products_shop",
   GET_ORDER_HISTORY: "/order/get_order_history",
->>>>>>> Stashed changes
 };

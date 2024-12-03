@@ -7,6 +7,7 @@ import orderAPIs from "@/api/order";
 import Spinner from "@/components/spinner";
 import { OrderStatus } from "@/constant/enum";
 import { Card, Skeleton } from "@nextui-org/react";
+import { IOrderHistory } from "@/interface/Data/IOrderData";
 
 const OrderAnalyzePage = () => {
   const [orders, setOrders] = useState<IOrderHistory[]>([]);
@@ -19,7 +20,7 @@ const OrderAnalyzePage = () => {
         const data = await orderAPIs.getOrderHistory();
         setOrders(data);
       } catch (error) {
-        console.error("Failed to fetch orders:", error);
+        console.log("Failed to fetch orders:", error);
       } finally {
         setLoading(false);
       }
