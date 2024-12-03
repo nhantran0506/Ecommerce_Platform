@@ -31,66 +31,67 @@ class ProductController:
             get_product_query = (
                 select(Product).limit(256).order_by(Product.create_at_datetime.desc())
             )
-            result = await self.db.execute(get_product_query)
-            results = result.scalars().all()
+            products_result = await self.db.execute(get_product_query)
+            products = products_result.scalars().all()
 
-            if not results:
+            if not products:
                 return JSONResponse(content=[], status_code=status.HTTP_200_OK)
 
-            image_queries = [
-                select(ImageProduct).where(ImageProduct.product_id == pro.product_id)
-                for pro in results
-            ]
 
-            image_results_list = await asyncio.gather(
-                *[self.db.execute(query) for query in image_queries]
-            )
+            products_response = []
+            for pro in products:
+                get_images_query = select(ImageProduct).where(ImageProduct.product_id == pro.product_id)
+                image_result = await self.db.execute(get_images_query)
+                product_images_url = image_result.scalars().all()
 
-            async def get_product_with_image(pro, image_results):
-                product_images = image_results.scalars().all()
-                
-                cat_names = []
-                query_get_cat = await self.db.execute(select(CategoryProduct).where(CategoryProduct.product_id == pro.product_id))
-                for cat in query_get_cat.scalars().all():
-                    cat_name = await self.db.execute(select(Category).where(Category.cat_id == cat.cat_id))
-                    cat_name = cat_name.scalar_one_or_none()
-                    if not cat_name:
-                        continue
-                    cat_names.append(cat_name.cat_name.value)
-                
                 image_urls = []
-                if product_images:
-
-                    image_url_inputs = [img.image_url for img in product_images]
-
+                if product_images_url or []:
                     image_url_tasks = [
-                        self._get_image(image_url) for image_url in image_url_inputs
+                        self._get_image(img.image_url) for img in product_images_url
                     ]
                     image_url_results = await asyncio.gather(*image_url_tasks)
-
                     image_urls = [
                         result["image_url"]
                         for result in image_url_results
                         if result["success"]
                     ]
+                
+               
+                get_shop_name = select(ShopProduct).where(ShopProduct.product_id == pro.product_id)
+                shop_product_result = await self.db.execute(get_shop_name)
+                shop_product = shop_product_result.scalar_one_or_none()
 
-                return {
-                    "product_id": str(pro.product_id),
-                    "product_name": pro.product_name,
-                    "product_price": pro.price,
-                    "product_category" : cat_names,
-                    "product_description" : pro.product_description,
-                    "image_urls": image_urls,
-                }
+                get_shop_query = select(Shop).where(Shop.shop_id == shop_product.shop_id)
+                shop_result = await self.db.execute(get_shop_query)
+                shop = shop_result.scalar_one_or_none()
 
-            response = await asyncio.gather(
-                *[
-                    get_product_with_image(pro, image_results)
-                    for pro, image_results in zip(results, image_results_list)
-                ]
-            )
+                get_cat_name = select(CategoryProduct).where(CategoryProduct.product_id == pro.product_id)
+                cat_product_result = await self.db.execute(get_cat_name)
+                cat_product_names = cat_product_result.scalars().all()
 
-            return JSONResponse(content=response, status_code=status.HTTP_200_OK)
+                cat_names =[]
+                for cat in cat_product_names:
+                    get_cat_name = select(Category).where(Category.cat_id == cat.cat_id)
+                    cat_name_result = await self.db.execute(get_cat_name)
+                    cat_name = cat_name_result.scalar_one_or_none()
+                    cat_names.append(cat_name.cat_name.value)
+
+                products_response.append(
+                    {
+                        "product_id": str(pro.product_id),
+                        "product_name": pro.product_name,
+                        "product_price": pro.price,
+                        "image_urls": image_urls,
+                        "product_description" : pro.product_description,
+                        "product_category" : cat_names,
+                        "shop_name" : {
+                            "shop_id": str(shop.shop_id),
+                            "shop_name": shop.shop_name,
+                        }
+                    }
+                )
+
+            return JSONResponse(content=products_response, status_code=status.HTTP_200_OK)
 
         except Exception as e:
             logger.error(str(e))

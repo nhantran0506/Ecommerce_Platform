@@ -12,14 +12,37 @@ from models.CartProduct import CartProduct
 from models.Shop import Shop
 from models.UserInterest import UserInterest, InterestScore
 from models.ShopProduct import ShopProduct
+from models.ImageProduct import ImageProduct
 from sqlalchemy.ext.asyncio import AsyncSession
 import logging
+import aiohttp
+import asyncio
+from config import CDN_SERVER_URL, CDN_GET_URL
+
 logger = logging.getLogger(__name__)
 
 
 class CartController:
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
+    
+
+    async def _get_image(self, image_url: str) -> dict:
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{CDN_SERVER_URL}/{CDN_GET_URL}/{image_url}"
+                ) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        return {"success": True, "image_url": result["image_url"]}
+                    else:
+                        return {
+                            "success": False,
+                            "error": f"Failed to retrieve image, status: {response.status}",
+                        }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
 
     async def update_cart(self, product_list: List[CartModify], current_user: User):
         try:
@@ -128,6 +151,21 @@ class CartController:
                         status_code=404,
                         detail=f"Product with id {items.product_id} not found",
                     )
+                
+                image_query = select(ImageProduct).where(ImageProduct.product_id == product.product_id)
+                image_results = await self.db.execute(image_query)
+                product_images = image_results.scalars().all()
+                if product_images:
+                    image_url_tasks = [
+                        self._get_image(img.image_url) for img in product_images
+                    ]
+                    image_url_results = await asyncio.gather(*image_url_tasks)
+                    image_urls = [
+                        result["image_url"]
+                        for result in image_url_results
+                        if result["success"]
+                    ]
+
 
                 cart_items_details.append(
                     {
@@ -135,6 +173,7 @@ class CartController:
                         "product_id": product.product_id,
                         "quantity": items.quantity,
                         "price": product.price,
+                        "image_urls": image_urls,
                         "total_price": items.quantity * product.price,
                     }
                 )

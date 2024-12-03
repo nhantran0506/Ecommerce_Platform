@@ -6,6 +6,8 @@ from llama_index.embeddings.ollama import OllamaEmbedding
 import weaviate
 from helper_collections.FAQQUES import FAQ
 from typing import Optional, List
+import asyncio
+import aiohttp
 from models.Products import *
 from config import (
     OLLAMA_CHAT_MODEL,
@@ -13,10 +15,14 @@ from config import (
     WEAVIATE_URL,
     OLLAMA_EMBEDDING_MODEL,
     VECTOR_DIMENSIONS,
-    REDIS_TTL
+    REDIS_TTL,
+    CDN_GET_URL,
+    CDN_SERVER_URL
 )
 from models.CategoryProduct import CategoryProduct
 from models.Category import Category
+from models.Shop import Shop
+from models.ShopProduct import ShopProduct
 from sqlalchemy import select, update, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
@@ -39,6 +45,7 @@ logger = logging.getLogger(__name__)
 class EmbeddingController:
     faq_collection_name = "FAQ"
     recommend_collection_name = "Recommend"
+
 
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
@@ -94,6 +101,24 @@ class EmbeddingController:
             ).as_retriever(similarity_top_k=256, node_postprocessors=[postprocessor])
         except Exception as e:
             logger.error(str(e))
+    
+
+    async def _get_image(self, image_url: str) -> dict:
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{CDN_SERVER_URL}/{CDN_GET_URL}/{image_url}"
+                ) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        return {"success": True, "image_url": result["image_url"]}
+                    else:
+                        return {
+                            "success": False,
+                            "error": f"Failed to retrieve image, status: {response.status}",
+                        }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
 
     def _create_schema(self, collection_name, is_faq: bool = False):
         try:
@@ -247,23 +272,67 @@ class EmbeddingController:
                     content={"Message": "No valid product IDs found"},
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
+            
+            products= []
+            for pro_id in product_ids:
+                get_image_query = select(ImageProduct).where(ImageProduct.product_id == pro_id)
+                image_results = await self.db.execute(get_image_query)
+                product_images = image_results.scalars().all()
 
-            product_get_query = select(Product).where(
-                Product.product_id.in_(product_ids)
-            )
-            results = await self.db.execute(product_get_query)
 
-            products = []
-            for pro in results.scalars().all():
-                products.append(
-                    {
-                        "product_id": str(pro.product_id),
-                        "product_name": pro.product_name,
-                        "product_price": pro.price,
-                    }
-                )
+                image_urls = []
+                if product_images or []:
+                    image_url_tasks = [
+                        self._get_image(img.image_url) for img in product_images
+                    ]
+                    image_url_results = await asyncio.gather(*image_url_tasks)
+                    image_urls = [
+                        result["image_url"]
+                        for result in image_url_results
+                        if result["success"]
+                    ]
 
-            # Before returning, cache the results
+            
+                get_product_query = select(Product).where(Product.product_id == pro_id)
+                product_result = await self.db.execute(get_product_query)
+                product = product_result.scalar_one_or_none()
+
+                if product:
+                    get_shop_name = select(ShopProduct).where(ShopProduct.product_id == pro_id)
+                    shop_product_result = await self.db.execute(get_shop_name)
+                    shop_product = shop_product_result.scalar_one_or_none()
+                    print("dmm", pro_id)
+
+                    get_shop_query = select(Shop).where(Shop.shop_id == shop_product.shop_id)
+                    shop_result = await self.db.execute(get_shop_query)
+                    shop = shop_result.scalar_one_or_none()
+
+                    get_cat_name = select(CategoryProduct).where(CategoryProduct.product_id == pro_id)
+                    cat_product_result = await self.db.execute(get_cat_name)
+                    cat_product_names = cat_product_result.scalars().all()
+
+                    cat_names =[]
+                    for cat in cat_product_names:
+                        get_cat_name = select(Category).where(Category.cat_id == cat.cat_id)
+                        cat_name_result = await self.db.execute(get_cat_name)
+                        cat_name = cat_name_result.scalar_one_or_none()
+                        cat_names.append(cat_name.cat_name.value)
+
+                    products.append(
+                        {
+                            "product_id": str(product.product_id),
+                            "product_name": product.product_name,
+                            "product_price": product.price,
+                            "image_urls": image_urls,
+                            "product_description" : product.product_description,
+                            "product_category" : cat_names,
+                            "shop_name" : {
+                                "shop_id": str(shop.shop_id),
+                                "shop_name": shop.shop_name,
+                            }
+                        }
+                    )
+                    
             self.redis.setex(
                 cache_key,
                 REDIS_TTL,
