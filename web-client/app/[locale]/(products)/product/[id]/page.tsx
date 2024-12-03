@@ -29,6 +29,8 @@ import {
 import productAPIs from "@/api/product";
 import cartAPIs from "@/api/cart";
 import { CircleCheck } from "lucide-react";
+import ProductDetailSkeleton from "@/components/product_detail_skeleton";
+// import ProductDetailSkeleton from "@/components/product_detail/product_detail_skeleton";
 
 const ProductDetailPage = ({ params }: { params: { id: string } }) => {
   const maxNumberOfProduct = 10;
@@ -149,9 +151,8 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
       </Button>
     </div>
   );
-
   if (loading) {
-    return <div>Loading...</div>;
+    return <ProductDetailSkeleton />;
   }
 
   if (!product) {

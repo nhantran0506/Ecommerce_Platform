@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Input } from "@nextui-org/react";
 import { Search } from "react-feather";
 
-const SearchBar = () => {
+const SearchBar = ({ className = "w-10/12" }) => {
   const router = useRouter();
   const pathname = usePathname();
   const locale = pathname.split("/")[1];
@@ -23,7 +23,7 @@ const SearchBar = () => {
   };
 
   return (
-    <div className="w-10/12">
+    <div className={className}>
       <Input
         isClearable
         radius="lg"
@@ -55,7 +55,7 @@ const SearchBar = () => {
         }}
         placeholder="Type to search..."
         startContent={
-          <Search className=" mb-0.5 dark:text-white/90 text-black pointer-events-none flex-shrink-0" />
+          <Search className="mb-0.5 dark:text-white/90 text-black pointer-events-none flex-shrink-0" />
         }
         onClear={() => handleClear()}
       />

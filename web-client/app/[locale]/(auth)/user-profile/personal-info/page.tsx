@@ -1,5 +1,6 @@
 "use client";
 import authAPIs from "@/api/auth";
+import PersonalInfoSkeleton from "@/components/personal-info-skeleton";
 import SectionHeader from "@/components/section_header";
 import { Button, Input } from "@nextui-org/react";
 import { useTranslations } from "next-intl";
@@ -105,6 +106,10 @@ const PersonalInfomationPage = () => {
     }
   };
 
+  if (loading) {
+    return <PersonalInfoSkeleton />;
+  }
+
   return (
     <SectionHeader
       title={t("user_profile_personal_info_title")}
@@ -115,37 +120,33 @@ const PersonalInfomationPage = () => {
       // }
       content={
         <div>
-          {loading ? (
-            <div>Loading...</div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4">
-              {listFormInput.map((item, index) => (
-                <div
-                  key={index}
-                  className={`mb-4 ${
-                    listFormInput.length % 2 !== 0 &&
-                    index === listFormInput.length - 1
-                      ? "col-span-2"
-                      : ""
-                  }`}
-                >
-                  <Input
-                    type={item.type}
-                    label={item.label}
-                    labelPlacement="outside"
-                    placeholder={item.placeholder}
-                    isClearable
-                    className="font-bold"
-                    value={item.value}
-                    onChange={(e) =>
-                      handleInputChange(item.field, e.target.value)
-                    }
-                    onClear={() => handleInputChange(item.field, "")}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-2 gap-4">
+            {listFormInput.map((item, index) => (
+              <div
+                key={index}
+                className={`mb-4 ${
+                  listFormInput.length % 2 !== 0 &&
+                  index === listFormInput.length - 1
+                    ? "col-span-2"
+                    : ""
+                }`}
+              >
+                <Input
+                  type={item.type}
+                  label={item.label}
+                  labelPlacement="outside"
+                  placeholder={item.placeholder}
+                  isClearable
+                  className="font-bold"
+                  value={item.value}
+                  onChange={(e) =>
+                    handleInputChange(item.field, e.target.value)
+                  }
+                  onClear={() => handleInputChange(item.field, "")}
+                />
+              </div>
+            ))}
+          </div>
 
           <div className="flex gap-4">
             <Button
