@@ -27,6 +27,7 @@ import vietNamImg from "@/assets/vietnam.png";
 import usImg from "@/assets/united-states-of-america.png";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
+import SearchBar from "../search";
 
 export default function NavigationBar() {
   const router = useRouter();
@@ -174,6 +175,10 @@ export default function NavigationBar() {
       </NavbarContent>
 
       <NavbarContent justify="end" className="gap-4">
+        <NavbarItem className="w-full flex justify-center">
+          <SearchBar />
+        </NavbarItem>
+
         <NavbarItem>
           <Button
             isIconOnly
