@@ -17,7 +17,32 @@ class Order {
       throw new Error(`Failed to checkout with status ${response.status}`);
     }
 
+<<<<<<< Updated upstream
     const data = await response.json();
+=======
+    const data = (await response.json()) as IOrderResponse;
+    return data;
+  }
+
+  async getOrderHistory(): Promise<IOrderHistory[]> {
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(`${API_BASE_URL}/order/get_order_history`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Get order history failed with status ${response.status}`
+      );
+    }
+
+    const data = (await response.json()) as IOrderHistory[];
+>>>>>>> Stashed changes
     return data;
   }
 

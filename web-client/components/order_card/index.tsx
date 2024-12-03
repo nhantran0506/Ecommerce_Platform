@@ -24,26 +24,36 @@ export interface IOrderItem {
 }
 
 interface IOrderCard {
-  id: string;
+  index: string;
   status: OrderStatus;
   listOrderItem: IOrderItem[];
+  createdAt: string;
 }
 
-const OrderCard: React.FC<IOrderCard> = ({ id, status, listOrderItem }) => {
+const OrderCard: React.FC<IOrderCard> = ({
+  index: id,
+  status,
+  listOrderItem,
+  createdAt,
+}) => {
   const router = useRouter();
   const pathname = usePathname();
   const locale = pathname.split("/")[1];
+
+  const orderDate = new Date(createdAt);
+  const formattedDate = orderDate.toLocaleDateString();
+  const formattedTime = orderDate.toLocaleTimeString();
 
   const listOrderCardOption: IOrderCardInfo[] = [
     {
       name: "date",
       icon: <Calendar />,
-      value: "September 16, 2020",
+      value: formattedDate,
     },
     {
       name: "time",
       icon: <Clock />,
-      value: "11:54 PM",
+      value: formattedTime,
     },
   ];
 
@@ -54,7 +64,7 @@ const OrderCard: React.FC<IOrderCard> = ({ id, status, listOrderItem }) => {
   return (
     <Card className="max-w-[400px] bg-[#F7F7F7]">
       <CardHeader className="flex justify-between">
-        <div>
+        <div className="w-72">
           <p className="text-xl font-bold">Order #{id}</p>
         </div>
 

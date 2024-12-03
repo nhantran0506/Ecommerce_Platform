@@ -3,7 +3,6 @@
 import CartItemCard from "@/components/cart_item_card";
 import SectionHeader from "@/components/section_header";
 import { listOrderItem } from "@/data/data";
-import { ITableColumProp } from "@/interface/UI/ICartUI";
 import { IOrder } from "@/interface/Data/IOrderData";
 import {
   Button,
@@ -68,7 +67,15 @@ const OrderDetailPage = ({ params }: { params: { id: string } }) => {
     order?.listOrderItem?.map((item, index) => ({
       key: index,
       index: index,
-      item: <CartItemCard product={item.product} onClick={() => {}} />,
+      item: (
+        <CartItemCard
+          product={{
+            ...item.product,
+            quantity: item.number,
+          }}
+          onClick={() => {}}
+        />
+      ),
       price: item?.product?.price ? `$${item.product.price.toFixed(2)}` : "N/A",
       quantity: item.number,
     })) || [];

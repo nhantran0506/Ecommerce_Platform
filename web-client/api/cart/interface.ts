@@ -3,17 +3,18 @@ interface IReqAddToCart {
   quantity: number;
 }
 
-interface IProductInCart {
+interface IProductTable {
   product_name: string;
   product_id: string;
   quantity: number;
   price: number;
-  total_price: number;
+  image_urls: string[];
+  total_price?: number;
 }
 
 interface IResCartProductList {
   cart_details: {
-    products: IProductInCart[];
+    products: IProductTable[];
     created_at: string;
     total_price: number;
   };

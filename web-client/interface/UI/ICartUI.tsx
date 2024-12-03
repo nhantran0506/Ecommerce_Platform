@@ -1,5 +1,5 @@
 interface ICartItem {
-  product: IProductInCart;
+  product: IProductTable;
   onClick: () => void;
 }
 

@@ -24,10 +24,15 @@ export const API_ROUTES = {
   ADD_PRODUCT_TO_CART: "/cart/update_products",
   GET_PRODUCT_IN_CART: "/cart/get_cart_details",
   ORDER_PRODUCT: "/order/order_products",
-  UPDATE_CART: '/cart/update_products',
+  UPDATE_CART: "/cart/update_products",
   SHOP_REVENUE_STATS: "/shops/statistics/revenue",
   SHOP_TOP_PRODUCTS_STATS: "/shops/statistics/top_products",
   SHOP_CATEGORIES_STATS: "/shops/statistics/categories",
+<<<<<<< Updated upstream
   GET_ORDER_BY_ID: "/order/get_order_by_id",
   RESTORE_ORDER: "/order/restore",
+=======
+  GET_ALL_PRODUCTS_SHOP: "/products/get_all_products_shop",
+  GET_ORDER_HISTORY: "/order/get_order_history",
+>>>>>>> Stashed changes
 };

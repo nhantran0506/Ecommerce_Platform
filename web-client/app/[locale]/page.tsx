@@ -12,6 +12,7 @@ import { usePathname } from "next/navigation";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import ListProductCardSkeleton from "@/components/list_product_card_skeleton";
 
 export default function Home() {
   const router = useRouter();
@@ -109,11 +110,11 @@ export default function Home() {
       <SectionHeader
         title={"All Products"}
         content={
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {loading ? (
-              <div>Loading...</div>
-            ) : (
-              productlist.map((item: IProductData, index: number) => (
+          loading ? (
+            <ListProductCardSkeleton />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {productlist.map((item: IProductData, index: number) => (
                 <ProductCard
                   key={index}
                   product={item}
@@ -121,9 +122,9 @@ export default function Home() {
                     router.push("/" + locale + "/product/" + item.product_id)
                   }
                 />
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )
         }
       />
     </div>

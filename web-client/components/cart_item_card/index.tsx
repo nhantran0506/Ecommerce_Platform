@@ -1,6 +1,6 @@
 import DefaultImage from "../product_card/default_image";
 import { ImageSizeEnum } from "@/interface/UI/IProductUI";
-import { Button, Card, Image } from "@nextui-org/react";
+import { Card, Image } from "@nextui-org/react";
 
 const CartItemCard: React.FC<ICartItem> = ({ product, onClick }) => {
   return (
@@ -11,8 +11,8 @@ const CartItemCard: React.FC<ICartItem> = ({ product, onClick }) => {
       isHoverable
     >
       <div className="flex gap-4">
-        <Button isIconOnly className="w-[200px] h-[120px]">
-          {/* {product?.image ? (
+        <div className="w-[200px] h-[120px] flex items-center justify-center">
+          {product?.image_urls[0] == "" ? (
             <div className="w-[120px] h-[120px]">
               <DefaultImage imgSize={ImageSizeEnum.sm} />
             </div>
@@ -21,26 +21,21 @@ const CartItemCard: React.FC<ICartItem> = ({ product, onClick }) => {
               shadow="sm"
               radius="lg"
               width="100%"
-              alt={product?.product_name}
-              className="w-[120px] h-[120px] object-cover"
-              src={product?.image}
+              alt={product.product_name}
+              className="w-full h-[180px] object-cover"
+              src={product.image_urls[0]}
               style={{
                 objectFit: "cover",
                 objectPosition: "center",
               }}
             />
-          )} */}
-
-          <div className="w-[120px] h-[120px]">
-            <DefaultImage imgSize={ImageSizeEnum.sm} />
-          </div>
-        </Button>
+          )}
+        </div>
 
         <div className="flex flex-col p-2 w-2/3 text-start">
           <h3 className="font-bold mb-1 text-lg line-clamp-1">
             {product?.product_name}
           </h3>
-          <p className="line-clamp-3">Desciption</p>
         </div>
       </div>
     </Card>

@@ -11,9 +11,10 @@ const MyOrdersPage = () => {
           {listOrderItem.map((item, index) => (
             <OrderCard
               key={index}
-              id={item.id}
+              index={item.id}
               status={item.status}
               listOrderItem={item.listOrderItem}
+              createdAt={""}
             />
           ))}
         </div>

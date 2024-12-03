@@ -19,12 +19,13 @@ import { useEffect, useState } from "react";
 import cartAPIs from "@/api/cart";
 import orderAPIs from "@/api/order";
 import { useRouter } from "next/navigation";
+import ProductListInCartSkeleton from "@/components/list_product_in_card_skeleton";
 
 const CartPage = () => {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
-  const [productlist, setProductList] = useState<IProductInCart[]>();
+  const [productlist, setProductList] = useState<IProductTable[]>();
   const [cartData, setCartData] = useState<IResCartProductList | null>(null);
 
   useEffect(() => {
@@ -47,13 +48,15 @@ const CartPage = () => {
   const handleAddToCart = async (id: string, val: number) => {
     try {
       setLoading(true);
-      const cartModify: ICartModify[] = [{
-        product_id: id,
-        quantity: val,
-      }];
+      const cartModify: ICartModify[] = [
+        {
+          product_id: id,
+          quantity: val,
+        },
+      ];
 
       await cartAPIs.updateCart(cartModify);
-      
+
       // Refresh cart data after update
       const updatedCart = await cartAPIs.getProductInCart();
       setCartData(updatedCart);
@@ -113,10 +116,12 @@ const CartPage = () => {
       }
 
       setLoading(true);
-      const reqBody: IOrderProduct[] = productlist.map(({ product_id, quantity }) => ({
-        product_id,
-        quantity,
-      }));
+      const reqBody: IOrderProduct[] = productlist.map(
+        ({ product_id, quantity }) => ({
+          product_id,
+          quantity,
+        })
+      );
 
       const res = await orderAPIs.checkout(reqBody);
 
@@ -133,9 +138,7 @@ const CartPage = () => {
     }
   };
 
-  return loading ? (
-    <div className="text-center">Loading...</div>
-  ) : (
+  return (
     <div className="flex flex-col justify-center mx-64">
       <h1 className="flex gap-2 font-bold text-xl mb-4 mt-12">
         Cart
@@ -144,46 +147,50 @@ const CartPage = () => {
         </span>
       </h1>
 
-      {productlist?.length! > 0 ? (
-        <Table aria-label="Cart table" className="mb-8">
-          <TableHeader columns={columns}>
-            {(column) => (
-              <TableColumn key={column.key}>
-                <p
-                  className={`text-sm ${
-                    column.key === "quantity" ? "text-center" : ""
-                  }`}
-                >
-                  {column.label}
-                </p>
-              </TableColumn>
-            )}
-          </TableHeader>
-          <TableBody items={rows}>
-            {(item) => (
-              <TableRow key={item.key}>
-                {(columnKey) => (
-                  <TableCell>
-                    {columnKey === "options" ? (
-                      <Button
-                        variant="light"
-                        color="danger"
-                        isIconOnly
-                        // onClick={() => handleDelete(item.key)}
-                      >
-                        <X />
-                      </Button>
-                    ) : (
-                      getKeyValue(item, columnKey)
-                    )}
-                  </TableCell>
-                )}
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+      {!loading ? (
+        productlist?.length! > 0 ? (
+          <Table aria-label="Cart table" className="mb-8">
+            <TableHeader columns={columns}>
+              {(column) => (
+                <TableColumn key={column.key}>
+                  <p
+                    className={`text-sm ${
+                      column.key === "quantity" ? "text-center" : ""
+                    }`}
+                  >
+                    {column.label}
+                  </p>
+                </TableColumn>
+              )}
+            </TableHeader>
+            <TableBody items={rows}>
+              {(item) => (
+                <TableRow key={item.key}>
+                  {(columnKey) => (
+                    <TableCell>
+                      {columnKey === "options" ? (
+                        <Button
+                          variant="light"
+                          color="danger"
+                          isIconOnly
+                          // onClick={() => handleDelete(item.key)}
+                        >
+                          <X />
+                        </Button>
+                      ) : (
+                        getKeyValue(item, columnKey)
+                      )}
+                    </TableCell>
+                  )}
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="text-center py-52">Your cart is empty</div>
+        )
       ) : (
-        <div>Loading...</div>
+        <ProductListInCartSkeleton />
       )}
 
       <Divider className="mb-8" />
@@ -194,7 +201,7 @@ const CartPage = () => {
           <p className="text-[#939699] font-bold">Back to shopping</p>
         </div>
 
-        <div className="flex justify-between items-center mt-4">
+        <div className="flex justify-between items-center mt-4 gap-4">
           <div className="text-xl font-bold">
             Total: ${cartData?.cart_details.total_price.toFixed(2) || "0.00"}
           </div>

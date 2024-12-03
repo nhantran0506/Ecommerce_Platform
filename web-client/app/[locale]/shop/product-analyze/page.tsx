@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import productAPIs from "@/api/product";
 import CartItemCard from "@/components/cart_item_card";
-import { ITableColumProp } from "@/interface/UI/ICartUI";
 import {
   Table,
   TableHeader,
@@ -17,39 +18,49 @@ import { PackagePlus, Trash2 } from "lucide-react";
 import ProductMotificationPage from "./product-motification/page";
 import { useProductId } from "@/state/state";
 import SectionHeader from "@/components/section_header";
-import { shopProductlist } from "@/data/data";
+import ProductAnalyzeSkeleton from "@/components/product-analyze-skeleton";
 
-const columns: ITableColumProp[] = [
-  {
-    key: "index",
-    label: "Index",
-  },
-  {
-    key: "item",
-    label: "Item",
-  },
-  {
-    key: "price",
-    label: "Price",
-  },
-  {
-    key: "action",
-    label: "Actions",
-  },
+const columns = [
+  { key: "index", label: "Index" },
+  { key: "item", label: "Item" },
+  { key: "price", label: "Price" },
+  { key: "action", label: "Actions" },
 ];
 
 const ProductAnalyzePage = () => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const { setProductId } = useProductId();
+  const [products, setProducts] = useState<IProductData[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const rows = shopProductlist.map((product) => ({
-    key: product.id,
-    index: product.id,
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const data = await productAPIs.getAllProductsShop();
+        setProducts(data);
+      } catch (error) {
+        console.error("Failed to fetch shop products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const rows = products.map((product, index) => ({
+    key: product.product_id,
+    index: index + 1,
     item: (
       <CartItemCard
-        product={product}
+        product={{
+          ...product,
+          quantity: 1,
+          price: product.price,
+        }}
         onClick={() => {
-          setProductId(product.id);
+          setProductId(product.product_id);
           onOpen();
         }}
       />
@@ -57,10 +68,14 @@ const ProductAnalyzePage = () => {
     price: `$${product.price.toFixed(2)}`,
   }));
 
+  if (loading) {
+    return <ProductAnalyzeSkeleton />;
+  }
+
   return (
     <>
       <SectionHeader
-        title={"Products"}
+        title="Products"
         action={
           <Button
             className="text-white bg-black h-10"
@@ -74,7 +89,7 @@ const ProductAnalyzePage = () => {
           </Button>
         }
         content={
-          <Table aria-label="Cart table" className="mb-8">
+          <Table aria-label="Products table" className="mb-8">
             <TableHeader columns={columns}>
               {(column) => (
                 <TableColumn key={column.key}>{column.label}</TableColumn>
@@ -86,12 +101,7 @@ const ProductAnalyzePage = () => {
                   {(columnKey) => (
                     <TableCell>
                       {columnKey === "action" ? (
-                        <Button
-                          variant="light"
-                          color="danger"
-                          isIconOnly
-                          // onClick={() => handleDelete(item.key)}
-                        >
+                        <Button variant="light" color="danger" isIconOnly>
                           <Trash2 />
                         </Button>
                       ) : (

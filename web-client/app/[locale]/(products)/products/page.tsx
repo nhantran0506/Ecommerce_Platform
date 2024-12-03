@@ -14,6 +14,7 @@ import { Suspense, useEffect, useState } from "react";
 import { productState } from "@/state/state";
 import productAPIs from "@/api/product";
 import { useTranslations } from "next-intl";
+import ListProductCardSkeleton from "@/components/list_product_card_skeleton";
 
 const ProductPage = () => {
   const router = useRouter();
@@ -102,11 +103,11 @@ const ProductPage = () => {
               : t("products_all_product")
           }
           content={
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {loading ? (
-                <div>Loading...</div>
-              ) : (
-                productlist?.map((item: IProductData, index: number) => (
+            loading ? (
+              <ListProductCardSkeleton />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {productlist?.map((item: IProductData, index: number) => (
                   <ProductCard
                     key={index}
                     product={item}
@@ -114,9 +115,9 @@ const ProductPage = () => {
                       router.push("/" + locale + "/product/" + item.product_id)
                     }
                   />
-                ))
-              )}
-            </div>
+                ))}{" "}
+              </div>
+            )
           }
         />
       </div>
