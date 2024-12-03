@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, Depends, File, Form, UploadFile, Request
+from fastapi import APIRouter, status, Depends, File, Form, UploadFile, Request, Query
 from fastapi.responses import JSONResponse
 import logging
 from middlewares import token_config
@@ -8,6 +8,7 @@ from controllers.EmbeddingController import EmbeddingController
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
+from typing import Optional, List
 
 
 logger = logging.getLogger(__name__)
@@ -85,18 +86,20 @@ async def product_update(
         )
 
 
-@router.get("/search_products")
-async def product_search(
-    user_query: str, embedding_controller: EmbeddingController = Depends()
+@router.get("/search")
+async def search_products(
+    query: str,
+    categories: Optional[List[str]] = Query(None),
+    min_price: Optional[float] = Query(None),
+    max_price: Optional[float] = Query(None),
+    embedding_controller: EmbeddingController = Depends()
 ):
-    try:
-        return await embedding_controller.search_product(user_query)
-    except Exception as e:
-        logger.error(str(e))
-        return JSONResponse(
-            content={"Message": "Unexpected error"},
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+    filters = SearchFilter(
+        categories=categories,
+        min_price=min_price,
+        max_price=max_price
+    )
+    return await embedding_controller.search_product(query, filters)
 
 
 @router.post("/get_all_products_shop")

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 import uuid
 from models.Category import CatTypes
 from fastapi import UploadFile
@@ -79,3 +79,9 @@ class ProductRatingSerializer(BaseModel):
     product_id: uuid.UUID
     rating: int
     comment: Optional[str] = ""
+
+
+class SearchFilter(BaseModel):
+    categories: Optional[List[str]] = None  
+    min_price: Optional[float] = None
+    max_price: Optional[float] = None

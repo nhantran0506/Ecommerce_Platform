@@ -27,7 +27,7 @@ from sqlalchemy import select, update, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
 from db_connector import get_db
-from serializers.ProductSerializers import ProductResponse
+from serializers.ProductSerializers import ProductResponse, SearchFilter
 from llama_index.core.indices.vector_store.retrievers import VectorIndexRetriever
 from fastapi import status
 from fastapi.responses import JSONResponse
@@ -243,18 +243,27 @@ class EmbeddingController:
             logger.error(f"Error removing product from vector store: {str(e)}")
             return False
 
-    async def search_product(self, user_query: str):
+    async def search_product(self, user_query: str, filters: Optional[SearchFilter] = None):
         try:
-            # Try to get cached search results
-            cache_key = f"product_search:{hash(user_query)}"
+            filter_key = ""
+            if filters:
+                if filters.categories:
+                    filter_key += f"_cat={'_'.join(sorted(filters.categories))}"
+                if filters.min_price is not None:
+                    filter_key += f"_min={filters.min_price}"
+                if filters.max_price is not None:
+                    filter_key += f"_max={filters.max_price}"
+            
+            cache_key = f"product_search:{hash(user_query)}{filter_key}"
             cached_data = self.redis.get(cache_key)
 
             if cached_data:
                 return JSONResponse(
-                    content=json.loads(cached_data), status_code=status.HTTP_200_OK
+                    content=json.loads(cached_data), 
+                    status_code=status.HTTP_200_OK
                 )
 
-            # If no cache, proceed with your existing search logic
+        
             vector_result = self.recommend_index.retrieve(user_query)
 
             if not vector_result:
@@ -263,6 +272,7 @@ class EmbeddingController:
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
 
+    
             product_ids = []
             for obj in vector_result:
                 product_id = obj.node.metadata["product_id"]
@@ -277,6 +287,46 @@ class EmbeddingController:
 
             products = []
             for pro_id in product_ids:
+                
+                get_product_query = select(Product).where(Product.product_id == pro_id)
+                product_result = await self.db.execute(get_product_query)
+                product = product_result.scalar_one_or_none()
+
+                if not product:
+                    continue
+
+               
+                if filters:
+                    if filters.min_price is not None and product.price < filters.min_price:
+                        continue
+                    if filters.max_price is not None and product.price > filters.max_price:
+                        continue
+
+             
+                get_cat_name = select(CategoryProduct).where(
+                    CategoryProduct.product_id == pro_id
+                )
+                cat_product_result = await self.db.execute(get_cat_name)
+                cat_product_names = cat_product_result.scalars().all()
+
+                cat_names = []
+               
+                
+                for cat in cat_product_names:
+                    get_cat_name = select(Category).where(
+                        Category.cat_id == cat.cat_id
+                    )
+                    cat_name_result = await self.db.execute(get_cat_name)
+                    cat_name = cat_name_result.scalar_one_or_none()
+                    if cat_name:
+                        cat_names.append(cat_name.cat_name.value)
+
+            
+                if filters and filters.categories:
+                    if not any(cat in filters.categories for cat in cat_names):
+                        continue
+
+             
                 get_image_query = select(ImageProduct).where(
                     ImageProduct.product_id == pro_id
                 )
@@ -284,7 +334,7 @@ class EmbeddingController:
                 product_images = image_results.scalars().all()
 
                 image_urls = []
-                if product_images or []:
+                if product_images:
                     image_url_tasks = [
                         self._get_image(img.image_url) for img in product_images
                     ]
@@ -295,56 +345,35 @@ class EmbeddingController:
                         if result["success"]
                     ]
 
-                get_product_query = select(Product).where(Product.product_id == pro_id)
-                product_result = await self.db.execute(get_product_query)
-                product = product_result.scalar_one_or_none()
+            
+                get_shop_name = select(ShopProduct).where(
+                    ShopProduct.product_id == pro_id
+                )
+                shop_product_result = await self.db.execute(get_shop_name)
+                shop_product = shop_product_result.scalar_one_or_none()
 
-                if product:
-                    get_shop_name = select(ShopProduct).where(
-                        ShopProduct.product_id == pro_id
-                    )
-                    shop_product_result = await self.db.execute(get_shop_name)
-                    shop_product = shop_product_result.scalar_one_or_none()
-                    print("dmm", pro_id)
-
+                if shop_product:
                     get_shop_query = select(Shop).where(
                         Shop.shop_id == shop_product.shop_id
                     )
                     shop_result = await self.db.execute(get_shop_query)
                     shop = shop_result.scalar_one_or_none()
 
-                    get_cat_name = select(CategoryProduct).where(
-                        CategoryProduct.product_id == pro_id
-                    )
-                    cat_product_result = await self.db.execute(get_cat_name)
-                    cat_product_names = cat_product_result.scalars().all()
-
-                    cat_names = []
-                    for cat in cat_product_names:
-                        get_cat_name = select(Category).where(
-                            Category.cat_id == cat.cat_id
-                        )
-                        cat_name_result = await self.db.execute(get_cat_name)
-                        cat_name = cat_name_result.scalar_one_or_none()
-                        cat_names.append(cat_name.cat_name.value)
-
-                    products.append(
-                        {
-                            "product_id": str(product.product_id),
-                            "product_name": product.product_name,
-                            "product_price": product.price,
-                            "product_total_sales": product.total_sales,
-                            "image_urls": image_urls,
-                            "product_description": product.product_description,
-                            "product_category": cat_names,
-                            "product_avg_stars": product.avg_stars,
-                            "product_total_ratings": product.total_ratings,
-                            "shop_name": {
-                                "shop_id": str(shop.shop_id),
-                                "shop_name": shop.shop_name,
-                            },
-                        }
-                    )
+                    products.append({
+                        "product_id": str(product.product_id),
+                        "product_name": product.product_name,
+                        "product_price": product.price,
+                        "product_total_sales": product.total_sales,
+                        "image_urls": image_urls,
+                        "product_description": product.product_description,
+                        "product_category": cat_names,
+                        "product_avg_stars": product.avg_stars,
+                        "product_total_ratings": product.total_ratings,
+                        "shop_name": {
+                            "shop_id": str(shop.shop_id),
+                            "shop_name": shop.shop_name,
+                        },
+                    })
 
             self.redis.setex(cache_key, REDIS_TTL, json.dumps(products))
 
