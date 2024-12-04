@@ -45,7 +45,7 @@ class AdminController:
                     status_code=status.HTTP_200_OK,
                 )
 
-            query = select(User).where(User.deleted_date != None)
+            query = select(User).where(User.deleted_date == None)
             result = await self.db.execute(query)
             users = result.scalars().all()
             count = str(len(users))
@@ -438,7 +438,7 @@ class AdminController:
             )
 
     async def statistics_number_orders(
-        self, admin_data: AdminCreate, current_user: User
+        self, admin_data: AdminGetData, current_user: User
     ):
         if current_user.role != UserRoles.ADMIN:
             return JSONResponse(

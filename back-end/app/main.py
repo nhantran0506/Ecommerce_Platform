@@ -21,7 +21,8 @@ from config import DATABASE_PASS, DATABASE_NAME, PORT
 from contextlib import asynccontextmanager
 from starlette.middleware.sessions import SessionMiddleware
 from models.Category import Category, CatTypes
-from sqlalchemy import func, select, insert
+from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert
 from db_connector import get_db
 from config import (
     SERECT_KEY,
@@ -34,12 +35,13 @@ routing = RouteConfig()
 async def insert_default_enum_values(session: AsyncSession):
     async with session.begin():
         for cat_type in CatTypes:
-            result = await session.execute(
-                select(Category).filter(Category.cat_name == cat_type)
+            insert_cat_query = insert(Category).values(
+                cat_name = cat_type.value
+            ).on_conflict_do_update(
+                index_elements=["cat_name"],
+                set_={"cat_name": Category.cat_name},
             )
-            if not result.scalar_one_or_none():
-                category = Category(cat_name=cat_type)
-                session.add(category)
+            await session.execute(insert_cat_query)
         await session.commit()
 
 async def create_tables():
