@@ -32,4 +32,6 @@ export const API_ROUTES = {
   RESTORE_ORDER: "/order/restore",
   GET_ALL_PRODUCTS_SHOP: "/products/get_all_products_shop",
   GET_ORDER_HISTORY: "/order/get_order_history",
+  GET_CATEGORIES: "/products/get_all_products_cat",
+  ADD_CATEGORY: "/admin/create_category",
 };
