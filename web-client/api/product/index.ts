@@ -86,6 +86,33 @@ class Product {
     const data = (await response.json()) as IProductData[];
     return data;
   }
+
+  async getRecommendedProducts(): Promise<IProductData[]> {
+    const token = localStorage.getItem("token");
+    const method = token ? "POST" : "GET";
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}${API_ROUTES.GET_RECOMMENDED_PRODUCTS}`,
+      {
+        method,
+        headers,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Get recommended products failed with status ${response.status}`);
+    }
+
+    const data = (await response.json()) as IProductData[];
+    return data;
+  }
 }
 
 export const productAPIs = new Product();

@@ -27,10 +27,10 @@ export default function Home() {
       try {
         setLoading(true);
 
-        // Check if there's a search query
+        // Use recommended products API instead of getAll
         const res = searchQuery
           ? await productAPIs.getSearchListProduct(searchQuery)
-          : await productAPIs.getAll();
+          : await productAPIs.getRecommendedProducts();
 
         setProductList(res);
       } catch (error) {
