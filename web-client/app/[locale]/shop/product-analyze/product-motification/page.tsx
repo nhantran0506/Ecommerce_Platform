@@ -15,8 +15,14 @@ import {
   Select,
   SelectItem,
 } from "@nextui-org/react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { API_BASE_URL } from "@/libraries/api";
+import productAPIs from "@/api/product";
+
+interface ICategory {
+  category_id: string; // e.g. "cd621c55-04a6-482c-9b4e-dc356231d49f"
+  category_name: string; // e.g. "SHIRT"
+}
 
 const ProductMotificationPage: React.FC<IProductMotificationPage> = ({
   isOpen,
@@ -29,17 +35,24 @@ const ProductMotificationPage: React.FC<IProductMotificationPage> = ({
     product_name: "",
     product_description: "",
     price: "",
-    category: "",
+    category_id: "",
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<ICategory[]>([]);
 
-  const categories = [
-    { value: "SHIRT", label: "Shirt" },
-    { value: "PANTS", label: "Pants" },
-    { value: "SHOES", label: "Shoes" },
-    { value: "ACCESSORIES", label: "Accessories" },
-  ];
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await productAPIs.getAllCategories();
+        setCategories(response);
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -60,6 +73,11 @@ const ProductMotificationPage: React.FC<IProductMotificationPage> = ({
       setLoading(true);
       const formDataToSend = new FormData();
 
+      // Find the selected category name based on the selected category_id
+      const selectedCategory = categories.find(
+        (cat) => cat.category_id === formData.category_id
+      );
+
       // Append basic product data
       formDataToSend.append("product_name", formData.product_name);
       formDataToSend.append(
@@ -67,9 +85,10 @@ const ProductMotificationPage: React.FC<IProductMotificationPage> = ({
         formData.product_description
       );
       formDataToSend.append("price", formData.price);
-      formDataToSend.append("category", formData.category);
+      // Send the category name instead of ID
+      formDataToSend.append("category", selectedCategory?.category_name || "");
 
-      // Append image files - using 'images' instead of 'image_urls'
+      // Append image files
       selectedFiles.forEach((file) => {
         formDataToSend.append("images", file);
       });
@@ -148,15 +167,24 @@ const ProductMotificationPage: React.FC<IProductMotificationPage> = ({
                       label="Category"
                       placeholder="Select category"
                       className="w-full"
+                      value={formData.category_id}
                       onChange={(e) =>
-                        handleInputChange("category", e.target.value)
+                        handleInputChange("category_id", e.target.value)
                       }
                     >
-                      {categories.map((category) => (
-                        <SelectItem key={category.value} value={category.value}>
-                          {category.label}
-                        </SelectItem>
-                      ))}
+                      {categories?.map(
+                        (category: {
+                          category_id: string;
+                          category_name: string;
+                        }) => (
+                          <SelectItem
+                            key={category.category_id}
+                            value={category.category_id}
+                          >
+                            {category.category_name}
+                          </SelectItem>
+                        )
+                      )}
                     </Select>
                   </div>
 

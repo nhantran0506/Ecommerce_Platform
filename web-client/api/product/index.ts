@@ -107,7 +107,9 @@ class Product {
     );
 
     if (!response.ok) {
-      throw new Error(`Get recommended products failed with status ${response.status}`);
+      throw new Error(
+        `Get recommended products failed with status ${response.status}`
+      );
     }
 
     const data = (await response.json()) as IProductData[];
@@ -116,18 +118,21 @@ class Product {
 
   async productRating(data: IProductRating): Promise<void> {
     const token = localStorage.getItem("token");
-    const response = await fetch(`${API_BASE_URL}${API_ROUTES.PRODUCT_RATING}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        product_id: data.product_id,
-        rating: data.rating,
-        comment: data.comment || ""
-      }),
-    });
+    const response = await fetch(
+      `${API_BASE_URL}${API_ROUTES.PRODUCT_RATING}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          product_id: data.product_id,
+          rating: data.rating,
+          comment: data.comment || "",
+        }),
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -135,18 +140,41 @@ class Product {
     }
   }
 
-  async getProductComments(productId: string): Promise<IProductRatingResponse[]> {
-    const response = await fetch(`${API_BASE_URL}/products/${productId}/comments`);
+  async getProductComments(
+    productId: string
+  ): Promise<IProductRatingResponse[]> {
+    const response = await fetch(
+      `${API_BASE_URL}/products/${productId}/comments`
+    );
     if (!response.ok) {
-      throw new Error('Failed to fetch product comments');
+      throw new Error("Failed to fetch product comments");
     }
     const data = await response.json();
     return data.map((comment: any) => ({
       user_name: `${comment.user_first_name} ${comment.user_last_name}`,
       rating: comment.rating,
       comment: comment.comment,
-      created_at: comment.created_at
+      created_at: comment.created_at,
     }));
+  }
+
+  async getAllCategories(): Promise<ICategory[]> {
+    const response = await fetch(
+      `${API_BASE_URL}${API_ROUTES.GET_CATEGORIES}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Get categories failed with status ${response.status}`);
+    }
+
+    const data = (await response.json()) as ICategory[];
+    return data;
   }
 }
 

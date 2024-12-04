@@ -6,8 +6,8 @@ interface ListProductCardSkeletonProps {
 }
 
 const ListProductCardSkeleton = ({
-  gridCols = 4,
-  count = 4,
+  gridCols = 3,
+  count = 3,
 }: ListProductCardSkeletonProps) => {
   return (
     <div className={`grid grid-cols-${gridCols} gap-6`}>

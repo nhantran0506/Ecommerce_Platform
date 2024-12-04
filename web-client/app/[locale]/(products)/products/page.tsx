@@ -88,7 +88,7 @@ const ProductPage = () => {
             }
             content={
               loading ? (
-                <ListProductCardSkeleton gridCols={3} count={6} />
+                <ListProductCardSkeleton gridCols={2} count={4} />
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {productlist?.map((item: IProductData, index: number) => (

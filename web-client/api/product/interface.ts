@@ -33,3 +33,8 @@ interface IProductRatingResponse {
   comment: string;
   created_at: string;
 }
+
+interface ICategory {
+  category_id: string;
+  category_name: string;
+}
