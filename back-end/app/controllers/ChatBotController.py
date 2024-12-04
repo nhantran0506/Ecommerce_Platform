@@ -7,7 +7,7 @@ from models.Users import User
 from sqlalchemy.ext.asyncio import AsyncSession
 from models.ChatHistory import ChatHistory
 from models.MessageHistory import MessageRole
-from .EmbeddingController import EmbeddingController
+from controllers.EmbeddingController import EmbeddingController
 from llama_index.core import PromptTemplate
 from helper_collections.PROMPTs import *
 from typing import List

@@ -1,28 +1,23 @@
-from pydantic import BaseModel
-from datetime import datetime as Datetime
-from pydantic import BaseModel, Field, field_validator
-import re
+from pydantic import BaseModel, field_validator
+from models.Category import CatTypes
 from datetime import datetime as DateTime
 
-class AdminGetData(BaseModel):
-    timestamp : DateTime
+class CategoryCreate(BaseModel):
+    cat_name: CatTypes
+    cat_description: str
 
-
-    class ConfigDict:
-        arbitrary_types_allowed = True
-        from_attributes = True
-
+    @field_validator('cat_description')
+    def validate_description(cls, v):
+        if not v or len(v.strip()) == 0:
+            raise ValueError('Category description cannot be empty')
+        return v.strip()
 
 class AdminCreate(BaseModel):
-    first_name: str = Field(..., alias="first_name")
-    last_name: str = Field(..., alias="last_name")
-    username: str = Field(..., alias="username")
-    password: str = Field(..., alias="password")
-    dob: DateTime = Field(..., alias="dob")
-
-    class ConfigDict:
-        arbitrary_types_allowed = True
-        from_attributes = True
+    first_name: str
+    last_name: str
+    username: str
+    password: str
+    dob: DateTime
 
     @field_validator('username')
     def validate_username(cls, v):
@@ -35,3 +30,8 @@ class AdminCreate(BaseModel):
         if len(v) < 8:
             raise ValueError('Password must be at least 8 characters long')
         return v
+
+
+class AdminGetData(BaseModel):
+    timestamp: DateTime
+
