@@ -828,3 +828,50 @@ class ProductController:
             await self.db.rollback()
             logger.error(str(e))
             return JSONResponse(content={"Message" : "Unexpected error"}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    async def get_product_comments(self, product_id: uuid.UUID):
+        try:
+            # Check if product exists
+            product_query = select(Product).where(Product.product_id == product_id)
+            product = await self.db.execute(product_query)
+            product = product.scalar_one_or_none()
+
+            if not product:
+                return JSONResponse(
+                    content={"message": "Product not found"},
+                    status_code=status.HTTP_404_NOT_FOUND
+                )
+
+            # Get all ratings for the product
+            ratings_query = (
+                select(ProductRating, User)
+                .join(User, ProductRating.user_id == User.user_id)
+                .where(ProductRating.product_id == product_id)
+                .order_by(ProductRating.created_at.desc())
+            )
+            
+            result = await self.db.execute(ratings_query)
+            ratings = result.all()
+
+            comments = []
+            for rating, user in ratings:
+                comments.append({
+                    "user_first_name": user.first_name,
+                    "user_last_name": user.last_name,
+                    "comment": rating.comment,
+                    "rating": rating.rating_stars,
+                    "created_at": str(rating.created_at)
+                })
+
+            return JSONResponse(
+                content=comments,
+                status_code=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            logger.error(str(e))
+            await self.db.rollback()
+            return JSONResponse(
+                content={"message": "Error getting product comments"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

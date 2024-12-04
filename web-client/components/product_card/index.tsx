@@ -44,7 +44,7 @@ const ProductCard: React.FC<IProductCard> = ({ product, onClick }) => {
 
           <div className="flex justify-between items-center">
             <div className="flex flex-col items-start">
-              <p className="font-bold text-lg">$ {product.product_price}</p>
+              <p className="font-bold text-lg">$ {product.price}</p>
               <StarRating totalStars={5} initStart={4} />
               <p className="text-sm">
                 Sold{" "}
