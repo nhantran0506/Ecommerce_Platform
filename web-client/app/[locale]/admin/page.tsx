@@ -5,6 +5,14 @@ import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
 import StatCard from "@/components/stat_card";
 import IframeContainer from "@/components/iframe_container";
 import Spinner from "@/components/spinner";
+import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { Button, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/react";
+import { Home } from "lucide-react";
+
+interface ICategory {
+  category_name: string;
+}
 
 export default function AdminPage() {
   const [stats, setStats] = useState({
@@ -24,6 +32,10 @@ export default function AdminPage() {
   });
 
   const [isLoading, setIsLoading] = useState(true);
+  const [categories, setCategories] = useState<ICategory[]>([]);
+  const router = useRouter();
+  const pathname = usePathname();
+  const locale = pathname.split("/")[1];
 
   const fetchNumber = useCallback(
     async (endpoint: string, field: keyof typeof stats) => {
@@ -94,6 +106,21 @@ export default function AdminPage() {
     }
   }, []);
 
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}${API_ROUTES.GET_CATEGORIES}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch categories");
+      const data = await response.json();
+      setCategories(data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -115,6 +142,7 @@ export default function AdminPage() {
     };
 
     fetchData();
+    fetchCategories();
 
     return () => {
       Object.values(iframeSrcs).forEach((src) => {
@@ -128,13 +156,39 @@ export default function AdminPage() {
   }
 
   return (
-    <div>
+    <div className="relative">
+      <Button 
+        onClick={() => router.push(`/${locale}`)}
+        className="absolute top-4 right-4 bg-primary text-white"
+        startContent={<Home size={20} />}
+      >
+        Home
+      </Button>
+
       <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <StatCard title="Users Online" value={stats.usersOnline} />
         <StatCard title="Total Revenue" value={stats.revenue} />
         <StatCard title="Shops on Platform" value={stats.shopCount} />
+      </div>
+
+      {/* Category Management Section */}
+      <div className="mb-8 p-6 bg-white rounded-lg shadow">
+        <h2 className="text-2xl font-semibold mb-4">Categories</h2>
+        
+        <Table aria-label="Categories table">
+          <TableHeader>
+            <TableColumn>NAME</TableColumn>
+          </TableHeader>
+          <TableBody>
+            {categories.map((category) => (
+              <TableRow key={category.category_name}>
+                <TableCell>{category.category_name}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
       <div className="space-y-8">

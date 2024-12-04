@@ -9,6 +9,23 @@ import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
 import { BotIcon } from "lucide-react";
 
 export default function ChatWindow() {
+  const pathname = usePathname();
+  const locale = pathname.split("/")[1];
+
+  // Add the same paths as NavigationBar's hideNavigationPaths
+  const hideOnPaths = [
+    `/${locale}/admin`,
+    `/${locale}/login`,
+    `/${locale}/sign-up`,
+    `/${locale}/forgot-password`,
+    `/${locale}/validate-code`,
+  ];
+
+  // Check if current path is in hideOnPaths
+  if (hideOnPaths.some((path) => pathname.startsWith(path))) {
+    return null;
+  }
+
   const [messages, setMessages] = useState<
     { sender: "You" | "Chatbot"; content: string }[]
   >([]);
@@ -18,42 +35,29 @@ export default function ChatWindow() {
   const [isTyping, setIsTyping] = useState(false);
   const [fullUrl, setFullUrl] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const pathName = usePathname();
   const router = useRouter();
-  const pathname = usePathname();
-  const locale = pathname.split("/")[1];
-  const isInitialMount = useRef(true);
 
-  // Load initial state from localStorage
+  // Load initial state only if user is authenticated
   useEffect(() => {
-    if (isInitialMount.current) {
-      const storedMessages = localStorage.getItem("chatMessages");
-      const storedMinimizedState = localStorage.getItem("chatMinimized");
+    const token = localStorage.getItem("token");
+    const sessionId = localStorage.getItem("sessionId");
+    
+    if (!token || !sessionId) {
+      setMessages([]);
+      localStorage.removeItem("sessionId");
+      return;
+    }
 
-      if (storedMessages) {
-        setMessages(JSON.parse(storedMessages));
-      }
-
-      if (storedMinimizedState !== null) {
-        setIsMinimized(JSON.parse(storedMinimizedState));
-      }
-
-      isInitialMount.current = false;
+    // Only load stored messages if there's a valid session
+    const storedMinimizedState = localStorage.getItem("chatMinimized");
+    if (storedMinimizedState !== null) {
+      setIsMinimized(JSON.parse(storedMinimizedState));
     }
   }, []);
 
-  // Save messages to localStorage
-  useEffect(() => {
-    if (!isInitialMount.current) {
-      localStorage.setItem("chatMessages", JSON.stringify(messages));
-    }
-  }, [messages]);
-
   // Save minimized state to localStorage
   useEffect(() => {
-    if (!isInitialMount.current) {
-      localStorage.setItem("chatMinimized", JSON.stringify(isMinimized));
-    }
+    localStorage.setItem("chatMinimized", JSON.stringify(isMinimized));
   }, [isMinimized]);
 
   // Handle search navigation
@@ -62,16 +66,15 @@ export default function ChatWindow() {
       const url = `/products?search=${encodeURIComponent(searchQuery)}`;
       router.push(`/${locale}${url}`);
     },
-    [router]
+    [router, locale]
   );
 
-  // Add effect to clear chat when token is removed
+  // Monitor authentication state
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      localStorage.removeItem("sessionId");
-      localStorage.removeItem("chatMessages");
       setMessages([]);
+      localStorage.removeItem("sessionId");
     }
   }, []);
 
@@ -96,7 +99,7 @@ export default function ChatWindow() {
         setMessages((prev) => [...prev, { sender: "You", content: input }]);
         setInput("");
 
-        const sessionId = localStorage.getItem("sessionId") || " ";
+        const sessionId = localStorage.getItem("sessionId") || "";
 
         const payload = {
           session_id: sessionId,
@@ -110,7 +113,7 @@ export default function ChatWindow() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify(payload),
           }
@@ -126,7 +129,6 @@ export default function ChatWindow() {
           localStorage.setItem("sessionId", data.session_id);
         }
 
-        // Always add the bot's response to messages
         if (data.response) {
           setMessages((prev) => [
             ...prev,
@@ -134,7 +136,6 @@ export default function ChatWindow() {
           ]);
         }
 
-        // Handle search navigation after adding the message
         if (data.purpose === "search") {
           handleSearch(data.response);
         }
@@ -144,8 +145,7 @@ export default function ChatWindow() {
           ...prev,
           {
             sender: "Chatbot",
-            content:
-              "The service is not available right now, please try later.",
+            content: "The service is not available right now, please try later.",
           },
         ]);
       } finally {
