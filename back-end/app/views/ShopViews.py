@@ -1,5 +1,5 @@
 from fastapi import APIRouter, status, Depends, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 import logging
 from middlewares import token_config
 from serializers.ShopSerializers import *
@@ -102,8 +102,8 @@ async def shop_statistics_revenue(
         return await shop_controller.statistics_revenue(shop_data, current_user)
     except Exception as e:
         logger.error(str(e))
-        return JSONResponse(
-            content={"Message": "Unexpected error"},
+        return HTMLResponse(
+            content="<div>Error generating revenue statistics</div>",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
@@ -117,8 +117,8 @@ async def shop_statistics_top_products(
         return await shop_controller.statistics_top_products(shop_data, current_user)
     except Exception as e:
         logger.error(str(e))
-        return JSONResponse(
-            content={"Message": "Unexpected error"},
+        return HTMLResponse(
+            content="<div>Error generating top products statistics</div>",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
@@ -132,8 +132,8 @@ async def shop_statistics_categories(
         return await shop_controller.statistics_categories(shop_data, current_user)
     except Exception as e:
         logger.error(str(e))
-        return JSONResponse(
-            content={"Message": "Unexpected error"},
+        return HTMLResponse(
+            content="<div>Error generating category statistics</div>",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 

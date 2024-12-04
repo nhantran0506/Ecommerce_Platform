@@ -179,3 +179,18 @@ async def get_product(
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+@router.get("/{product_id}/comments")
+async def get_product_comments(
+    product_id: uuid.UUID,
+    product_controller: ProductController = Depends()
+):
+    try:
+        return await product_controller.get_product_comments(product_id)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )

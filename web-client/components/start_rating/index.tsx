@@ -4,16 +4,17 @@ import { Star } from "react-feather";
 
 interface StarRatingProps {
   totalStars?: number;
-  color?: string; // Add color prop to customize the star color
+  color?: string;
   initStart?: number;
+  readonly?: boolean;
 }
 
 const StarRating: React.FC<StarRatingProps> = ({
   totalStars = 5,
   color = "#eac086",
   initStart = 0,
+  readonly = false,
 }) => {
-  // Default color to a custom value
   const [rating, setRating] = useState<number>(initStart ?? 0);
   const [hover, setHover] = useState<number>(0);
 
@@ -24,15 +25,15 @@ const StarRating: React.FC<StarRatingProps> = ({
         return (
           <div
             key={index}
-            role="button"
+            role={readonly ? undefined : "button"}
             className="mr-1"
-            // onClick={() => setRating(starValue)}
-            // onMouseEnter={() => setHover(starValue)}
-            // onMouseLeave={() => setHover(0)}
+            onMouseEnter={() => !readonly && setHover(starValue)}
+            onMouseLeave={() => !readonly && setHover(0)}
+            onClick={() => !readonly && setRating(starValue)}
           >
             <Star
               size={15}
-              fill={starValue <= (hover || rating) ? color : "gray"}
+              fill={starValue <= (hover || rating) ? color : "none"}
               color={starValue <= (hover || rating) ? color : "gray"}
             />
           </div>

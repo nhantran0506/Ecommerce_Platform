@@ -85,3 +85,14 @@ class SearchFilter(BaseModel):
     categories: Optional[List[str]] = None  
     min_price: Optional[float] = None
     max_price: Optional[float] = None
+
+
+class ProductCommentResponse(BaseModel):
+    user_first_name: str
+    user_last_name: str
+    comment: str
+    rating: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

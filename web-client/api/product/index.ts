@@ -86,6 +86,68 @@ class Product {
     const data = (await response.json()) as IProductData[];
     return data;
   }
+
+  async getRecommendedProducts(): Promise<IProductData[]> {
+    const token = localStorage.getItem("token");
+    const method = token ? "POST" : "GET";
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}${API_ROUTES.GET_RECOMMENDED_PRODUCTS}`,
+      {
+        method,
+        headers,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Get recommended products failed with status ${response.status}`);
+    }
+
+    const data = (await response.json()) as IProductData[];
+    return data;
+  }
+
+  async productRating(data: IProductRating): Promise<void> {
+    const token = localStorage.getItem("token");
+    const response = await fetch(`${API_BASE_URL}${API_ROUTES.PRODUCT_RATING}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        product_id: data.product_id,
+        rating: data.rating,
+        comment: data.comment || ""
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw { response: { status: response.status, ...errorData } };
+    }
+  }
+
+  async getProductComments(productId: string): Promise<IProductRatingResponse[]> {
+    const response = await fetch(`${API_BASE_URL}/products/${productId}/comments`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch product comments');
+    }
+    const data = await response.json();
+    return data.map((comment: any) => ({
+      user_name: `${comment.user_first_name} ${comment.user_last_name}`,
+      rating: comment.rating,
+      comment: comment.comment,
+      created_at: comment.created_at
+    }));
+  }
 }
 
 export const productAPIs = new Product();

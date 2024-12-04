@@ -324,7 +324,6 @@ class RecommendedController:
                 content={"Message": "Error getting recommendations"},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
     async def get_default_recommed(self):
         try:
             cache_key = "default_recommendations"
@@ -346,6 +345,86 @@ class RecommendedController:
             orders = orders.scalars().all()
 
             product_metrics = {}
+
+            
+            if not orders:
+                get_products_list_query = select(Product).limit(256)
+                products_lists_result = await self.db.execute(get_products_list_query)
+                products = products_lists_result.scalars().all()
+
+                response = []
+                for product in products:
+                    get_image_query = select(ImageProduct).where(
+                        ImageProduct.product_id == product.product_id
+                    )
+                    image_results = await self.db.execute(get_image_query)
+                    product_images = image_results.scalars().all()
+
+                    image_urls = []
+                    if product_images:
+                        image_url_tasks = [
+                            self._get_image(img.image_url) for img in product_images
+                        ]
+                        image_url_results = await asyncio.gather(*image_url_tasks)
+                        image_urls = [
+                            result["image_url"]
+                            for result in image_url_results
+                            if result["success"]
+                        ]
+
+                    get_shop_product = select(ShopProduct).where(
+                        ShopProduct.product_id == product.product_id
+                    )
+                    shop_product_result = await self.db.execute(get_shop_product)
+                    shop_product = shop_product_result.scalar_one_or_none()
+
+                    shop = None
+                    if shop_product:
+                        get_shop_query = select(Shop).where(
+                            Shop.shop_id == shop_product.shop_id
+                        )
+                        shop_result = await self.db.execute(get_shop_query)
+                        shop = shop_result.scalar_one_or_none()
+
+                    get_cat_product = select(CategoryProduct).where(
+                        CategoryProduct.product_id == product.product_id
+                    )
+                    cat_product_result = await self.db.execute(get_cat_product)
+                    cat_product_names = cat_product_result.scalars().all()
+
+                    cat_names = []
+                    for cat in cat_product_names:
+                        get_cat_name = select(Category).where(
+                            Category.cat_id == cat.cat_id
+                        )
+                        cat_name_result = await self.db.execute(get_cat_name)
+                        cat_name = cat_name_result.scalar_one_or_none()
+                        if cat_name:
+                            cat_names.append(cat_name.cat_name.value)
+
+                    response.append(
+                        {
+                            "product_id": str(product.product_id),
+                            "product_name": product.product_name,
+                            "product_price": product.price,
+                            "product_total_sales": product.total_sales,
+                            "image_urls": image_urls,
+                            "product_description": product.product_description,
+                            "product_category": cat_names,
+                            "product_avg_stars": product.avg_stars,
+                            "product_total_ratings": product.total_ratings,
+                            "trending_score": 0,  # No trending score for products without order data
+                            "shop_name": {
+                                "shop_id": str(shop.shop_id) if shop else None,
+                                "shop_name": shop.shop_name if shop else None,
+                            },
+                        }
+                    )
+
+                self.redis.setex(cache_key, REDIS_TTL, json.dumps(response))
+                return JSONResponse(content=response, status_code=status.HTTP_200_OK)
+
+            # Process orders for products with metrics
             for order in orders:
                 if order.product_id not in product_metrics:
                     product_metrics[order.product_id] = {
@@ -400,13 +479,13 @@ class RecommendedController:
                 product = product.scalar_one_or_none()
 
                 if product:
-
                     get_shop_product = select(ShopProduct).where(
                         ShopProduct.product_id == product_id
                     )
                     shop_product_result = await self.db.execute(get_shop_product)
                     shop_product = shop_product_result.scalar_one_or_none()
 
+                    shop = None
                     if shop_product:
                         get_shop_query = select(Shop).where(
                             Shop.shop_id == shop_product.shop_id
@@ -414,46 +493,52 @@ class RecommendedController:
                         shop_result = await self.db.execute(get_shop_query)
                         shop = shop_result.scalar_one_or_none()
 
-                        get_cat_product = select(CategoryProduct).where(
-                            CategoryProduct.product_id == product_id
-                        )
-                        cat_product_result = await self.db.execute(get_cat_product)
-                        cat_product_names = cat_product_result.scalars().all()
+                    get_cat_product = select(CategoryProduct).where(
+                        CategoryProduct.product_id == product_id
+                    )
+                    cat_product_result = await self.db.execute(get_cat_product)
+                    cat_product_names = cat_product_result.scalars().all()
 
-                        cat_names = []
-                        for cat in cat_product_names:
-                            get_cat_name = select(Category).where(
-                                Category.cat_id == cat.cat_id
-                            )
-                            cat_name_result = await self.db.execute(get_cat_name)
-                            cat_name = cat_name_result.scalar_one_or_none()
-                            if cat_name:
-                                cat_names.append(cat_name.cat_name.value)
-
-                        products.append(
-                            {
-                                "product_id": str(product.product_id),
-                                "product_name": product.product_name,
-                                "product_price": product.price,
-                                "product_total_sales": product.total_sales,
-                                "image_urls": image_urls,
-                                "product_description": product.product_description,
-                                "product_category": cat_names,
-                                "product_avg_stars": product.avg_stars,
-                                "product_total_ratings": product.total_ratings,
-                                "trending_score": trending_score,
-                                "shop_name": {
-                                    "shop_id": str(shop.shop_id) if shop else None,
-                                    "shop_name": shop.shop_name if shop else None,
-                                },
-                            }
+                    cat_names = []
+                    for cat in cat_product_names:
+                        get_cat_name = select(Category).where(
+                            Category.cat_id == cat.cat_id
                         )
+                        cat_name_result = await self.db.execute(get_cat_name)
+                        cat_name = cat_name_result.scalar_one_or_none()
+                        if cat_name:
+                            cat_names.append(cat_name.cat_name.value)
+
+                    products.append(
+                        {
+                            "product_id": str(product.product_id),
+                            "product_name": product.product_name,
+                            "product_price": product.price,
+                            "product_total_sales": product.total_sales,
+                            "image_urls": image_urls,
+                            "product_description": product.product_description,
+                            "product_category": cat_names,
+                            "product_avg_stars": product.avg_stars,
+                            "product_total_ratings": product.total_ratings,
+                            "trending_score": trending_score,
+                            "shop_name": {
+                                "shop_id": str(shop.shop_id) if shop else None,
+                                "shop_name": shop.shop_name if shop else None,
+                            },
+                        }
+                    )
 
             products.sort(key=lambda x: x["trending_score"], reverse=True)
             response = products[:256]
 
             self.redis.setex(cache_key, REDIS_TTL, json.dumps(response))
             return JSONResponse(content=response, status_code=status.HTTP_200_OK)
+
+        except Exception as e:
+            return JSONResponse(
+                content={"error": str(e)}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 
         except Exception as e:
             await self.db.rollback()
