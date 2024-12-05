@@ -86,25 +86,24 @@ async def product_update(
         )
 
 
-@router.get("/search")
+@router.get("/search_products")
 async def search_products(
-    query: str,
+    user_query: str,
     categories: Optional[List[str]] = Query(None),
     min_price: Optional[float] = Query(None),
     max_price: Optional[float] = Query(None),
-    embedding_controller: EmbeddingController = Depends()
+    embedding_controller: EmbeddingController = Depends(),
 ):
     filters = SearchFilter(
-        categories=categories,
-        min_price=min_price,
-        max_price=max_price
+        categories=categories, min_price=min_price, max_price=max_price
     )
-    return await embedding_controller.search_product(query, filters)
+    return await embedding_controller.search_product(user_query, filters)
 
 
 @router.post("/get_all_products_shop")
 async def get_all_products_shop(
-    product_controller: ProductController = Depends(), current_user = Depends(token_config.get_current_user)
+    product_controller: ProductController = Depends(),
+    current_user=Depends(token_config.get_current_user),
 ):
     try:
         return await product_controller.get_all_products_shop(current_user=current_user)
@@ -114,7 +113,6 @@ async def get_all_products_shop(
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-    
 
 
 @router.post("/product_rating")
@@ -183,8 +181,7 @@ async def get_product(
 
 @router.get("/{product_id}/comments")
 async def get_product_comments(
-    product_id: uuid.UUID,
-    product_controller: ProductController = Depends()
+    product_id: uuid.UUID, product_controller: ProductController = Depends()
 ):
     try:
         return await product_controller.get_product_comments(product_id)

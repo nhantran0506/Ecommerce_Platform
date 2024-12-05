@@ -1,7 +1,7 @@
 interface IProductData {
   product_id: string;
   product_name: string;
-  price: number;
+  product_price: number;
   image_urls: string[];
 }
 
