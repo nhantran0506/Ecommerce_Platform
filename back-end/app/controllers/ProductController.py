@@ -467,9 +467,10 @@ class ProductController:
 
             try:
                 embedding_controller = EmbeddingController(self.db)
-                embedding_result = await embedding_controller.embedding_product(
-                    db_product
-                )
+                if embedding_controller:
+                    embedding_result = await embedding_controller.embedding_product(
+                        db_product
+                    )
                 if not embedding_result:
                     await self.db.rollback()
                     return JSONResponse(

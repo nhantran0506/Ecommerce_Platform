@@ -34,6 +34,7 @@ from fastapi.responses import JSONResponse
 import weaviate.classes.query as wq
 from llama_index.core.vector_stores import MetadataFilters, ExactMatchFilter
 from llama_index.core.postprocessor import SimilarityPostprocessor
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 import logging
 from redis_config import get_redis
 import json
@@ -54,6 +55,11 @@ class EmbeddingController:
                 host=WEAVIATE_URL,
                 port=8080,
                 # skip_init_checks=True,
+            )
+
+            self.embed_model_recommend = HuggingFaceEmbedding(
+                model_name="BAAI/bge-small-en",
+                device="cuda",
             )
 
             self.embed_model = OllamaEmbedding(
@@ -96,7 +102,7 @@ class EmbeddingController:
 
             self.recommend_index = VectorStoreIndex.from_vector_store(
                 self.recommend_vector_store,
-                embed_model=self.embed_model,
+                embed_model=self.embed_model_recommend,
             ).as_retriever(similarity_top_k=256, node_postprocessors=[postprocessor])
         except Exception as e:
             logger.error(str(e))
@@ -201,7 +207,7 @@ class EmbeddingController:
             _index = VectorStoreIndex.from_documents(
                 [document],
                 storage_context=self.recommend_storage_context,
-                embed_model=self.embed_model,
+                embed_model=self.embed_model_recommend,
                 show_progress=True,
             )
 
@@ -224,7 +230,7 @@ class EmbeddingController:
 
             _index = VectorStoreIndex.from_vector_store(
                 self.recommend_vector_store,
-                embed_model=self.embed_model,
+                embed_model=self.embed_model_recommend,
             ).as_retriever(
                 similarity_top_k=1, vector_store_query_mode="default", filters=filters
             )
@@ -387,20 +393,6 @@ class EmbeddingController:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    def embedding(self, docs: List[Document], is_faq: bool = False):
-        storage_context = (
-            self.faq_storage_context if is_faq else self.recommend_storage_context
-        )
-
-        index = VectorStoreIndex.from_documents(
-            docs,
-            storage_context=storage_context,
-            embed_model=self.embed_model,
-        )
-
-        if is_faq:
-            self.faq_index = index
-
     def query(self, query: str, top_k: int = 5, min_similarity: float = 0.5):
 
         results = self.faq_index.retrieve(query)
@@ -426,5 +418,7 @@ class EmbeddingController:
     def __exit__(self, exc_type, exc_val, exc_tb):
         if hasattr(self, "embed_model"):
             del self.embed_model
+        if hasattr(self, "embed_model_recommend"):
+            del self.embed_model_recommend
         if hasattr(self, "client"):
             self.client.close()
