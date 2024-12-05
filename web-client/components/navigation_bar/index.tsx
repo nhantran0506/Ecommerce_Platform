@@ -230,7 +230,7 @@ export default function NavigationBar() {
             >
               <DropdownItem key="name">
                 <p className="text-lg text-black font-bold">
-                  {isLogin ? "Phuoc Truong" : "Welcome 👋"}
+                  {isLogin ? "Options" : "Welcome 👋"}
                 </p>
               </DropdownItem>
               <DropdownSection>

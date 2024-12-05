@@ -82,7 +82,7 @@ const CartPage = () => {
         />
       </div>
     ),
-    total_price: `$${product.total_price.toFixed(2)}`,
+    total_price: `$${(product.total_price ?? 0).toFixed(2)}`,
   }));
 
   const columns: ITableColumProp[] = [
@@ -143,7 +143,7 @@ const CartPage = () => {
       <h1 className="flex gap-2 font-bold text-xl mb-4 mt-12">
         Cart
         <span className="text-[#939699] font-normal">
-          ({productlist?.length})
+          ({!loading ? productlist?.length : 0})
         </span>
       </h1>
 

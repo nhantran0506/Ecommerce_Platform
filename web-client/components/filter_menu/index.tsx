@@ -9,12 +9,6 @@ import ListCheckBox from "./list_checkbox";
 import { Button, Input, Checkbox } from "@nextui-org/react";
 
 const FilterMenu = () => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const togglePopup = () => {
-    setIsOpen(!isOpen);
-  };
-
   const categories = [
     {
       title: "Categories",
@@ -37,8 +31,8 @@ const FilterMenu = () => {
   ];
 
   return (
-    <div className="w-64 border rounded-lg p-4">
-      <h2 className="text-lg font-semibold mb-4">FILTER</h2>
+    <div className="w-48 border rounded-lg p-4 h-[380px]">
+      <h2 className="text-lg font-bold mb-4">FILTER</h2>
 
       {categories.map((category, index) => (
         <div key={index} className="mb-6">
@@ -50,7 +44,7 @@ const FilterMenu = () => {
               </div>
             ))}
           </div>
-          <button className="text-sm text-gray-600 mt-2">More</button>
+          {/* <button className="text-sm text-gray-600 mt-2">More</button> */}
         </div>
       ))}
     </div>
