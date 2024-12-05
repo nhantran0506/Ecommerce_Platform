@@ -90,13 +90,13 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
       ];
 
       await cartAPIs.updateCart(reqBody);
-      
+
       // Show success animation
-      const cartButton = document.querySelector('.cart-button');
+      const cartButton = document.querySelector(".cart-button");
       if (cartButton) {
-        cartButton.classList.add('cart-animation');
+        cartButton.classList.add("cart-animation");
         setTimeout(() => {
-          cartButton.classList.remove('cart-animation');
+          cartButton.classList.remove("cart-animation");
           onOpen(); // Show success modal
         }, 1000);
       }
@@ -190,23 +190,24 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
         rating,
         comment,
       });
-      
+
       // Refresh comments after successful submission
       const updatedComments = await productAPIs.getProductComments(productId);
       setRatings(updatedComments);
-      
+
       return { success: true };
     } catch (error: any) {
       if (error.response?.status === 403) {
-        return { 
-          success: false, 
-          error: "You need to purchase this product before you can leave a review." 
+        return {
+          success: false,
+          error:
+            "You need to purchase this product before you can leave a review.",
         };
       }
       console.error("Failed to submit rating:", error);
-      return { 
-        success: false, 
-        error: "An error occurred while submitting your review." 
+      return {
+        success: false,
+        error: "An error occurred while submitting your review.",
       };
     } finally {
       setLoading(false);
@@ -218,7 +219,7 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
   }
 
   if (!product) {
-    return <div>Product not found</div>;
+    return <div></div>;
   }
 
   return (
@@ -263,12 +264,14 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
             <div className="px-2 pt-2">
               <div className="flex justify-between mb-4">
                 <div>
-                  <h1 className="font-bold text-2xl mb-2">{product.product_name}</h1>
+                  <h1 className="font-bold text-2xl mb-2">
+                    {product.product_name}
+                  </h1>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                      <StarRating 
-                        totalStars={5} 
-                        initStart={product.product_avg_stars} 
+                      <StarRating
+                        totalStars={5}
+                        initStart={product.product_avg_stars}
                         readonly={true}
                       />
                       <span className="text-gray-500">
@@ -316,10 +319,10 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
                 disabled={isAddingToCart}
               >
                 <span className="text-gray-400">
-                  <ShoppingCart 
-                    color="currentColor" 
+                  <ShoppingCart
+                    color="currentColor"
                     fill="currentColor"
-                    className={isAddingToCart ? 'animate-bounce' : ''}
+                    className={isAddingToCart ? "animate-bounce" : ""}
                   />
                 </span>
                 Add to Cart

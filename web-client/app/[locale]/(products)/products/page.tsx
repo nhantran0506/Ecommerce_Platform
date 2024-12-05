@@ -34,10 +34,9 @@ const ProductPage = () => {
       try {
         setLoading(true);
 
-        // Use recommended products API instead of getAll
         const res = searchQuery
           ? await productAPIs.getSearchListProduct(searchQuery)
-          : await productAPIs.getRecommendedProducts();
+          : await productAPIs.getAll();
 
         setProductList(res);
       } catch (error) {
@@ -88,9 +87,9 @@ const ProductPage = () => {
             }
             content={
               loading ? (
-                <ListProductCardSkeleton gridCols={2} count={4} />
+                <ListProductCardSkeleton gridCols={3} count={6} />
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-3 gap-8">
                   {productlist?.map((item: IProductData, index: number) => (
                     <ProductCard
                       key={index}

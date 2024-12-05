@@ -1,12 +1,12 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { Image } from "@nextui-org/react";
+import { Button } from "@nextui-org/react";
 import bannerImg from "@/assets/banner-bg.jpg";
 import bannerImg2 from "@/assets/banner-2.jpeg";
 import bannerImg3 from "@/assets/banner-3.jpg";
 import SectionHeader from "@/components/section_header";
 import ProductCard from "@/components/product_card";
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import productAPIs from "@/api/product";
 import { usePathname } from "next/navigation";
 import Slider from "react-slick";
@@ -14,6 +14,21 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import ListProductCardSkeleton from "@/components/list_product_card_skeleton";
 import { useTranslations } from "next-intl";
+import { Shirt } from "lucide-react";
+import { CategoriesEnum } from "@/constant/enum";
+import Image from "next/image";
+import pantImg from "@/assets/pants.png";
+import shirtImg from "@/assets/shirt.png";
+import shoeImg from "@/assets/shoe.png";
+import accessoriesImg from "@/assets/accessories.png";
+import electronicsImg from "@/assets/electronics.png";
+import booksImg from "@/assets/book.png";
+import sportsImg from "@/assets/sports.png";
+import makeupImg from "@/assets/makeup.png";
+import healthImg from "@/assets/health.png";
+import homeImg from "@/assets/home.png";
+import toyImg from "@/assets/toy.png";
+import foodImg from "@/assets/food.png";
 
 export default function Home() {
   const router = useRouter();
@@ -21,29 +36,34 @@ export default function Home() {
   const locale = pathname.split("/")[1];
   const [loading, setLoading] = useState(false);
   const [productlist, setProductList] = useState<IProductData[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [recommendProductlist, setRecommendProductList] = useState<
+    IProductData[]
+  >([]);
+  const [cateList, setCateList] = useState<ICategory[]>([]);
   const t = useTranslations();
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
+    fetchHomeInfo();
+  }, []);
 
-        // Use recommended products API instead of getAll
-        const res = searchQuery
-          ? await productAPIs.getSearchListProduct(searchQuery)
-          : await productAPIs.getRecommendedProducts();
+  const fetchHomeInfo = async () => {
+    try {
+      setLoading(true);
 
-        setProductList(res);
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      const products = await productAPIs.getAll();
+      setProductList(products);
 
-    fetchProducts();
-  }, [searchQuery, setProductList]);
+      const recommendedProducts = await productAPIs.getRecommendedProducts();
+      setRecommendProductList(recommendedProducts);
+
+      const cateListRes = await productAPIs.getAllCategories();
+      setCateList(cateListRes);
+    } catch (error) {
+      console.error("Failed to fetch home data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const bannerSettings = {
     dots: true,
@@ -79,6 +99,72 @@ export default function Home() {
     },
   ];
 
+  const renderCateIcon = (name: string): ReactNode => {
+    switch (name) {
+      case CategoriesEnum.SHIRT: {
+        return (
+          <Image src={shirtImg} alt="shirt-image" width={60} height={60} />
+        );
+      }
+      case CategoriesEnum.PANTS: {
+        return <Image src={pantImg} alt="pant-image" width={60} height={60} />;
+      }
+      case CategoriesEnum.SHOES: {
+        return <Image src={shoeImg} alt="shoe-image" width={60} height={60} />;
+      }
+      case CategoriesEnum.ACCESSORIES: {
+        return (
+          <Image
+            src={accessoriesImg}
+            alt="accessories-image"
+            width={60}
+            height={60}
+          />
+        );
+      }
+      case CategoriesEnum.ELECTRONICS: {
+        return (
+          <Image
+            src={electronicsImg}
+            alt="electronics-image"
+            width={60}
+            height={60}
+          />
+        );
+      }
+      case CategoriesEnum.BOOKS: {
+        return <Image src={booksImg} alt="book-image" width={50} height={50} />;
+      }
+      case CategoriesEnum.SPORTS: {
+        return (
+          <Image src={sportsImg} alt="sports-image" width={55} height={55} />
+        );
+      }
+      case CategoriesEnum.BEAUTY: {
+        return (
+          <Image src={makeupImg} alt="make-up-image" width={60} height={60} />
+        );
+      }
+      case CategoriesEnum.HEALTH: {
+        return (
+          <Image src={healthImg} alt="health-image" width={60} height={60} />
+        );
+      }
+      case CategoriesEnum.HOME: {
+        return <Image src={homeImg} alt="home-image" width={50} height={50} />;
+      }
+      case CategoriesEnum.TOYS: {
+        return <Image src={toyImg} alt="toy-image" width={50} height={50} />;
+      }
+      case CategoriesEnum.FOOD: {
+        return <Image src={foodImg} alt="food-image" width={55} height={55} />;
+      }
+      default: {
+        return <div className="text-3xl font-bold">...</div>;
+      }
+    }
+  };
+
   return (
     <div className="flex flex-col mx-64">
       {/* Banner Section */}
@@ -96,12 +182,15 @@ export default function Home() {
                 </div>
 
                 {/* Image */}
-                <Image
-                  src={banner.image}
-                  alt={`Banner Image ${index + 1}`}
-                  className="object-cover object-[50%_60%] h-[400px] z-0 rounded-xl"
-                  width={1100}
-                />
+                <div className="relative w-full h-[400px]">
+                  <Image
+                    src={banner.image}
+                    alt={`Banner Image ${index + 1}`}
+                    layout="fill"
+                    objectFit="cover"
+                    className="rounded-xl"
+                  />
+                </div>
               </div>
             </div>
           ))}
@@ -109,12 +198,64 @@ export default function Home() {
       </div>
 
       {/* Content Section */}
-      <SectionHeader
-        title={t("products_all_product")}
-        content={
-          loading ? (
-            <ListProductCardSkeleton gridCols={4} count={4} />
-          ) : (
+      {loading ? (
+        <SectionHeader title={t("home_category")} content={"Loading..."} />
+      ) : cateList.length > 0 ? (
+        <SectionHeader
+          title={t("home_category")}
+          content={
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+              {cateList.map((item: ICategory, index: number) => (
+                <Button
+                  isIconOnly
+                  className="w-24 h-24 border-3 border-black bg-white shadow-lg"
+                  key={index}
+                >
+                  {renderCateIcon(item.category_name)}
+                </Button>
+              ))}
+            </div>
+          }
+        />
+      ) : (
+        <></>
+      )}
+
+      {loading ? (
+        <SectionHeader
+          title={t("products_recommend_product")}
+          content={<ListProductCardSkeleton gridCols={4} count={4} />}
+        />
+      ) : recommendProductlist.length > 0 ? (
+        <SectionHeader
+          title={t("products_recommend_product")}
+          content={
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {recommendProductlist.map((item: IProductData, index: number) => (
+                <ProductCard
+                  key={index}
+                  product={item}
+                  onClick={() =>
+                    router.push("/" + locale + "/product/" + item.product_id)
+                  }
+                />
+              ))}
+            </div>
+          }
+        />
+      ) : (
+        <></>
+      )}
+
+      {loading ? (
+        <SectionHeader
+          title={t("products_all_product")}
+          content={<ListProductCardSkeleton gridCols={4} count={4} />}
+        />
+      ) : productlist.length > 0 ? (
+        <SectionHeader
+          title={t("products_all_product")}
+          content={
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {productlist.map((item: IProductData, index: number) => (
                 <ProductCard
@@ -126,9 +267,11 @@ export default function Home() {
                 />
               ))}
             </div>
-          )
-        }
-      />
+          }
+        />
+      ) : (
+        <></>
+      )}
     </div>
   );
 }

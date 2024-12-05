@@ -6,11 +6,11 @@ interface ListProductCardSkeletonProps {
 }
 
 const ListProductCardSkeleton = ({
-  gridCols = 3,
+  gridCols,
   count = 3,
 }: ListProductCardSkeletonProps) => {
   return (
-    <div className={`grid grid-cols-${gridCols} gap-6`}>
+    <div className={`grid grid-cols-${gridCols} gap-8`}>
       {Array.from({ length: count }).map((_, index) => (
         <Card className="border-2 rounded-xl w-[220px] h-[300px]" key={index}>
           <Skeleton className="overflow-visible p-0">
