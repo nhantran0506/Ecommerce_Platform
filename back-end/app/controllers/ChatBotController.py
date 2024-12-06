@@ -103,37 +103,6 @@ class ChatBotController:
         self.db = db
         self.embedding_engine = EmbeddingController(self.db)
 
-    async def get_page_content(self, html_url: str) -> str:
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(html_url) as response:
-                    if response.status != 200:
-                        logger.error(
-                            f"Error: Failed to fetch the page. Status code: {response.status}"
-                        )
-                        return ""
-
-                    html_content = await response.text()
-
-            soup = BeautifulSoup(html_content, "html.parser")
-            body = soup.body
-            if not body:
-                logger.error("Error: No <body> tag found in the HTML.")
-                return ""
-
-            for element in body(["script", "style"]):
-                element.decompose()
-
-            text = body.get_text()
-
-            lines = (line.strip() for line in text.splitlines())
-            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-            clean_text = "\n".join(chunk for chunk in chunks if chunk)
-
-            return clean_text
-        except Exception as e:
-            logger.error(f"Error: {str(e)}")
-            return f"Page content not available right now."
 
     async def add_user(self, user: User, model_name: str):
         try:
@@ -218,10 +187,7 @@ class ChatBotController:
 
                 default_prompt = PromptTemplate(DEFAULT_PROMPT).format(
                     context=context,
-                    user_query=query,
-                    current_page_content=await self.get_page_content(
-                        query_payload.current_route
-                    ),
+                    user_query=query
                 )
 
                 session_id = await self.add_message(

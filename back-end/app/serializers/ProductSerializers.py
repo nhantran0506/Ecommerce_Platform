@@ -11,6 +11,7 @@ class ProductBase(BaseModel):
     product_description: str
     price: float
     category: list[str]
+    inventory : int
 
     @field_validator("category")
     @classmethod

@@ -305,6 +305,7 @@ class RecommendedController:
                                 "product_avg_stars": product.avg_stars,
                                 "product_total_ratings": product.total_ratings,
                                 "trending_score": trending_score,
+                                "inventory" : product.inventory,
                                 "shop_name": {
                                     "shop_id": str(shop.shop_id) if shop else None,
                                     "shop_name": shop.shop_name if shop else None,
@@ -413,7 +414,8 @@ class RecommendedController:
                             "product_category": cat_names,
                             "product_avg_stars": product.avg_stars,
                             "product_total_ratings": product.total_ratings,
-                            "trending_score": 0,  # No trending score for products without order data
+                            "trending_score": 0, 
+                            "inventory" : product.inventory,
                             "shop_name": {
                                 "shop_id": str(shop.shop_id) if shop else None,
                                 "shop_name": shop.shop_name if shop else None,
@@ -424,7 +426,7 @@ class RecommendedController:
                 self.redis.setex(cache_key, REDIS_TTL, json.dumps(response))
                 return JSONResponse(content=response, status_code=status.HTTP_200_OK)
 
-            # Process orders for products with metrics
+           
             for order in orders:
                 if order.product_id not in product_metrics:
                     product_metrics[order.product_id] = {
@@ -521,6 +523,7 @@ class RecommendedController:
                             "product_avg_stars": product.avg_stars,
                             "product_total_ratings": product.total_ratings,
                             "trending_score": trending_score,
+                            "inventory" : product.inventory,
                             "shop_name": {
                                 "shop_id": str(shop.shop_id) if shop else None,
                                 "shop_name": shop.shop_name if shop else None,

@@ -80,13 +80,11 @@ class OrderController:
 
             total_amount = 0
             for order_item in order_items:
-
                 query = insert(OrderItem).values(
                     order_id=order_id,
                     product_id=order_item.product_id,
                     quantity=order_item.quantity,
                 )
-
                 query = query.on_conflict_do_update(
                     index_elements=["order_id", "product_id"],
                     set_={"quantity": order_item.quantity},
@@ -104,7 +102,6 @@ class OrderController:
                         set_={"score": InterestScore.BUY.value},
                     )
                 )
-
                 get_product_query = select(Product).where(
                     Product.product_id == order_item.product_id
                 )
@@ -115,7 +112,7 @@ class OrderController:
                     update_product_query = (
                         update(Product)
                         .where(Product.product_id == order_item.product_id)
-                        .values(total_sales=product.total_sales + order_item.quantity)
+                        .values(total_sales=product.total_sales + order_item.quantity, inventory = product.inventory - order_item.quantity)
                     )
                     await self.db.execute(update_product_query)
 
@@ -258,7 +255,7 @@ class OrderController:
                     update_product_query = (
                         update(Product)
                         .where(Product.product_id == cart_item.product_id)
-                        .values(total_sales=product.total_sales + cart_item.quantity)
+                        .values(total_sales=product.total_sales + cart_item.quantity, inventory = product.inventory - cart_item.quantity)
                     )
                     await self.db.execute(update_product_query)
 

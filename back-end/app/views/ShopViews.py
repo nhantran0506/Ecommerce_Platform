@@ -47,8 +47,6 @@ async def create_shop(
         return await shop_controller.create_new_shop(
             shop=shop, current_user=current_user
         )
-    except HTTPException as e:
-        raise e
     except Exception as e:
         logger.error(str(e))
         return JSONResponse(
