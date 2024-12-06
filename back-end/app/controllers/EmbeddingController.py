@@ -4,6 +4,7 @@ from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.vector_stores.weaviate import WeaviateVectorStore
 from llama_index.core import StorageContext
 from llama_index.embeddings.ollama import OllamaEmbedding
+from weaviate.classes.query import MetadataQuery
 import weaviate
 from helper_collections.FAQQUES import FAQ
 from typing import Optional, List
@@ -106,16 +107,17 @@ class EmbeddingController:
             )
             
             postprocessor = SimilarityPostprocessor(similarity_cutoff=0.4)
-            
+    
+    
             self.faq_index = VectorStoreIndex.from_vector_store(
                 self.faq_vector_store,
                 embed_model=self.embed_model_recommend,
-            ).as_retriever(similarity_top_k=256, node_postprocessors=[postprocessor])
+            ).as_retriever(similarity_top_k=2, node_postprocessors=[postprocessor])
         
             self.recommend_index = VectorStoreIndex.from_vector_store(
                 self.recommend_vector_store,
                 embed_model=self.embed_model_recommend,
-            ).as_retriever(dense_similarity_top_k=256, node_postprocessors=[postprocessor], alpha=0.0, enable_reranking=False)
+            ).as_retriever(dense_similarity_top_k=256, node_postprocessors=[postprocessor], alpha=0.5)
          
         except Exception as e:
             logger.error(str(e))
@@ -140,6 +142,7 @@ class EmbeddingController:
     def _create_schema(self, collection_name, is_faq: bool = False):
         try:
             self.client.collections.get(collection_name)
+            self.client.collections.delete(collection_name)
         except:
             schema = {
                 "class": collection_name,
@@ -157,12 +160,23 @@ class EmbeddingController:
             }
 
             if not is_faq:
-                schema["properties"].append(
+               schema["properties"].extend([
                     {
                         "name": "product_id",
-                        "dataType": ["uuid"],
-                    }
-                )
+                        "dataType": ["string"],  # Ensure dataType is correct
+                        "indexSearchable": True,  # Enable indexSearchable
+                    },
+                    {
+                        "name": "product_name",
+                        "dataType": ["string"],  # Ensure dataType is correct
+                        "indexSearchable": True,  # Enable indexSearchable
+                    },
+                    {
+                        "name": "product_cat",
+                        "dataType": ["string"],  # Ensure dataType is correct
+                        "indexSearchable": True,  # Enable indexSearchable
+                    },
+                ])
 
             self.client.collections.create_from_dict(schema)
 
@@ -206,15 +220,15 @@ class EmbeddingController:
                 )
                 cat_data = cat.scalar_one_or_none()
                 if cat_data:
-                    cat_names += cat_data.cat_name.value
+                    cat_names = cat_names + " " + cat_data.cat_name.value
 
             product_text = (
-                f"{' '.join([product.product_name] * 2)} {' '.join(cat_names * 1)}"
+                f"{' '.join([product.product_name] * 2)} {cat_names}"
             )
 
             document = Document(
                 text=product_text,
-                metadata={"topic": "product", "product_id": str(product.product_id)},
+                metadata={"topic": "product", "product_id": str(product.product_id), "product_cat" : cat_names, "product_name" : product.product_name},
             )
 
             _index = VectorStoreIndex.from_documents(
@@ -241,15 +255,18 @@ class EmbeddingController:
                 ]
             )
 
-            _index = VectorStoreIndex.from_vector_store(
-                self.recommend_vector_store,
-                embed_model=self.embed_model_recommend,
-            ).as_retriever(
-                similarity_top_k=1, vector_store_query_mode="default", filters=filters
+            from weaviate.classes.query import Filter
+            vector_result = self.client.collections.get(self.recommend_collection_name).query.bm25(
+                query=" ",
+                limit=1,
+                query_properties = ["product_id"],
+                # return_properties = ["product_id"],
+                filters=Filter.by_property("product_id").equal(str(product.product_id))
             )
+            
+            print(vector_result)
 
-            vector_result = _index.retrieve(" ")
-            if vector_result:
+            if vector_result != []:
                 document_id = vector_result[0].node.id_
                 self.recommend_vector_store.delete(document_id)
                 return True
@@ -265,7 +282,7 @@ class EmbeddingController:
     async def search_product(
         self, user_query: str, filters: Optional[SearchFilter] = None
     ):
-        print("This first")
+        
         try:
             filter_key = ""
             if filters:
@@ -286,16 +303,22 @@ class EmbeddingController:
 
             product_lists = []
             if user_query:
-                vector_result = self.recommend_index.retrieve(user_query)
+                vector_result = self.client.collections.get(self.recommend_collection_name).query.bm25(
+                    query=user_query,
+                    limit=256,
+                    query_properties = ["product_name", "product_cat"],
+                    return_properties = ["product_id"],
+                    return_metadata=MetadataQuery(score=True),
+                )
 
                 if not vector_result:
                     return JSONResponse(
                         content={"Message": "No products found"},
                         status_code=status.HTTP_404_NOT_FOUND,
                     )
-
-                for obj in vector_result:
-                    product_id = obj.node.metadata["product_id"]
+            
+                for obj in vector_result.objects:
+                    product_id = obj.properties["product_id"]
                     if product_id:
                         pro_query = select(Product).where(
                             Product.product_id == product_id
