@@ -11,7 +11,21 @@ class ProductBase(BaseModel):
     product_description: str
     price: float
     category: list[str]
-    inventory : int
+    inventory: int
+
+    @field_validator("inventory")
+    @classmethod
+    def validate_inventory(cls, inventory: int) -> int:
+        if inventory <= 0:
+            raise ValueError("Product inventory must be greater than zero")
+        return inventory
+
+    @field_validator("price")
+    @classmethod
+    def validate_price(cls, price: float) -> float:
+        if price <= 0:
+            raise ValueError("Product price must be greater than zero")
+        return price
 
     @field_validator("category")
     @classmethod
@@ -86,6 +100,14 @@ class SearchFilter(BaseModel):
     categories: Optional[List[str]] = None  
     min_price: Optional[float] = None
     max_price: Optional[float] = None
+    sort_price: Optional[str] = None 
+
+    @field_validator("sort_price")
+    @classmethod
+    def validate_sort_price(cls, sort_price: Optional[str]) -> Optional[str]:
+        if sort_price and sort_price not in ['asc', 'desc']:
+            raise ValueError("sort_price must be either 'asc' or 'desc'")
+        return sort_price
 
 
 class ProductCommentResponse(BaseModel):

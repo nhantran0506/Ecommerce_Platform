@@ -4,6 +4,7 @@ import logging
 from middlewares import token_config
 from serializers.ShopSerializers import *
 from controllers.ShopController import ShopController
+from models.Users import User
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/shops", tags=["shops"])
@@ -37,6 +38,21 @@ async def get_shop(shop_id: int, shop_controller: ShopController = Depends()):
         )
 
 
+@router.post("/get_shop_details")
+async def get_shop_details(
+    shop_controller: ShopController = Depends(),
+    current_user: User = Depends(token_config.get_current_user),
+):
+    try:
+        return await shop_controller.get_shop_details(current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
 @router.post("/create_shop", status_code=status.HTTP_201_CREATED)
 async def create_shop(
     shop: ShopCreate,
@@ -56,15 +72,12 @@ async def create_shop(
 
 
 @router.post("/delete_shop")
-def delete_shop(
-    shop_id: int,
+async def delete_shop(
     current_user=Depends(token_config.get_current_user),
     shop_controller: ShopController = Depends(),
 ):
     try:
-        return shop_controller.delete_existing_shop(
-            shop_id=shop_id, current_user=current_user
-        )
+        return await shop_controller.delete_existing_shop(current_user=current_user)
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -90,6 +103,7 @@ async def shop_rating(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+
 @router.post("/statistics/revenue")
 async def shop_statistics_revenue(
     shop_data: ShopGetData,
@@ -105,6 +119,7 @@ async def shop_statistics_revenue(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+
 @router.post("/statistics/top_products")
 async def shop_statistics_top_products(
     shop_data: ShopGetData,
@@ -119,6 +134,7 @@ async def shop_statistics_top_products(
             content="<div>Error generating top products statistics</div>",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
 
 @router.post("/statistics/categories")
 async def shop_statistics_categories(
@@ -145,4 +161,23 @@ async def get_sale_history(
         return await shop_controller.get_sale_history(current_user)
     except Exception as e:
         logger.error(str(e))
-        return JSONResponse(content={"Message": "Unexpected error"}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@router.post("/update_shop")
+async def update_shop(
+    shop: ShopBase,
+    current_user: User = Depends(token_config.get_current_user),
+    shop_controller: ShopController = Depends()
+):
+    try:
+        return await shop_controller.update_shop(shop=shop, current_user=current_user)
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

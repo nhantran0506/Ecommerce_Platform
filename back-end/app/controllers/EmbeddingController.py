@@ -48,10 +48,6 @@ logger = logging.getLogger(__name__)
 class EmbeddingController:
     faq_collection_name = "FAQ"
     recommend_collection_name = "Recommend"
-    embed_model_recommend = HuggingFaceEmbedding(
-        model_name="BAAI/bge-small-en",
-        # device="cuda",
-    )
 
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
@@ -65,11 +61,9 @@ class EmbeddingController:
 
             
 
-            # self.embed_model_recommend = HuggingFaceEmbedding(
-            #     model_name="BAAI/bge-small-en",
-            #     # device="cuda",
-            #     max_length = VECTOR_DIMENSIONS,
-            # )
+            self.embed_model_recommend = HuggingFaceEmbedding(
+                model_name="BAAI/bge-small-en"
+            )
           
 
 
@@ -142,7 +136,6 @@ class EmbeddingController:
     def _create_schema(self, collection_name, is_faq: bool = False):
         try:
             self.client.collections.get(collection_name)
-            self.client.collections.delete(collection_name)
         except:
             schema = {
                 "class": collection_name,
@@ -163,18 +156,18 @@ class EmbeddingController:
                schema["properties"].extend([
                     {
                         "name": "product_id",
-                        "dataType": ["string"],  # Ensure dataType is correct
-                        "indexSearchable": True,  # Enable indexSearchable
+                        "dataType": ["string"],  
+                        "indexSearchable": True,  
                     },
                     {
                         "name": "product_name",
-                        "dataType": ["string"],  # Ensure dataType is correct
-                        "indexSearchable": True,  # Enable indexSearchable
+                        "dataType": ["string"],  
+                        "indexSearchable": True, 
                     },
                     {
                         "name": "product_cat",
-                        "dataType": ["string"],  # Ensure dataType is correct
-                        "indexSearchable": True,  # Enable indexSearchable
+                        "dataType": ["string"],  
+                        "indexSearchable": True, 
                     },
                 ])
 
@@ -257,11 +250,10 @@ class EmbeddingController:
 
             from weaviate.classes.query import Filter
             vector_result = self.client.collections.get(self.recommend_collection_name).query.bm25(
-                query=" ",
+                query=str(product.product_id),
                 limit=1,
                 query_properties = ["product_id"],
-                # return_properties = ["product_id"],
-                filters=Filter.by_property("product_id").equal(str(product.product_id))
+                return_properties = ["product_id"],
             )
             
             print(vector_result)
@@ -279,35 +271,15 @@ class EmbeddingController:
             logger.error(f"Error removing product from vector store: {str(e)}")
             return False
 
-    async def search_product(
-        self, user_query: str, filters: Optional[SearchFilter] = None
-    ):
-        
+    async def search_product(self, user_query: Optional[str], filters: SearchFilter):
         try:
-            filter_key = ""
-            if filters:
-                if filters.categories:
-                    filter_key += f"_cat={'_'.join(sorted(filters.categories))}"
-                if filters.min_price is not None:
-                    filter_key += f"_min={filters.min_price}"
-                if filters.max_price is not None:
-                    filter_key += f"_max={filters.max_price}"
-
-            cache_key = f"product_search:{hash(user_query)}{filter_key}"
-            cached_data = self.redis.get(cache_key)
-
-            if cached_data:
-                return JSONResponse(
-                    content=json.loads(cached_data), status_code=status.HTTP_200_OK
-                )
-
             product_lists = []
             if user_query:
                 vector_result = self.client.collections.get(self.recommend_collection_name).query.bm25(
                     query=user_query,
                     limit=256,
-                    query_properties = ["product_name", "product_cat"],
-                    return_properties = ["product_id"],
+                    query_properties=["product_name", "product_cat"],
+                    return_properties=["product_id"],
                     return_metadata=MetadataQuery(score=True),
                 )
 
@@ -316,21 +288,42 @@ class EmbeddingController:
                         content={"Message": "No products found"},
                         status_code=status.HTTP_404_NOT_FOUND,
                     )
-            
+
                 for obj in vector_result.objects:
                     product_id = obj.properties["product_id"]
                     if product_id:
                         pro_query = select(Product).where(
                             Product.product_id == product_id
                         )
+                        if filters.min_price is not None:
+                            pro_query = pro_query.where(Product.price >= filters.min_price)
+                        if filters.max_price is not None:
+                            pro_query = pro_query.where(Product.price <= filters.max_price)
+                        
+                        if filters.sort_price:
+                            if filters.sort_price == 'asc':
+                                pro_query = pro_query.order_by(Product.price.asc())
+                            else:  # desc
+                                pro_query = pro_query.order_by(Product.price.desc())
+                                
                         product_result = await self.db.execute(pro_query)
                         product = product_result.scalar_one_or_none()
                         if product:
                             product_lists.append(product)
-
             else:
-                get_product_ids = select(Product).limit(256)
-                product_ids_result = await self.db.execute(get_product_ids)
+                get_product_query = select(Product).limit(256)
+                if filters.min_price is not None:
+                    get_product_query = get_product_query.where(Product.price >= filters.min_price)
+                if filters.max_price is not None:
+                    get_product_query = get_product_query.where(Product.price <= filters.max_price)
+                
+                if filters.sort_price:
+                    if filters.sort_price == 'asc':
+                        get_product_query = get_product_query.order_by(Product.price.asc())
+                    else:  
+                        get_product_query = get_product_query.order_by(Product.price.desc())
+                        
+                product_ids_result = await self.db.execute(get_product_query)
                 product_lists = product_ids_result.scalars().all()
 
             if not product_lists:
@@ -432,7 +425,6 @@ class EmbeddingController:
                         }
                     )
 
-            self.redis.setex(cache_key, REDIS_TTL, json.dumps(products))
 
             return JSONResponse(content=products, status_code=status.HTTP_200_OK)
 
