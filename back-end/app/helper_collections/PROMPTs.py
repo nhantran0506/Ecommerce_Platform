@@ -1,17 +1,13 @@
 DEFAULT_PROMPT = ("""
-    Answer the customer question below base on the given context and html page content or with you knowledge about our ecommerce.
+    ### Instruction : Answer the customer question below base on the given context and html page content or with you knowledge about our ecommerce.
 
-    Context:
+    ### Context:
     {context}
                   
-    HTML Page content of the customer current view:
-    ```html
-    {current_page_content}
-    ```
-                  
-    User query:
+    ### User query:
     {user_query}
-    Answer:
+    
+    ### Answer:
 """)
 
 SYSTEM_PROMPT = (

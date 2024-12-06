@@ -2,7 +2,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 from fastapi.responses import JSONResponse, HTMLResponse
-from models.Shop import Shop
 from models.Ratings import ShopRating
 from serializers.ShopSerializers import *
 from middlewares.token_config import *
@@ -14,6 +13,7 @@ from models.OrderItem import OrderItem
 from models.Products import Product
 from models.Category import Category
 from models.CategoryProduct import CategoryProduct
+from models.Users import User, UserRoles
 from serializers.ShopSerializers import *
 from config import REDIS_TTL
 from redis_config import get_redis
@@ -46,22 +46,38 @@ class ShopController:
 
         return exist_shop
 
-    async def create_new_shop(self, shop: ShopCreate, current_user):
-        result = await self.db.execute(
-            select(Shop).filter(Shop.owner_id == current_user.user_id)
-        )
-        exist_shop = result.scalar_one_or_none()
-        if exist_shop:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="You already have a shop. Each user can only create one shop.",
+    async def create_new_shop(self, shop: ShopCreate, current_user : User):
+        try:
+            result = await self.db.execute(
+                select(Shop).filter(Shop.owner_id == current_user.user_id)
             )
+            exist_shop = result.scalar_one_or_none()
+            if exist_shop:
+                return JSONResponse(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    content={"error" : "You already have a shop. Each user can only create one shop."},
+                )
+            
+            update_user_query = update(User).where(User.user_id == current_user.user_id).values(
+                role = UserRoles.SHOP_OWNER,
+            )
+            await self.db.execute(update_user_query)
+            
+            create_new_shop_query = insert(Shop).values(
+                shop_name = shop.shop_name,
+                shop_address = shop.shop_address,
+                shop_bio = shop.shop_bio,
+                shop_phone_number = current_user.phone_number,
+                owner_id=current_user.user_id
+            ).returning(Shop)
 
-        db_shop = Shop(**shop.model_dump(), owner_id=current_user.user_id)
-        self.db.add(db_shop)
-        await self.db.commit()
-        await self.db.refresh(db_shop)
-        return db_shop
+            
+            db_shop = await self.db.execute(create_new_shop_query)
+            await self.db.commit()
+            return db_shop
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(str(e))
 
     async def delete_existing_shop(self, shop_id, current_user):
         result = await self.db.execute(select(Shop).filter(Shop.shop_id == shop_id))
@@ -269,7 +285,6 @@ class ShopController:
 
     async def statistics_top_products(self, shop_data: ShopGetData, current_user: User):
         try:
-            # Get shop owned by user
             shop_query = select(Shop).where(Shop.owner_id == current_user.user_id)
             result = await self.db.execute(shop_query)
             shop = result.scalar_one_or_none()
@@ -285,18 +300,15 @@ class ShopController:
                 f"shop:{shop.shop_id}:top_products:{timestamp_dt.strftime('%Y-%m')}"
             )
 
-            # cached_html = self.redis.get(cache_key)
-            # if cached_html:
-            #     return HTMLResponse(content=cached_html)
 
-            # Calculate date range
+        
             year = timestamp_dt.year
             month = timestamp_dt.month
             start_of_month = datetime(year, month, 1)
             _, last_day = calendar.monthrange(year, month)
             end_of_month = datetime(year, month, last_day, 23, 59, 59)
 
-            # Get shop's products
+          
             shop_products_query = select(ShopProduct).where(
                 ShopProduct.shop_id == shop.shop_id
             )
@@ -304,7 +316,7 @@ class ShopController:
             shop_products = shop_products.scalars().all()
             product_ids = [sp.product_id for sp in shop_products]
 
-            # Get orders and calculate sales
+          
             product_sales = {}
             orders_query = select(OrderItem).where(
                 OrderItem.product_id.in_(product_ids),
@@ -319,7 +331,7 @@ class ShopController:
                     product_sales[order.product_id] = 0
                 product_sales[order.product_id] += order.quantity
 
-            # Get product names and create visualization
+          
             products_data = []
             for product_id, sales in product_sales.items():
                 product_query = select(Product).where(Product.product_id == product_id)
@@ -328,7 +340,7 @@ class ShopController:
                 if product:
                     products_data.append({"name": product.product_name, "sales": sales})
 
-            # Sort by sales and get top 10
+      
             products_data.sort(key=lambda x: x["sales"], reverse=True)
             top_products = products_data[:10]
 
@@ -357,7 +369,7 @@ class ShopController:
             )
 
             chart_html = fig.to_html(full_html=False, config={"displaylogo": False})
-            # self.redis.setex(cache_key, REDIS_TTL, chart_html)
+           
 
             return HTMLResponse(content=chart_html)
 
@@ -370,7 +382,6 @@ class ShopController:
 
     async def statistics_categories(self, shop_data: ShopGetData, current_user: User):
         try:
-            # Get shop owned by user
             shop_query = select(Shop).where(Shop.owner_id == current_user.user_id)
             result = await self.db.execute(shop_query)
             shop = result.scalar_one_or_none()
@@ -386,18 +397,14 @@ class ShopController:
                 f"shop:{shop.shop_id}:category_stats:{timestamp_dt.strftime('%Y-%m')}"
             )
 
-            # cached_html = self.redis.get(cache_key)
-            # if cached_html:
-            #     return HTMLResponse(content=cached_html)
-
-            # Calculate date range
+        
             year = timestamp_dt.year
             month = timestamp_dt.month
             start_of_month = datetime(year, month, 1)
             _, last_day = calendar.monthrange(year, month)
             end_of_month = datetime(year, month, last_day, 23, 59, 59)
 
-            # Get shop's products
+         
             shop_products_query = select(ShopProduct).where(
                 ShopProduct.shop_id == shop.shop_id
             )
@@ -414,7 +421,6 @@ class ShopController:
                 category_sales[cat.cat_name.value] = 0
 
             for product_id in product_ids:
-                # Get product categories
                 cat_query = select(CategoryProduct).where(
                     CategoryProduct.product_id == product_id
                 )
@@ -431,8 +437,7 @@ class ShopController:
                     if category:
                         if category.cat_name.value not in category_sales:
                             category_sales[category.cat_name.value] = 0
-
-                        # Get orders for this product
+                            
                         orders_query = select(OrderItem).where(
                             OrderItem.product_id == product_id,
                             OrderItem.order_at >= start_of_month,
@@ -444,7 +449,7 @@ class ShopController:
                         for order in orders:
                             category_sales[category.cat_name.value] += order.quantity
 
-            # Create visualization
+        
             fig = go.Figure(
                 data=[
                     go.Bar(
@@ -470,7 +475,6 @@ class ShopController:
             )
 
             chart_html = fig.to_html(full_html=False, config={"displaylogo": False})
-            # self.redis.setex(cache_key, REDIS_TTL, chart_html)
 
             return HTMLResponse(content=chart_html)
 

@@ -20,6 +20,7 @@ class Product(Base):
     avg_stars: Mapped[Float] = mapped_column(Float, nullable=True, default=0.0)
     total_ratings: Mapped[Integer] = mapped_column(Integer, nullable=True, default=0)
     total_sales: Mapped[Integer] = mapped_column(Integer, nullable=True, default=0)
+    inventory: Mapped[Integer] = mapped_column(Integer, nullable=True, default=0)
 
     ratings: Mapped["ProductRating"] = relationship(
         "ProductRating", back_populates="product"

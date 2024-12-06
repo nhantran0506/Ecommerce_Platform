@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+
 DATABASE_PASS = str(os.getenv("DATABASE_PASS"))
 DATABASE_NAME = str(os.getenv("DATABASE_NAME"))
 PORT = str(os.getenv("PORT"))
@@ -30,6 +32,7 @@ FACEBOOK_CLIENT_SECRET = str(os.getenv("FACEBOOK_CLIENT_SECRET"))
 OLLAMA_CHAT_MODEL = str(os.getenv("OLLAMA_CHAT_MODEL"))
 OLLAMA_EMBEDDING_MODEL = str(os.getenv("OLLAMA_EMBEDDING_MODEL"))
 GOOGLE_CHAT_MODEL = str(os.getenv("GOOGLE_CHAT_MODEL"))
+HUGGING_FACE_EMBEDDING_MODEL = str(os.getenv("HUGGING_FACE_EMBEDDING_MODEL"))
 OLLAMA_BASE_URL = str(os.getenv("OLLAMA_BASE_URL"))
 VECTOR_DIMENSIONS = int(os.getenv("VECTOR_DIMENSIONS"))
 WEAVIATE_URL = str(os.getenv("WEAVIATE_URL"))

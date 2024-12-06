@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Document
+from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.vector_stores.weaviate import WeaviateVectorStore
 from llama_index.core import StorageContext
 from llama_index.embeddings.ollama import OllamaEmbedding
@@ -34,6 +35,7 @@ from fastapi.responses import JSONResponse
 import weaviate.classes.query as wq
 from llama_index.core.vector_stores import MetadataFilters, ExactMatchFilter
 from llama_index.core.postprocessor import SimilarityPostprocessor
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 import logging
 from redis_config import get_redis
 import json
@@ -45,6 +47,10 @@ logger = logging.getLogger(__name__)
 class EmbeddingController:
     faq_collection_name = "FAQ"
     recommend_collection_name = "Recommend"
+    embed_model_recommend = HuggingFaceEmbedding(
+        model_name="BAAI/bge-small-en",
+        # device="cuda",
+    )
 
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
@@ -56,13 +62,24 @@ class EmbeddingController:
                 # skip_init_checks=True,
             )
 
-            self.embed_model = OllamaEmbedding(
-                model_name=OLLAMA_EMBEDDING_MODEL,
-                base_url=OLLAMA_BASE_URL,
-                request_timeout=500.0,
-                dimensions=VECTOR_DIMENSIONS,
-                show_progress=True,
-            )
+            
+
+            # self.embed_model_recommend = HuggingFaceEmbedding(
+            #     model_name="BAAI/bge-small-en",
+            #     # device="cuda",
+            #     max_length = VECTOR_DIMENSIONS,
+            # )
+          
+
+
+            # self.embed_model = OllamaEmbedding(
+            #     model_name=OLLAMA_EMBEDDING_MODEL,
+            #     base_url=OLLAMA_BASE_URL,
+            #     request_timeout=500.0,
+            #     dimensions=VECTOR_DIMENSIONS,
+            #     show_progress=True,
+            # )
+            
 
             self._create_schema(self.faq_collection_name, is_faq=True)
             self._create_schema(self.recommend_collection_name, is_faq=False)
@@ -80,24 +97,26 @@ class EmbeddingController:
                 text_key="content",
                 metadata_keys=["topic", "product_id"],
             )
-
+            
             self.faq_storage_context = StorageContext.from_defaults(
                 vector_store=self.faq_vector_store
             )
             self.recommend_storage_context = StorageContext.from_defaults(
                 vector_store=self.recommend_vector_store
             )
-
+            
             postprocessor = SimilarityPostprocessor(similarity_cutoff=0.4)
+            
             self.faq_index = VectorStoreIndex.from_vector_store(
                 self.faq_vector_store,
-                embed_model=self.embed_model,
+                embed_model=self.embed_model_recommend,
             ).as_retriever(similarity_top_k=256, node_postprocessors=[postprocessor])
-
+        
             self.recommend_index = VectorStoreIndex.from_vector_store(
                 self.recommend_vector_store,
-                embed_model=self.embed_model,
-            ).as_retriever(similarity_top_k=256, node_postprocessors=[postprocessor])
+                embed_model=self.embed_model_recommend,
+            ).as_retriever(dense_similarity_top_k=256, node_postprocessors=[postprocessor], alpha=0.0, enable_reranking=False)
+         
         except Exception as e:
             logger.error(str(e))
 
@@ -163,7 +182,7 @@ class EmbeddingController:
         self.faq_index = VectorStoreIndex.from_documents(
             docs,
             storage_context=self.faq_storage_context,
-            embed_model=self.embed_model,
+            embed_model=self.embed_model_recommend,
         )
 
     @staticmethod
@@ -201,7 +220,7 @@ class EmbeddingController:
             _index = VectorStoreIndex.from_documents(
                 [document],
                 storage_context=self.recommend_storage_context,
-                embed_model=self.embed_model,
+                embed_model=self.embed_model_recommend,
                 show_progress=True,
             )
 
@@ -224,7 +243,7 @@ class EmbeddingController:
 
             _index = VectorStoreIndex.from_vector_store(
                 self.recommend_vector_store,
-                embed_model=self.embed_model,
+                embed_model=self.embed_model_recommend,
             ).as_retriever(
                 similarity_top_k=1, vector_store_query_mode="default", filters=filters
             )
@@ -243,7 +262,10 @@ class EmbeddingController:
             logger.error(f"Error removing product from vector store: {str(e)}")
             return False
 
-    async def search_product(self, user_query: str, filters: Optional[SearchFilter] = None):
+    async def search_product(
+        self, user_query: str, filters: Optional[SearchFilter] = None
+    ):
+        print("This first")
         try:
             filter_key = ""
             if filters:
@@ -253,82 +275,92 @@ class EmbeddingController:
                     filter_key += f"_min={filters.min_price}"
                 if filters.max_price is not None:
                     filter_key += f"_max={filters.max_price}"
-            
+
             cache_key = f"product_search:{hash(user_query)}{filter_key}"
             cached_data = self.redis.get(cache_key)
 
             if cached_data:
                 return JSONResponse(
-                    content=json.loads(cached_data), 
-                    status_code=status.HTTP_200_OK
+                    content=json.loads(cached_data), status_code=status.HTTP_200_OK
                 )
 
-        
-            vector_result = self.recommend_index.retrieve(user_query)
+            product_lists = []
+            if user_query:
+                vector_result = self.recommend_index.retrieve(user_query)
 
-            if not vector_result:
-                return JSONResponse(
-                    content={"Message": "No products found"},
-                    status_code=status.HTTP_404_NOT_FOUND,
-                )
+                if not vector_result:
+                    return JSONResponse(
+                        content={"Message": "No products found"},
+                        status_code=status.HTTP_404_NOT_FOUND,
+                    )
 
-    
-            product_ids = []
-            for obj in vector_result:
-                product_id = obj.node.metadata["product_id"]
-                if product_id:
-                    product_ids.append(product_id)
+                for obj in vector_result:
+                    product_id = obj.node.metadata["product_id"]
+                    if product_id:
+                        pro_query = select(Product).where(
+                            Product.product_id == product_id
+                        )
+                        product_result = await self.db.execute(pro_query)
+                        product = product_result.scalar_one_or_none()
+                        if product:
+                            product_lists.append(product)
 
-            if not product_ids:
+            else:
+                get_product_ids = select(Product).limit(256)
+                product_ids_result = await self.db.execute(get_product_ids)
+                product_lists = product_ids_result.scalars().all()
+
+            if not product_lists:
                 return JSONResponse(
                     content={"Message": "No valid product IDs found"},
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
 
             products = []
-            for pro_id in product_ids:
-                
-                get_product_query = select(Product).where(Product.product_id == pro_id)
+            for pro in product_lists:
+
+                get_product_query = select(Product).where(
+                    Product.product_id == pro.product_id
+                )
                 product_result = await self.db.execute(get_product_query)
                 product = product_result.scalar_one_or_none()
 
                 if not product:
                     continue
 
-               
                 if filters:
-                    if filters.min_price is not None and product.price < filters.min_price:
+                    if (
+                        filters.min_price is not None
+                        and product.price < filters.min_price
+                    ):
                         continue
-                    if filters.max_price is not None and product.price > filters.max_price:
+                    if (
+                        filters.max_price is not None
+                        and product.price > filters.max_price
+                    ):
                         continue
 
-             
                 get_cat_name = select(CategoryProduct).where(
-                    CategoryProduct.product_id == pro_id
+                    CategoryProduct.product_id == pro.product_id
                 )
                 cat_product_result = await self.db.execute(get_cat_name)
                 cat_product_names = cat_product_result.scalars().all()
 
                 cat_names = []
-               
-                
+
                 for cat in cat_product_names:
-                    get_cat_name = select(Category).where(
-                        Category.cat_id == cat.cat_id
-                    )
+                    get_cat_name = select(Category).where(Category.cat_id == cat.cat_id)
                     cat_name_result = await self.db.execute(get_cat_name)
                     cat_name = cat_name_result.scalar_one_or_none()
                     if cat_name:
                         cat_names.append(cat_name.cat_name.value)
 
-            
                 if filters and filters.categories:
                     if not any(cat in filters.categories for cat in cat_names):
                         continue
 
-             
                 get_image_query = select(ImageProduct).where(
-                    ImageProduct.product_id == pro_id
+                    ImageProduct.product_id == pro.product_id
                 )
                 image_results = await self.db.execute(get_image_query)
                 product_images = image_results.scalars().all()
@@ -345,9 +377,8 @@ class EmbeddingController:
                         if result["success"]
                     ]
 
-            
                 get_shop_name = select(ShopProduct).where(
-                    ShopProduct.product_id == pro_id
+                    ShopProduct.product_id == pro.product_id
                 )
                 shop_product_result = await self.db.execute(get_shop_name)
                 shop_product = shop_product_result.scalar_one_or_none()
@@ -359,21 +390,24 @@ class EmbeddingController:
                     shop_result = await self.db.execute(get_shop_query)
                     shop = shop_result.scalar_one_or_none()
 
-                    products.append({
-                        "product_id": str(product.product_id),
-                        "product_name": product.product_name,
-                        "product_price": product.price,
-                        "product_total_sales": product.total_sales,
-                        "image_urls": image_urls,
-                        "product_description": product.product_description,
-                        "product_category": cat_names,
-                        "product_avg_stars": product.avg_stars,
-                        "product_total_ratings": product.total_ratings,
-                        "shop_name": {
-                            "shop_id": str(shop.shop_id),
-                            "shop_name": shop.shop_name,
-                        },
-                    })
+                    products.append(
+                        {
+                            "product_id": str(product.product_id),
+                            "product_name": product.product_name,
+                            "product_price": product.price,
+                            "product_total_sales": product.total_sales,
+                            "image_urls": image_urls,
+                            "product_description": product.product_description,
+                            "product_category": cat_names,
+                            "product_avg_stars": product.avg_stars,
+                            "product_total_ratings": product.total_ratings,
+                            "inventory": product.inventory,
+                            "shop_name": {
+                                "shop_id": str(shop.shop_id),
+                                "shop_name": shop.shop_name,
+                            },
+                        }
+                    )
 
             self.redis.setex(cache_key, REDIS_TTL, json.dumps(products))
 
@@ -386,20 +420,6 @@ class EmbeddingController:
                 content={"Message": f"Error: {str(e)}"},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-    def embedding(self, docs: List[Document], is_faq: bool = False):
-        storage_context = (
-            self.faq_storage_context if is_faq else self.recommend_storage_context
-        )
-
-        index = VectorStoreIndex.from_documents(
-            docs,
-            storage_context=storage_context,
-            embed_model=self.embed_model,
-        )
-
-        if is_faq:
-            self.faq_index = index
 
     def query(self, query: str, top_k: int = 5, min_similarity: float = 0.5):
 
@@ -424,7 +444,9 @@ class EmbeddingController:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if hasattr(self, "embed_model"):
-            del self.embed_model
+        # if hasattr(self, "embed_model"):
+        #     del self.embed_model
+        if hasattr(self, "embed_model_recommend"):
+            del self.embed_model_recommend
         if hasattr(self, "client"):
             self.client.close()

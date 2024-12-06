@@ -33,6 +33,7 @@ async def create_product(
     product_description: str = Form(...),
     price: float = Form(...),
     category: list[str] = Form(...),
+    inventory : int = Form(...),
     images: list[UploadFile] = File(...),
     current_user=Depends(token_config.get_current_user),
     product_controller: ProductController = Depends(),
@@ -43,6 +44,7 @@ async def create_product(
             product_description=product_description,
             price=price,
             category=category,
+            inventory = inventory,
         )
         return await product_controller.create_product(
             product=product, image_list=images, current_user=current_user
@@ -61,6 +63,7 @@ async def product_update(
     product_id: uuid.UUID = Form(...),
     product_description: str = Form(...),
     price: float = Form(...),
+    inventory : int = Form(...),
     category: list[str] = Form(...),
     images: list[UploadFile] = File(...),
     product_controller: ProductController = Depends(),
@@ -72,6 +75,7 @@ async def product_update(
             product_name=product_name,
             product_description=product_description,
             price=price,
+            inventory = inventory,
             category=category,
         )
 
@@ -88,7 +92,7 @@ async def product_update(
 
 @router.get("/search_products")
 async def search_products(
-    user_query: str,
+    user_query: Optional[str] = Query(None),
     categories: Optional[List[str]] = Query(None),
     min_price: Optional[float] = Query(None),
     max_price: Optional[float] = Query(None),
@@ -161,15 +165,32 @@ async def get_all_products_cat(product_controller: ProductController = Depends()
         )
 
 
+@router.post("/{product_id}")
+async def get_product(
+    product_id: uuid.UUID,
+    product_controller: ProductController = Depends(),
+    current_user = Depends(token_config.get_current_user)
+):
+    try:
+        return await product_controller.post_single_product(
+            product_id=product_id, current_user = current_user
+        )
+    except Exception as e:
+        logger.error(str(e))
+        return JSONResponse(
+            content={"Message": "Unexpected error"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
 @router.get("/{product_id}")
 async def get_product(
     product_id: uuid.UUID,
     product_controller: ProductController = Depends(),
-    current_user=Depends(token_config.get_current_user),
 ):
     try:
         return await product_controller.get_single_product(
-            product_id=product_id, current_user=current_user
+            product_id=product_id
         )
     except Exception as e:
         logger.error(str(e))
