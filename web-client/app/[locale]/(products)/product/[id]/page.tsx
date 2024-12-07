@@ -28,12 +28,13 @@ import {
 } from "@nextui-org/react";
 import productAPIs from "@/api/product";
 import cartAPIs from "@/api/cart";
-import { CircleCheck } from "lucide-react";
+import { CircleCheck, User } from "lucide-react";
 import ProductDetailSkeleton from "@/components/product_detail_skeleton";
 import RatingInput from "@/components/product_rating/rating_input";
 import ExpandableDescription from "@/components/expandable_description";
 import RatingList from "@/components/product_rating/rating_list";
 import StarRating from "@/components/start_rating";
+import { useRouter, usePathname } from "next/navigation";
 // import ProductDetailSkeleton from "@/components/product_detail/product_detail_skeleton";
 
 const ProductDetailPage = ({ params }: { params: { id: string } }) => {
@@ -46,7 +47,11 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
 
   const [ratings, setRatings] = useState<IProductRatingResponse[]>([]);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const isOutOfStock = product?.inventory ===0;
+  const isOutOfStock = product?.inventory === 0;
+
+  const router = useRouter();
+  const pathname = usePathname();
+  const locale = pathname.split("/")[1];
 
   useEffect(() => {
     const fetchProductDetail = async () => {
@@ -81,7 +86,11 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
   }, [productId]);
 
   const handleAddToCart = async () => {
-    if (!product || product.inventory === 0 || numberOfProduct> product.inventory) {
+    if (
+      !product ||
+      product.inventory === 0 ||
+      numberOfProduct > product.inventory
+    ) {
       return;
     }
 
@@ -162,9 +171,7 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
         radius="lg"
         className="bg-slate-200"
         isDisabled={isOutOfStock}
-        onClick={() =>
-          setNumberOfProduct((prev) => (prev > 1 ? prev - 1 : 1))
-        }
+        onClick={() => setNumberOfProduct((prev) => (prev > 1 ? prev - 1 : 1))}
       >
         <Minus size={15} />
       </Button>
@@ -175,7 +182,7 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
         className="bg-slate-200"
         isDisabled={isOutOfStock}
         onClick={() =>
-          setNumberOfProduct((prev) => 
+          setNumberOfProduct((prev) =>
             prev < (product?.inventory || 0) ? prev + 1 : prev
           )
         }
@@ -259,12 +266,14 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
                   src={product.image_urls[0]}
                   alt="Product image"
                   layout="fill"
-                  className={`object-cover ${isOutOfStock ? 'opacity-50' : ''}`}
+                  className={`object-cover ${isOutOfStock ? "opacity-50" : ""}`}
                   priority={true}
                 />
                 {isOutOfStock && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                    <span className="text-white font-bold text-xl">Outof Stock</span>
+                    <span className="text-white font-bold text-xl">
+                      Outof Stock
+                    </span>
                   </div>
                 )}
               </>
@@ -323,7 +332,7 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
                 onClick={() => handleAddToCart()}
                 isDisabled={isOutOfStock}
               >
-                {isOutOfStock ? 'Out of Stock' : 'OrderNow'}
+                {isOutOfStock ? "Out of Stock" : "OrderNow"}
               </Button>
               <Button
                 className="font-bold px-5 cart-button"
@@ -345,8 +354,28 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
           </div>
         </div>
 
+        <div className="w-full mb-6">
+          <h2 className="text-xl font-bold mb-4">Seller Detail</h2>
+
+          <div className="flex items-center gap-2 mb-4">
+            <div className="bg-black p-3 rounded-full">
+              <User color="white" size={30} />
+            </div>
+            <Button
+              variant="light"
+              className="p-4 font-semibold"
+              onClick={() =>
+                router.push(`/${locale}/shop/${product.shop_name.shop_id}`)
+              }
+            >
+              <div className="uppercase">{product.shop_name.shop_name}</div>
+            </Button>
+          </div>
+        </div>
+
         <div className="w-full">
           <h2 className="text-xl font-bold mb-4">Product Description</h2>
+
           <ExpandableDescription description={product.product_description} />
         </div>
 
