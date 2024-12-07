@@ -14,6 +14,8 @@ import PasswordInput from "@/components/password_input";
 import { Input } from "@nextui-org/react";
 import { useTranslations } from "use-intl";
 import { IReqLogin } from "@/api/auth/interface";
+import { useAuthState } from "@/state/auth";
+import { UserRoleEnum } from "@/state/enum";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -25,6 +27,7 @@ export default function LoginPage() {
   const locale = pathname.split("/")[1];
   const { handleGoogleLogin } = useGoogleAuth();
   const t = useTranslations();
+  const { setIsAuthenticated } = useAuthState();
 
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUsername(e.target.value);
@@ -45,10 +48,17 @@ export default function LoginPage() {
 
     try {
       const response = await authAPIs.login(reqBody);
-
       await localStorage.setItem("token", response.token);
 
-      router.push("/");
+      setIsAuthenticated(true);
+
+      const userInfo = await authAPIs.getCurrentUser();
+
+      if (userInfo.role === UserRoleEnum.admin) {
+        router.push(`/${locale}/admin`);
+      } else {
+        router.push(`/${locale}`);
+      }
     } catch (error) {
       setError(
         error instanceof Error

@@ -30,17 +30,18 @@ import { useTheme } from "next-themes";
 import SearchBar from "../search";
 import { useLocaleState } from "@/state/state";
 import { LocaleEnum } from "@/state/enum";
+import { useAuthState } from "@/state/auth";
 
 export default function NavigationBar() {
   const router = useRouter();
   const pathname = usePathname();
   const locale = useLocaleState((state) => state.locale);
   const setLocale = useLocaleState((state) => state.setLocale);
+  const { isAuthenticated: isLogin, setIsAuthenticated: setIsLogin } =
+    useAuthState();
 
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isVietNamese, setIsVietNamese] = useState<boolean>(false);
-  const [isLogin, setIsLogin] = useState<boolean>(false);
-  const [token, setToken] = useState<string | null>(null);
   const t = useTranslations();
   const { theme, setTheme } = useTheme();
 
@@ -94,20 +95,16 @@ export default function NavigationBar() {
   ];
 
   useEffect(() => {
-    // Access localStorage only in the browser
     const storedToken = localStorage.getItem("token");
-    setToken(storedToken);
-    if (storedToken && storedToken !== "") setIsLogin(true);
-
+    setIsLogin(!!storedToken);
     setIsVietNamese(locale == LocaleEnum.vi ? true : false);
-  }, []);
+  }, [setIsLogin]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("sessionId");
     localStorage.removeItem("chatMessages");
     setIsLogin(false);
-
     router.push(`/${locale}${MenuEnum.LogIn}`);
   };
 
@@ -160,9 +157,9 @@ export default function NavigationBar() {
         <NavbarBrand>
           <div className="flex items-center gap-2">
             <div className="bg-black text-white px-3 py-2 rounded-lg">
-              <span className="font-bold text-xl">SHOP</span>
+              <span className="font-bold text-xl">ECOM</span>
             </div>
-            <span className="font-bold text-xl text-black">HUB</span>
+            <span className="font-bold text-xl text-black">SITE</span>
           </div>
         </NavbarBrand>
       </NavbarContent>
@@ -171,10 +168,10 @@ export default function NavigationBar() {
         <NavbarBrand>
           <div className="flex items-center gap-2">
             <div className="bg-black text-white px-3 py-2 rounded-lg">
-              <span className="font-bold text-xl">SHOP</span>
+              <span className="font-bold text-xl">ECOM</span>
             </div>
             <span className="font-bold text-xl text-black dark:text-white">
-              HUB
+              SITE
             </span>
           </div>
         </NavbarBrand>
