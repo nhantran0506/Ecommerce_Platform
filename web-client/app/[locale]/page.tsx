@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { Button } from "@nextui-org/react";
+import { Button, Skeleton } from "@nextui-org/react";
 import bannerImg from "@/assets/banner-bg.jpg";
 import bannerImg2 from "@/assets/banner-2.jpeg";
 import bannerImg3 from "@/assets/banner-3.jpg";
@@ -8,13 +8,11 @@ import SectionHeader from "@/components/section_header";
 import ProductCard from "@/components/product_card";
 import { ReactNode, useEffect, useState } from "react";
 import productAPIs from "@/api/product";
-import { usePathname } from "next/navigation";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import ListProductCardSkeleton from "@/components/list_product_card_skeleton";
 import { useTranslations } from "next-intl";
-import { Shirt } from "lucide-react";
 import { CategoriesEnum } from "@/constant/enum";
 import Image from "next/image";
 import pantImg from "@/assets/pants.png";
@@ -29,18 +27,30 @@ import healthImg from "@/assets/health.png";
 import homeImg from "@/assets/home.png";
 import toyImg from "@/assets/toy.png";
 import foodImg from "@/assets/food.png";
+import {
+  useCategporyState,
+  useLocaleState,
+  useProductState,
+} from "@/state/state";
 
 export default function Home() {
   const router = useRouter();
-  const pathname = usePathname();
-  const locale = pathname.split("/")[1];
+  const t = useTranslations();
   const [loading, setLoading] = useState(false);
-  const [productlist, setProductList] = useState<IProductData[]>([]);
+  const [isHydrated, setIsHydrated] = useState(false);
+
   const [recommendProductlist, setRecommendProductList] = useState<
     IProductData[]
   >([]);
-  const [cateList, setCateList] = useState<ICategory[]>([]);
-  const t = useTranslations();
+  const productlist = useProductState((state) => state.productList);
+  const setProductList = useProductState((state) => state.setProductList);
+  const cateList = useCategporyState((state) => state.categoryList);
+  const setCateList = useCategporyState((state) => state.setCategoryList);
+  const locale = useLocaleState((state) => state.locale);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
     fetchHomeInfo();
@@ -50,14 +60,18 @@ export default function Home() {
     try {
       setLoading(true);
 
-      const products = await productAPIs.getAll();
-      setProductList(products);
+      if (isHydrated && productlist.length === 0) {
+        const products = await productAPIs.getAll();
+        setProductList(products);
+      }
 
       const recommendedProducts = await productAPIs.getRecommendedProducts();
       setRecommendProductList(recommendedProducts);
 
-      const cateListRes = await productAPIs.getAllCategories();
-      setCateList(cateListRes);
+      if (isHydrated && cateList.length === 0) {
+        const cateListRes = await productAPIs.getAllCategories();
+        setCateList(cateListRes);
+      }
     } catch (error) {
       console.error("Failed to fetch home data:", error);
     } finally {
@@ -199,7 +213,19 @@ export default function Home() {
 
       {/* Content Section */}
       {loading ? (
-        <SectionHeader title={t("home_category")} content={"Loading..."} />
+        <SectionHeader
+          title={t("home_category")}
+          content={
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <Skeleton
+                  key={index}
+                  className="w-24 h-24 rounded-lg"
+                ></Skeleton>
+              ))}
+            </div>
+          }
+        />
       ) : cateList.length > 0 ? (
         <SectionHeader
           title={t("home_category")}

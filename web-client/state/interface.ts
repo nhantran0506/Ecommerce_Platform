@@ -1,26 +1,34 @@
-interface IUserData {
-  first_name: string;
-  last_name: string;
-  phone_number: string;
-  address: string;
-  email: string;
-  role: UserRoleEnum;
-}
+import { IResGetUser } from "@/api/auth/interface";
+import { LocaleEnum } from "./enum";
 
-interface IUserState {
-  user: IUserData;
-  setUser: (userInfo: IUserData) => void;
+export interface IUserState {
+  user: IResGetUser;
+  setUser: (userInfo: IResGetUser) => void;
   clearUser: () => void;
 }
 
-interface IProductId {
+export interface IProductId {
   productId: string;
   setProductId: (newId: string) => void;
 }
 
-interface IListProductState {
+export interface IListProductState {
   productList: IProductData[];
 
   setProductList: (productList: IProductData[]) => void;
   clearProductList: () => void;
+}
+
+export interface IListCategoryState {
+  categoryList: ICategory[];
+
+  setCategoryList: (categoryList: ICategory[]) => void;
+  clearCategoryList: () => void;
+}
+
+export interface ILocaleState {
+  locale: LocaleEnum;
+
+  setLocale: (locale: LocaleEnum) => void;
+  clearLocale: () => void;
 }
