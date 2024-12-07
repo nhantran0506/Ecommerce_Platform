@@ -2,6 +2,7 @@
 
 import orderAPIs from "@/api/order";
 import CartItemCard from "@/components/cart_item_card";
+import OrderDetailPageSkeleton from "@/components/order_detail_skeleton";
 import SectionHeader from "@/components/section_header";
 import { formatDate } from "@/libraries/helpers";
 import {
@@ -87,7 +88,7 @@ const OrderDetailPage = ({ params }: { params: { id: string } }) => {
     })) || [];
 
   if (loading) {
-    return <></>;
+    return <OrderDetailPageSkeleton />;
   }
 
   return (
@@ -99,35 +100,33 @@ const OrderDetailPage = ({ params }: { params: { id: string } }) => {
       <SectionHeader
         title={"Progress"}
         content={
-          <div>
-            <Card>
-              <CardBody>
-                <div className="flex gap-4">
-                  {listOrderStep.orderStep.map((item, index) => (
-                    <Progress
-                      key={index}
-                      aria-label="Loading..."
-                      label={item}
-                      value={index <= listOrderStep.currentStep ? 100 : 0}
-                      className="max-w-md"
-                    />
-                  ))}
-                </div>
-              </CardBody>
-              <Divider />
-              <CardFooter className="flex justify-between">
-                <Button radius="full" variant="bordered">
-                  Estimated shipping date:{" "}
-                  <span className="font-semibold">
-                    {formatDate(order?.created_at ?? "")}
-                  </span>
-                </Button>
-                <Button radius="full" className="bg-black text-white">
-                  Mask as received
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
+          <Card>
+            <CardBody>
+              <div className="flex gap-4">
+                {listOrderStep.orderStep.map((item, index) => (
+                  <Progress
+                    key={index}
+                    aria-label="Loading..."
+                    label={item}
+                    value={index <= listOrderStep.currentStep ? 100 : 0}
+                    className="max-w-md"
+                  />
+                ))}
+              </div>
+            </CardBody>
+            <Divider />
+            <CardFooter className="flex justify-between">
+              <Button radius="full" variant="bordered">
+                Estimated shipping date:{" "}
+                <span className="font-semibold">
+                  {formatDate(order?.created_at ?? "")}
+                </span>
+              </Button>
+              <Button radius="full" className="bg-black text-white">
+                Mask as received
+              </Button>
+            </CardFooter>
+          </Card>
         }
       />
 

@@ -12,13 +12,25 @@ import {
   TableCell,
   Skeleton,
 } from "@nextui-org/react";
-import { useTheme } from "next-themes";
 
 export default function OrderDetailPageSkeleton() {
-  const { theme } = useTheme();
+  // Define columns structure
+  const columns = [
+    { key: "col1", label: "Column 1" },
+    { key: "col2", label: "Column 2" },
+    { key: "col3", label: "Column 3" },
+  ];
+
+  // Define rows structure
+  const rows = [...Array(3)].map((_, index) => ({
+    key: index,
+    col1: <Skeleton className="h-6 w-20 rounded-lg" />,
+    col2: <Skeleton className="h-6 w-20 rounded-lg" />,
+    col3: <Skeleton className="h-6 w-20 rounded-lg" />,
+  }));
 
   return (
-    <div className="flex flex-col mx-60 my-10" data-theme={theme}>
+    <div className="flex flex-col mx-60 my-10">
       <div className="mb-8">
         <Skeleton className="h-10 w-60 rounded-lg" />
       </div>
@@ -44,26 +56,24 @@ export default function OrderDetailPageSkeleton() {
       <div>
         <Skeleton className="h-8 w-36 rounded-lg mb-4" />
         <Card>
-          <Table removeWrapper aria-label="Skeleton table">
-            <TableHeader>
-              <TableRow>
-                {[...Array(3)].map((_, index) => (
-                  <TableColumn key={index}>
-                    <Skeleton className="h-6 w-24 rounded-lg" />
-                  </TableColumn>
-                ))}
-              </TableRow>
+          <Table aria-label="Skeleton table" removeWrapper>
+            <TableHeader columns={columns}>
+              {(column) => (
+                <TableColumn key={column.key}>
+                  <Skeleton className="h-6 w-24 rounded-lg" />
+                </TableColumn>
+              )}
             </TableHeader>
-            <TableBody>
-              {[...Array(3)].map((_, rowIndex) => (
-                <TableRow key={rowIndex}>
-                  {[...Array(3)].map((_, colIndex) => (
-                    <TableCell key={colIndex}>
-                      <Skeleton className="h-6 w-20 rounded-lg" />
+            <TableBody items={rows}>
+              {(item) => (
+                <TableRow key={item.key}>
+                  {(columnKey) => (
+                    <TableCell>
+                      {item[columnKey as keyof typeof item]}
                     </TableCell>
-                  ))}
+                  )}
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </Card>
