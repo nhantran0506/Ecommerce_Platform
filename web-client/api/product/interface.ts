@@ -1,11 +1,12 @@
 interface IProductData {
   product_id: string;
   product_name: string;
-  product_price: number;
+  price: number;
   image_urls: string[];
   product_total_ratings: number;
   product_avg_stars: number;
   product_total_sales: number;
+  inventory: number;
 }
 
 interface IProductDetailData {
@@ -17,6 +18,7 @@ interface IProductDetailData {
   product_total_ratings: number;
   product_total_sales: number;
   price: number;
+  inventory: number;
   image_urls: string[];
   shop_name: {
     shop_id: string;

@@ -14,7 +14,7 @@ import {
   Button,
   useDisclosure,
 } from "@nextui-org/react";
-import { PackagePlus, Trash2 } from "lucide-react";
+import { PackagePlus, Trash2, Edit } from "lucide-react";
 import ProductMotificationPage from "./product-motification/page";
 import { useProductId } from "@/state/state";
 import SectionHeader from "@/components/section_header";
@@ -24,6 +24,7 @@ const columns = [
   { key: "index", label: "Index" },
   { key: "item", label: "Item" },
   { key: "price", label: "Price" },
+  { key: "inventory", label: "Remaining Stock" },
   { key: "action", label: "Actions" },
 ];
 
@@ -32,6 +33,43 @@ const ProductAnalyzePage = () => {
   const { setProductId } = useProductId();
   const [products, setProducts] = useState<IProductData[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const handleUpdateProduct = (productId: string) => {
+    setProductId(productId);
+    onOpen();
+  };
+
+  const renderCell = (row: any, columnKey: string) => {
+    const cellValue = row[columnKey];
+    
+    switch (columnKey) {
+      case "inventory":
+        return (
+          <div className="flex justify-center">
+            <span className={`${parseInt(cellValue) === 0 ? 'text-danger' : ''}`}>
+              {cellValue}
+            </span>
+          </div>
+        );
+      case "action":
+        return (
+          <div className="flex gap-4">
+            <Button
+              isIconOnly
+              color="primary"
+              onClick={() => handleUpdateProduct(row.key)}
+            >
+              <Edit size={18} />
+            </Button>
+            <Button isIconOnly color="danger">
+              <Trash2 size={18} />
+            </Button>
+          </div>
+        );
+      default:
+        return cellValue;
+    }
+  };
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -66,6 +104,7 @@ const ProductAnalyzePage = () => {
       />
     ),
     price: `$${product.price.toFixed(2)}`,
+    inventory: product.inventory ? product.inventory : 0,
   }));
 
   if (loading) {
@@ -100,13 +139,7 @@ const ProductAnalyzePage = () => {
                 <TableRow key={item.key}>
                   {(columnKey) => (
                     <TableCell>
-                      {columnKey === "action" ? (
-                        <Button variant="light" color="danger" isIconOnly>
-                          <Trash2 />
-                        </Button>
-                      ) : (
-                        getKeyValue(item, columnKey)
-                      )}
+                      {renderCell(item, columnKey.toString())}
                     </TableCell>
                   )}
                 </TableRow>

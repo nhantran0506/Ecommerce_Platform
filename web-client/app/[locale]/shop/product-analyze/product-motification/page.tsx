@@ -14,10 +14,12 @@ import {
   Chip,
   Select,
   SelectItem,
+  useDisclosure,
 } from "@nextui-org/react";
 import { useState, useRef, useEffect } from "react";
-import { API_BASE_URL } from "@/libraries/api";
+import { API_BASE_URL , API_ROUTES} from "@/libraries/api";
 import productAPIs from "@/api/product";
+import { CircleCheck } from "lucide-react";
 
 interface ICategory {
   category_id: string; // e.g. "cd621c55-04a6-482c-9b4e-dc356231d49f"
@@ -30,12 +32,18 @@ const ProductMotificationPage: React.FC<IProductMotificationPage> = ({
 }) => {
   const { productId } = useProductId();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { 
+    isOpen: isSuccessOpen, 
+    onOpen: onSuccessOpen, 
+    onOpenChange: onSuccessOpenChange 
+  } = useDisclosure();
 
   const [formData, setFormData] = useState({
     product_name: "",
     product_description: "",
     price: "",
     category_id: "",
+    inventory: "",
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,6 +62,30 @@ const ProductMotificationPage: React.FC<IProductMotificationPage> = ({
     fetchCategories();
   }, []);
 
+  useEffect(() => {
+    const fetchProductDetails = async () => {
+      if (!productId) return;
+      
+      try {
+        setLoading(true);
+        const product = await productAPIs.getProductById(productId);
+        setFormData({
+          product_name: product.product_name,
+          product_description: product.product_description,
+          price: product.price.toString(),
+          category_id: product.product_category[0] || "",
+          inventory: product.inventory.toString(),
+        });
+      } catch (error) {
+        console.error("Failed to fetch product details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductDetails();
+  }, [productId]);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -71,47 +103,64 @@ const ProductMotificationPage: React.FC<IProductMotificationPage> = ({
   const handleSubmit = async () => {
     try {
       setLoading(true);
+      
+      if (!formData.product_name || !formData.price || !formData.category_id) {
+        throw new Error("Please fill in all required fields");
+      }
+
       const formDataToSend = new FormData();
 
-      // Find the selected category name based on the selected category_id
-      const selectedCategory = categories.find(
-        (cat) => cat.category_id === formData.category_id
-      );
+      const selectedCategory = categories.find(cat => cat.category_id === formData.category_id);
+      const categoryName = selectedCategory ? selectedCategory.category_name : '';
 
-      // Append basic product data
-      formDataToSend.append("product_name", formData.product_name);
-      formDataToSend.append(
-        "product_description",
-        formData.product_description
-      );
-      formDataToSend.append("price", formData.price);
-      // Send the category name instead of ID
-      formDataToSend.append("category", selectedCategory?.category_name || "");
+      formDataToSend.append('product_name', formData.product_name);
+      formDataToSend.append('product_description', formData.product_description);
+      formDataToSend.append('price', formData.price);
+      formDataToSend.append('inventory', formData.inventory);
+      formDataToSend.append('category', categoryName);
 
-      // Append image files
+      if (productId) {
+        formDataToSend.append('product_id', productId);
+      } else if (selectedFiles.length === 0) {
+        return;
+      }
+
       selectedFiles.forEach((file) => {
-        formDataToSend.append("images", file);
+        formDataToSend.append('images', file);
       });
 
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE_URL}/products/create`, {
-        method: "POST",
+      const endpoint = productId 
+        ? `${API_BASE_URL}${API_ROUTES.UPDATE_PRODUCT}`
+        : `${API_BASE_URL}${API_ROUTES.CREATE_PRODUCT}`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
         body: formDataToSend,
       });
 
       if (!response.ok) {
-        throw new Error(`Create product failed with status ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.detail || `Operation failed with status ${response.status}`);
       }
 
-      // Close modal and reset form
+      setFormData({
+        product_name: "",
+        product_description: "",
+        price: "",
+        category_id: "",
+        inventory: "",
+      });
+      setSelectedFiles([]);
+      
+      onSuccessOpen();
       if (onOpenChange) {
         onOpenChange(false);
       }
     } catch (error) {
-      console.error("Failed to create product:", error);
+      console.error('Failed to process product:', error);
     } finally {
       setLoading(false);
     }
@@ -163,28 +212,32 @@ const ProductMotificationPage: React.FC<IProductMotificationPage> = ({
                   </div>
 
                   <div className="col-span-1">
+                    <Input
+                      type="number"
+                      label="Inventory"
+                      placeholder="0"
+                      value={formData.inventory}
+                      onChange={(e) => handleInputChange("inventory", e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="col-span-1">
                     <Select
                       label="Category"
                       placeholder="Select category"
                       className="w-full"
                       value={formData.category_id}
-                      onChange={(e) =>
-                        handleInputChange("category_id", e.target.value)
-                      }
+                      onChange={(e) => handleInputChange("category_id", e.target.value)}
                     >
-                      {categories?.map(
-                        (category: {
-                          category_id: string;
-                          category_name: string;
-                        }) => (
-                          <SelectItem
-                            key={category.category_id}
-                            value={category.category_id}
-                          >
-                            {category.category_name}
-                          </SelectItem>
-                        )
-                      )}
+                      {categories?.map((category) => (
+                        <SelectItem
+                          key={category.category_id}
+                          value={category.category_name}
+                        >
+                          {category.category_name}
+                        </SelectItem>
+                      ))}
                     </Select>
                   </div>
 
@@ -235,7 +288,27 @@ const ProductMotificationPage: React.FC<IProductMotificationPage> = ({
                   onPress={handleSubmit}
                   isLoading={loading}
                 >
-                  Create Product
+                  {productId ? 'Update Product' : 'Create Product'}
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={isSuccessOpen} onOpenChange={onSuccessOpenChange}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex mb-1 gap-2 items-center text-2xl">
+                Success <CircleCheck color="green" size={30} />
+              </ModalHeader>
+              <ModalBody className="mb-2">
+                <div>{productId ? "Product updated successfully!" : "Product created successfully!"}</div>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="primary" onPress={onClose}>
+                  Ok
                 </Button>
               </ModalFooter>
             </>

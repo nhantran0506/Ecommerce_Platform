@@ -65,7 +65,7 @@ async def product_update(
     price: float = Form(...),
     inventory : int = Form(...),
     category: list[str] = Form(...),
-    images: list[UploadFile] = File(...),
+    images: Optional[list[UploadFile]] = File(...),
     product_controller: ProductController = Depends(),
     current_user=Depends(token_config.get_current_user),
 ):

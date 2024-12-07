@@ -89,31 +89,31 @@ class Product {
 
   async getRecommendedProducts(): Promise<IProductData[]> {
     const token = localStorage.getItem("token");
-    const method = token ? "POST" : "GET";
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-    };
-
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-
-    const response = await fetch(
-      `${API_BASE_URL}${API_ROUTES.GET_RECOMMENDED_PRODUCTS}`,
-      {
-        method,
-        headers,
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        `Get recommended products failed with status ${response.status}`
+    
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}${API_ROUTES.GET_RECOMMENDED_PRODUCTS}`,
+        {
+          method: token ? "POST" : "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        }
       );
-    }
 
-    const data = (await response.json()) as IProductData[];
-    return data;
+      if (!response.ok) {
+        throw new Error(
+          `Get recommended products failed with status ${response.status}`
+        );
+      }
+
+      const data = (await response.json()) as IProductData[];
+      return data;
+    } catch (error) {
+      console.error("Failed to fetch recommended products:", error);
+      return [];
+    }
   }
 
   async productRating(data: IProductRating): Promise<void> {

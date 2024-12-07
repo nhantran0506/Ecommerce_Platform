@@ -373,11 +373,8 @@ class ProductController:
         current_user: User,
     ):
         try:
-            if not image_list:
-                return JSONResponse(
-                    content={"message": "At least one product image is required"},
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                )
+            
+                
 
             get_shop = select(Shop).where(Shop.owner_id == current_user.user_id)
             shop_result = await self.db.execute(get_shop)
@@ -931,6 +928,7 @@ class ProductController:
                         "product_avg_stars": product.avg_stars,
                         "product_total_ratings": product.total_ratings,
                         "product_total_sales": product.total_sales,
+                        "inventory" : product.inventory,
                         "price": product.price,
                         "image_urls": image_urls,
                         "shop_name": {

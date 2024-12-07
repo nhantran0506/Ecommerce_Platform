@@ -46,6 +46,7 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
 
   const [ratings, setRatings] = useState<IProductRatingResponse[]>([]);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const isOutOfStock = product?.inventory ===0;
 
   useEffect(() => {
     const fetchProductDetail = async () => {
@@ -80,6 +81,10 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
   }, [productId]);
 
   const handleAddToCart = async () => {
+    if (!product || product.inventory === 0 || numberOfProduct> product.inventory) {
+      return;
+    }
+
     try {
       setIsAddingToCart(true);
       const reqBody: ICartModify[] = [
@@ -156,10 +161,9 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
         isIconOnly
         radius="lg"
         className="bg-slate-200"
+        isDisabled={isOutOfStock}
         onClick={() =>
-          setNumberOfProduct((numberOfProduct) =>
-            numberOfProduct >= 1 ? numberOfProduct - 1 : 0
-          )
+          setNumberOfProduct((prev) => (prev > 1 ? prev - 1 : 1))
         }
       >
         <Minus size={15} />
@@ -169,16 +173,18 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
         isIconOnly
         radius="lg"
         className="bg-slate-200"
+        isDisabled={isOutOfStock}
         onClick={() =>
-          setNumberOfProduct((numberOfProduct) =>
-            numberOfProduct < maxNumberOfProduct
-              ? numberOfProduct + 1
-              : maxNumberOfProduct
+          setNumberOfProduct((prev) => 
+            prev < (product?.inventory || 0) ? prev + 1 : prev
           )
         }
       >
         <Plus size={15} />
       </Button>
+      <span className="text-sm text-gray-500">
+        ({product?.inventory || 0} available)
+      </span>
     </div>
   );
 
@@ -248,13 +254,20 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
         <div className="grid grid-cols-2 gap-8 mb-8">
           <div className="rounded-lg bg-transparent overflow-hidden w-[450px] h-[400px] relative">
             {product.image_urls[0] ? (
-              <Image
-                src={product.image_urls[0]}
-                alt="Product image"
-                layout="fill"
-                className="object-cover"
-                priority={true}
-              />
+              <>
+                <Image
+                  src={product.image_urls[0]}
+                  alt="Product image"
+                  layout="fill"
+                  className={`object-cover ${isOutOfStock ? 'opacity-50' : ''}`}
+                  priority={true}
+                />
+                {isOutOfStock && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                    <span className="text-white font-bold text-xl">Outof Stock</span>
+                  </div>
+                )}
+              </>
             ) : (
               <DefaultImage imgSize={ImageSizeEnum.lg} />
             )}
@@ -308,15 +321,16 @@ const ProductDetailPage = ({ params }: { params: { id: string } }) => {
                 className="bg-black text-white px-24 font-bold"
                 radius="full"
                 onClick={() => handleAddToCart()}
+                isDisabled={isOutOfStock}
               >
-                Order Now
+                {isOutOfStock ? 'Out of Stock' : 'OrderNow'}
               </Button>
               <Button
                 className="font-bold px-5 cart-button"
                 variant="bordered"
                 radius="full"
                 onClick={() => handleAddToCart()}
-                disabled={isAddingToCart}
+                isDisabled={isOutOfStock || isAddingToCart}
               >
                 <span className="text-gray-400">
                   <ShoppingCart

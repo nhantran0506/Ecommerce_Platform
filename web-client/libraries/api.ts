@@ -35,5 +35,7 @@ export const API_ROUTES = {
   GET_CATEGORIES: "/products/get_all_products_cat",
   GET_PRODUCT_CAT: "/admin/category_statistics",
   GET_RECOMMENDED_PRODUCTS: "/recommed/get_recommed",
-  PRODUCT_RATING: "/products/product_rating"
+  PRODUCT_RATING: "/products/product_rating",
+  CREATE_PRODUCT: "/products/create",
+  UPDATE_PRODUCT: "/products/product_update",
 };

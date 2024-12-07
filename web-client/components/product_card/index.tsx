@@ -15,6 +15,7 @@ const DEFAULT_IMAGE_URL = "https://via.placeholder.com/220x180?text=No+Image";
 
 const ProductCard: React.FC<IProductCard> = ({ product, onClick }) => {
   const imageUrl = product.image_urls?.[0] || DEFAULT_IMAGE_URL;
+  const isOutOfStock = product.inventory === 0;
 
   return (
     <Card
@@ -22,19 +23,24 @@ const ProductCard: React.FC<IProductCard> = ({ product, onClick }) => {
       isPressable
       onPress={() => onClick()}
     >
-      <CardBody className="overflow-visible p-0">
+      <CardBody className="overflow-visible p-0 relative">
         <Image
           shadow="sm"
           radius="lg"
           width="100%"
           alt={product.product_name}
-          className="w-full h-[180px] object-cover"
+          className={`w-full h-[180px] object-cover ${isOutOfStock ? 'opacity-50' : ''}`}
           src={imageUrl}
           style={{
             objectFit: "cover",
             objectPosition: "center",
           }}
         />
+        {isOutOfStock && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg">
+            <span className="text-white font-bold text-lg">Out of Stock</span>
+          </div>
+        )}
       </CardBody>
       <CardFooter>
         <div className="flex flex-col w-full h-full">
