@@ -112,7 +112,10 @@ class OrderController:
                     update_product_query = (
                         update(Product)
                         .where(Product.product_id == order_item.product_id)
-                        .values(total_sales=product.total_sales + order_item.quantity, inventory = product.inventory - order_item.quantity)
+                        .values(
+                            total_sales=product.total_sales + order_item.quantity,
+                            inventory=product.inventory - order_item.quantity,
+                        )
                     )
                     await self.db.execute(update_product_query)
 
@@ -255,7 +258,10 @@ class OrderController:
                     update_product_query = (
                         update(Product)
                         .where(Product.product_id == cart_item.product_id)
-                        .values(total_sales=product.total_sales + cart_item.quantity, inventory = product.inventory - cart_item.quantity)
+                        .values(
+                            total_sales=product.total_sales + cart_item.quantity,
+                            inventory=product.inventory - cart_item.quantity,
+                        )
                     )
                     await self.db.execute(update_product_query)
 
@@ -333,16 +339,15 @@ class OrderController:
 
                 response.append(
                     {
-                    "order_id": str(order.order_id),
-                    "product": product_list_info,
-                    "created_at": str(order.created_at),
-                }
-                ) 
+                        "order_id": str(order.order_id),
+                        "product": product_list_info,
+                        "created_at": str(order.created_at),
+                    }
+                )
 
             return JSONResponse(content=response, status_code=status.HTTP_200_OK)
         except Exception as e:
             await self.db.rollback()
-            print(str(e))
             return JSONResponse(
                 content={"error": "Unable to get order history."},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -403,8 +408,7 @@ class OrderController:
         try:
             # Get the order
             get_order_query = select(Order).where(
-                Order.order_id == order_id,
-                Order.user_id == current_user.user_id
+                Order.order_id == order_id, Order.user_id == current_user.user_id
             )
             order = await self.db.execute(get_order_query)
             order = order.scalar_one_or_none()
@@ -429,8 +433,7 @@ class OrderController:
 
             if user_cart is None:
                 user_cart_create_query = insert(Cart).values(
-                    user_id=current_user.user_id,
-                    created_at=datetime.now()
+                    user_id=current_user.user_id, created_at=datetime.now()
                 )
                 await self.db.execute(user_cart_create_query)
                 result = await self.db.execute(cart_query)
@@ -438,31 +441,39 @@ class OrderController:
 
             # Restore each order item to cart
             for order_item in order_items:
-                cart_product_query = insert(CartProduct).values(
-                    cart_id=user_cart.cart_id,
-                    product_id=order_item.product_id,
-                    quantity=order_item.quantity
-                ).on_conflict_do_update(
-                    index_elements=["cart_id", "product_id"],
-                    set_={"quantity": CartProduct.quantity + order_item.quantity}
+                cart_product_query = (
+                    insert(CartProduct)
+                    .values(
+                        cart_id=user_cart.cart_id,
+                        product_id=order_item.product_id,
+                        quantity=order_item.quantity,
+                    )
+                    .on_conflict_do_update(
+                        index_elements=["cart_id", "product_id"],
+                        set_={"quantity": CartProduct.quantity + order_item.quantity},
+                    )
                 )
                 await self.db.execute(cart_product_query)
 
                 # Update user interest
-                insert_user_interest = insert(UserInterest).values(
-                    user_id=current_user.user_id,
-                    product_id=order_item.product_id,
-                    score=InterestScore.CART.value
-                ).on_conflict_do_update(
-                    index_elements=["user_id", "product_id"],
-                    set_={"score": InterestScore.CART.value}
+                insert_user_interest = (
+                    insert(UserInterest)
+                    .values(
+                        user_id=current_user.user_id,
+                        product_id=order_item.product_id,
+                        score=InterestScore.CART.value,
+                    )
+                    .on_conflict_do_update(
+                        index_elements=["user_id", "product_id"],
+                        set_={"score": InterestScore.CART.value},
+                    )
                 )
                 await self.db.execute(insert_user_interest)
 
             await self.db.commit()
             return JSONResponse(
                 content={"Message": "Order successfully restored to cart"},
-                status_code=status.HTTP_200_OK
+                status_code=status.HTTP_200_OK,
             )
 
         except Exception as e:
@@ -470,5 +481,5 @@ class OrderController:
             logger.error(str(e))
             return JSONResponse(
                 content={"Message": "Unexpected error"},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

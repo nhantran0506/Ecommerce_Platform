@@ -59,13 +59,9 @@ class EmbeddingController:
                 # skip_init_checks=True,
             )
 
-            
-
             self.embed_model_recommend = HuggingFaceEmbedding(
                 model_name="BAAI/bge-small-en"
             )
-          
-
 
             # self.embed_model = OllamaEmbedding(
             #     model_name=OLLAMA_EMBEDDING_MODEL,
@@ -74,10 +70,6 @@ class EmbeddingController:
             #     dimensions=VECTOR_DIMENSIONS,
             #     show_progress=True,
             # )
-            
-
-            self._create_schema(self.faq_collection_name, is_faq=True)
-            self._create_schema(self.recommend_collection_name, is_faq=False)
 
             self.faq_vector_store = WeaviateVectorStore(
                 weaviate_client=self.client,
@@ -92,27 +84,87 @@ class EmbeddingController:
                 text_key="content",
                 metadata_keys=["topic", "product_id"],
             )
-            
+
             self.faq_storage_context = StorageContext.from_defaults(
                 vector_store=self.faq_vector_store
             )
             self.recommend_storage_context = StorageContext.from_defaults(
                 vector_store=self.recommend_vector_store
             )
-            
+
+            # check database
+            try:
+                _faq_collection = self.client.collections.get(self.faq_collection_name)
+                if len(_faq_collection.iterator()) == 0:
+                    self.load_faq()
+            except:
+                schema = {
+                    "class": self.faq_collection_name,
+                    "properties": [
+                        {
+                            "name": "content",
+                            "dataType": ["string"],
+                        },
+                        {
+                            "name": "topic",
+                            "dataType": ["string"],
+                        },
+                    ],
+                    "vectorizer": "none",
+                }
+
+                self.load_faq()
+
+            try:
+                self.client.collections.get(self.recommend_collection_name)
+            except:
+                schema = {
+                    "class": self.faq_collection_name,
+                    "properties": [
+                        {
+                            "name": "content",
+                            "dataType": ["string"],
+                        },
+                        {
+                            "name": "topic",
+                            "dataType": ["string"],
+                        },
+                        {
+                            "name": "product_id",
+                            "dataType": ["string"],
+                            "indexSearchable": True,
+                        },
+                        {
+                            "name": "product_name",
+                            "dataType": ["string"],
+                            "indexSearchable": True,
+                        },
+                        {
+                            "name": "product_cat",
+                            "dataType": ["string"],
+                            "indexSearchable": True,
+                        },
+                    ],
+                    "vectorizer": "none",
+                }
+                self.client.collections.create_from_dict(schema)
+
             postprocessor = SimilarityPostprocessor(similarity_cutoff=0.4)
-    
-    
+
             self.faq_index = VectorStoreIndex.from_vector_store(
                 self.faq_vector_store,
                 embed_model=self.embed_model_recommend,
             ).as_retriever(similarity_top_k=2, node_postprocessors=[postprocessor])
-        
+
             self.recommend_index = VectorStoreIndex.from_vector_store(
                 self.recommend_vector_store,
                 embed_model=self.embed_model_recommend,
-            ).as_retriever(dense_similarity_top_k=256, node_postprocessors=[postprocessor], alpha=0.5)
-         
+            ).as_retriever(
+                dense_similarity_top_k=256,
+                node_postprocessors=[postprocessor],
+                alpha=0.5,
+            )
+
         except Exception as e:
             logger.error(str(e))
 
@@ -132,49 +184,6 @@ class EmbeddingController:
                         }
         except Exception as e:
             return {"success": False, "error": str(e)}
-
-    def _create_schema(self, collection_name, is_faq: bool = False):
-        try:
-            self.client.collections.get(collection_name)
-        except:
-            schema = {
-                "class": collection_name,
-                "properties": [
-                    {
-                        "name": "content",
-                        "dataType": ["string"],
-                    },
-                    {
-                        "name": "topic",
-                        "dataType": ["string"],
-                    },
-                ],
-                "vectorizer": "none",
-            }
-
-            if not is_faq:
-               schema["properties"].extend([
-                    {
-                        "name": "product_id",
-                        "dataType": ["string"],  
-                        "indexSearchable": True,  
-                    },
-                    {
-                        "name": "product_name",
-                        "dataType": ["string"],  
-                        "indexSearchable": True, 
-                    },
-                    {
-                        "name": "product_cat",
-                        "dataType": ["string"],  
-                        "indexSearchable": True, 
-                    },
-                ])
-
-            self.client.collections.create_from_dict(schema)
-
-            if is_faq and collection_name == self.faq_collection_name:
-                self.load_faq()
 
     def load_faq(self):
         docs = []
@@ -215,13 +224,16 @@ class EmbeddingController:
                 if cat_data:
                     cat_names = cat_names + " " + cat_data.cat_name.value
 
-            product_text = (
-                f"{' '.join([product.product_name] * 2)} {cat_names}"
-            )
+            product_text = f"{' '.join([product.product_name] * 2)} {cat_names}"
 
             document = Document(
                 text=product_text,
-                metadata={"topic": "product", "product_id": str(product.product_id), "product_cat" : cat_names, "product_name" : product.product_name},
+                metadata={
+                    "topic": "product",
+                    "product_id": str(product.product_id),
+                    "product_cat": cat_names,
+                    "product_name": product.product_name,
+                },
             )
 
             _index = VectorStoreIndex.from_documents(
@@ -249,14 +261,15 @@ class EmbeddingController:
             )
 
             from weaviate.classes.query import Filter
-            vector_result = self.client.collections.get(self.recommend_collection_name).query.bm25(
+
+            vector_result = self.client.collections.get(
+                self.recommend_collection_name
+            ).query.bm25(
                 query=str(product.product_id),
                 limit=1,
-                query_properties = ["product_id"],
-                return_properties = ["product_id"],
+                query_properties=["product_id"],
+                return_properties=["product_id"],
             )
-            
-            print(vector_result)
 
             if vector_result != []:
                 document_id = vector_result[0].node.id_
@@ -275,7 +288,9 @@ class EmbeddingController:
         try:
             product_lists = []
             if user_query:
-                vector_result = self.client.collections.get(self.recommend_collection_name).query.bm25(
+                vector_result = self.client.collections.get(
+                    self.recommend_collection_name
+                ).query.bm25(
                     query=user_query,
                     limit=256,
                     query_properties=["product_name", "product_cat"],
@@ -296,16 +311,20 @@ class EmbeddingController:
                             Product.product_id == product_id
                         )
                         if filters.min_price is not None:
-                            pro_query = pro_query.where(Product.price >= filters.min_price)
+                            pro_query = pro_query.where(
+                                Product.price >= filters.min_price
+                            )
                         if filters.max_price is not None:
-                            pro_query = pro_query.where(Product.price <= filters.max_price)
-                        
+                            pro_query = pro_query.where(
+                                Product.price <= filters.max_price
+                            )
+
                         if filters.sort_price:
-                            if filters.sort_price == 'asc':
+                            if filters.sort_price == "asc":
                                 pro_query = pro_query.order_by(Product.price.asc())
                             else:  # desc
                                 pro_query = pro_query.order_by(Product.price.desc())
-                                
+
                         product_result = await self.db.execute(pro_query)
                         product = product_result.scalar_one_or_none()
                         if product:
@@ -313,16 +332,24 @@ class EmbeddingController:
             else:
                 get_product_query = select(Product).limit(256)
                 if filters.min_price is not None:
-                    get_product_query = get_product_query.where(Product.price >= filters.min_price)
+                    get_product_query = get_product_query.where(
+                        Product.price >= filters.min_price
+                    )
                 if filters.max_price is not None:
-                    get_product_query = get_product_query.where(Product.price <= filters.max_price)
-                
+                    get_product_query = get_product_query.where(
+                        Product.price <= filters.max_price
+                    )
+
                 if filters.sort_price:
-                    if filters.sort_price == 'asc':
-                        get_product_query = get_product_query.order_by(Product.price.asc())
-                    else:  
-                        get_product_query = get_product_query.order_by(Product.price.desc())
-                        
+                    if filters.sort_price == "asc":
+                        get_product_query = get_product_query.order_by(
+                            Product.price.asc()
+                        )
+                    else:
+                        get_product_query = get_product_query.order_by(
+                            Product.price.desc()
+                        )
+
                 product_ids_result = await self.db.execute(get_product_query)
                 product_lists = product_ids_result.scalars().all()
 
@@ -425,7 +452,6 @@ class EmbeddingController:
                         }
                     )
 
-
             return JSONResponse(content=products, status_code=status.HTTP_200_OK)
 
         except Exception as e:
@@ -437,6 +463,17 @@ class EmbeddingController:
             )
 
     def query(self, query: str, top_k: int = 5, min_similarity: float = 0.5):
+
+        vector_result = self.client.collections.get(
+            self.faq_collection_name
+        ).query.hybrid(
+            query=query,
+            vector=self.embed_model_recommend.get_text_embedding(query),
+            alpha=0.3,
+            limit=top_k,
+            return_metadata=MetadataQuery(score=True),
+        )
+        
 
         results = self.faq_index.retrieve(query)
         responses = []
@@ -451,7 +488,6 @@ class EmbeddingController:
         )
         try:
             self.client.collections.delete(collection_name)
-            self._create_schema(collection_name, is_faq=is_faq)
         except Exception as e:
             logger.error(f"Error clearing collection: {e}")
 
