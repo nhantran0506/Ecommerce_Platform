@@ -158,13 +158,25 @@ export default function NavigationBar() {
 
       <NavbarContent className="sm:hidden pr-3" justify="center">
         <NavbarBrand>
-          <p className="font-bold text-inherit">LOGO</p>
+          <div className="flex items-center gap-2">
+            <div className="bg-black text-white px-3 py-2 rounded-lg">
+              <span className="font-bold text-xl">SHOP</span>
+            </div>
+            <span className="font-bold text-xl text-black">HUB</span>
+          </div>
         </NavbarBrand>
       </NavbarContent>
 
       <NavbarContent className="hidden sm:flex gap-8" justify="center">
         <NavbarBrand>
-          <p className="font-bold text-inherit">LOGO</p>
+          <div className="flex items-center gap-2">
+            <div className="bg-black text-white px-3 py-2 rounded-lg">
+              <span className="font-bold text-xl">SHOP</span>
+            </div>
+            <span className="font-bold text-xl text-black dark:text-white">
+              HUB
+            </span>
+          </div>
         </NavbarBrand>
         {pageNavigation.map((item, index) => {
           return (
