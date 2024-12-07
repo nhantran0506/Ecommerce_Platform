@@ -96,10 +96,14 @@ async def search_products(
     categories: Optional[List[str]] = Query(None),
     min_price: Optional[float] = Query(None),
     max_price: Optional[float] = Query(None),
+    sort_price: Optional[str] = Query(None, description="'asc' for low to high, 'desc' for high to low"),
     embedding_controller: EmbeddingController = Depends(),
 ):
     filters = SearchFilter(
-        categories=categories, min_price=min_price, max_price=max_price
+        categories=categories, 
+        min_price=min_price, 
+        max_price=max_price,
+        sort_price=sort_price
     )
     return await embedding_controller.search_product(user_query, filters)
 

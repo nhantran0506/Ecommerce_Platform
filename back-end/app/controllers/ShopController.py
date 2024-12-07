@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete
 from sqlalchemy.dialects.postgresql import insert
 from fastapi.responses import JSONResponse, HTMLResponse
 from models.Ratings import ShopRating
@@ -15,7 +15,6 @@ from models.Category import Category
 from models.CategoryProduct import CategoryProduct
 from models.Users import User, UserRoles
 from serializers.ShopSerializers import *
-from config import REDIS_TTL
 from redis_config import get_redis
 from datetime import datetime
 import calendar
@@ -46,50 +45,125 @@ class ShopController:
 
         return exist_shop
 
-    async def create_new_shop(self, shop: ShopCreate, current_user : User):
+    async def get_shop_details(self, current_user: User):
         try:
-            result = await self.db.execute(
-                select(Shop).filter(Shop.owner_id == current_user.user_id)
+            get_shop_query = select(Shop).where(Shop.owner_id == current_user.user_id)
+            shop_result = await self.db.execute(get_shop_query)
+            shop = shop_result.scalar_one_or_none()
+            if shop:
+                return shop
+
+            return JSONResponse(
+                content={"msg": "User don't have shop."},
+                status_code=status.HTTP_403_FORBIDDEN,
             )
-            exist_shop = result.scalar_one_or_none()
+        except Exception as e:
+            return JSONResponse(
+                content={"error": str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    async def create_new_shop(self, shop: ShopBase, current_user: User):
+        try:
+
+            get_shop_query = select(Shop).where(Shop.owner_id == current_user.user_id)
+            exist_shop = await self.db.execute(get_shop_query)
+            exist_shop = exist_shop.scalar_one_or_none()
+
             if exist_shop:
                 return JSONResponse(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    content={"error" : "You already have a shop. Each user can only create one shop."},
+                    content={
+                        "error": "You already have a shop. Each user can only create one shop."
+                    },
                 )
-            
-            update_user_query = update(User).where(User.user_id == current_user.user_id).values(
-                role = UserRoles.SHOP_OWNER,
+
+            update_user_query = (
+                update(User)
+                .where(User.user_id == current_user.user_id)
+                .values(role=UserRoles.SHOP_OWNER)
             )
             await self.db.execute(update_user_query)
-            
-            create_new_shop_query = insert(Shop).values(
-                shop_name = shop.shop_name,
-                shop_address = shop.shop_address,
-                shop_bio = shop.shop_bio,
-                shop_phone_number = current_user.phone_number,
-                owner_id=current_user.user_id
-            ).returning(Shop)
 
-            
-            db_shop = await self.db.execute(create_new_shop_query)
+            new_shop = Shop(
+                shop_name=shop.shop_name,
+                shop_address=shop.shop_address,
+                shop_bio=shop.shop_bio,
+                shop_phone_number=current_user.phone_number,
+                owner_id=current_user.user_id,
+            )
+            self.db.add(new_shop)
             await self.db.commit()
-            return db_shop
+            await self.db.refresh(new_shop)
+
+            return JSONResponse(
+                status_code=status.HTTP_201_CREATED,
+                content={
+                    "shop_id": str(new_shop.shop_id),
+                    "shop_name": new_shop.shop_name,
+                    "shop_address": new_shop.shop_address,
+                    "shop_bio": new_shop.shop_bio,
+                    "shop_phone_number": new_shop.shop_phone_number,
+                    "owner_id": str(new_shop.owner_id),
+                    "avg_stars": (
+                        float(new_shop.avg_stars) if new_shop.avg_stars else 0.0
+                    ),
+                    "total_ratings": new_shop.total_ratings or 0,
+                },
+            )
         except Exception as e:
             await self.db.rollback()
             logger.error(str(e))
+            return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"error": str(e)},
+            )
 
-    async def delete_existing_shop(self, shop_id, current_user):
-        result = await self.db.execute(select(Shop).filter(Shop.shop_id == shop_id))
-        db_shop = result.scalar_one_or_none()
-        if db_shop:
-            await self.db.delete(db_shop)
+    async def delete_existing_shop(self, current_user: User):
+        try:
+
+            get_shop_query = select(Shop).where(Shop.owner_id == current_user.user_id)
+            shop_result = await self.db.execute(get_shop_query)
+            shop = shop_result.scalar_one_or_none()
+
+            if not shop:
+                return JSONResponse(
+                    content={"message": "Shop not found"},
+                    status_code=status.HTTP_404_NOT_FOUND,
+                )
+
+            delete_shop_products = delete(ShopProduct).where(
+                ShopProduct.shop_id == shop.shop_id
+            )
+            await self.db.execute(delete_shop_products)
+
+            delete_shop = delete(Shop).where(Shop.owner_id == current_user.user_id)
+            await self.db.execute(delete_shop)
+
+            update_user_query = (
+                update(User)
+                .where(User.user_id == current_user.user_id)
+                .values(role=UserRoles.USER)
+            )
+            await self.db.execute(update_user_query)
+
             await self.db.commit()
-        return db_shop
+            return JSONResponse(
+                content={"message": "Shop deleted successfully"},
+                status_code=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(str(e))
+            return JSONResponse(
+                content={"error": str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
     async def shop_rating(self, shop_rating: ShopRatingSerializer, current_user: User):
         try:
-            # First check if shop exists
+
             get_shop_query = select(Shop).where(Shop.shop_id == shop_rating.shop_id)
             shop_result = await self.db.execute(get_shop_query)
             shop = shop_result.scalar_one_or_none()
@@ -100,7 +174,6 @@ class ShopController:
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
 
-            # Check if user has already rated this shop
             existing_rating_query = select(ShopRating).where(
                 ShopRating.shop_id == shop_rating.shop_id,
                 ShopRating.user_id == current_user.user_id,
@@ -109,7 +182,7 @@ class ShopController:
             existing_rating = existing_rating_result.scalar_one_or_none()
 
             if existing_rating:
-                # Update existing rating without changing timestamp
+
                 update_rating_query = (
                     update(ShopRating)
                     .where(
@@ -122,7 +195,6 @@ class ShopController:
                 )
                 await self.db.execute(update_rating_query)
 
-                # Recalculate average rating
                 rating_query = select(
                     func.sum(ShopRating.rating_stars),
                     func.count(ShopRating.rating_stars),
@@ -132,7 +204,6 @@ class ShopController:
                 total_stars, count_stars = rating_result.one_or_none()
                 new_avg = float(total_stars / count_stars) if count_stars else 0.0
 
-                # Update shop's average rating
                 update_shop_query = (
                     update(Shop)
                     .where(Shop.shop_id == shop_rating.shop_id)
@@ -140,7 +211,7 @@ class ShopController:
                 )
                 await self.db.execute(update_shop_query)
             else:
-                # Insert new rating
+
                 new_rating = ShopRating(
                     shop_id=shop_rating.shop_id,
                     user_id=current_user.user_id,
@@ -300,15 +371,12 @@ class ShopController:
                 f"shop:{shop.shop_id}:top_products:{timestamp_dt.strftime('%Y-%m')}"
             )
 
-
-        
             year = timestamp_dt.year
             month = timestamp_dt.month
             start_of_month = datetime(year, month, 1)
             _, last_day = calendar.monthrange(year, month)
             end_of_month = datetime(year, month, last_day, 23, 59, 59)
 
-          
             shop_products_query = select(ShopProduct).where(
                 ShopProduct.shop_id == shop.shop_id
             )
@@ -316,7 +384,6 @@ class ShopController:
             shop_products = shop_products.scalars().all()
             product_ids = [sp.product_id for sp in shop_products]
 
-          
             product_sales = {}
             orders_query = select(OrderItem).where(
                 OrderItem.product_id.in_(product_ids),
@@ -331,7 +398,6 @@ class ShopController:
                     product_sales[order.product_id] = 0
                 product_sales[order.product_id] += order.quantity
 
-          
             products_data = []
             for product_id, sales in product_sales.items():
                 product_query = select(Product).where(Product.product_id == product_id)
@@ -340,7 +406,6 @@ class ShopController:
                 if product:
                     products_data.append({"name": product.product_name, "sales": sales})
 
-      
             products_data.sort(key=lambda x: x["sales"], reverse=True)
             top_products = products_data[:10]
 
@@ -369,7 +434,6 @@ class ShopController:
             )
 
             chart_html = fig.to_html(full_html=False, config={"displaylogo": False})
-           
 
             return HTMLResponse(content=chart_html)
 
@@ -397,14 +461,12 @@ class ShopController:
                 f"shop:{shop.shop_id}:category_stats:{timestamp_dt.strftime('%Y-%m')}"
             )
 
-        
             year = timestamp_dt.year
             month = timestamp_dt.month
             start_of_month = datetime(year, month, 1)
             _, last_day = calendar.monthrange(year, month)
             end_of_month = datetime(year, month, last_day, 23, 59, 59)
 
-         
             shop_products_query = select(ShopProduct).where(
                 ShopProduct.shop_id == shop.shop_id
             )
@@ -437,7 +499,7 @@ class ShopController:
                     if category:
                         if category.cat_name.value not in category_sales:
                             category_sales[category.cat_name.value] = 0
-                            
+
                         orders_query = select(OrderItem).where(
                             OrderItem.product_id == product_id,
                             OrderItem.order_at >= start_of_month,
@@ -449,7 +511,6 @@ class ShopController:
                         for order in orders:
                             category_sales[category.cat_name.value] += order.quantity
 
-        
             fig = go.Figure(
                 data=[
                     go.Bar(
@@ -567,4 +628,53 @@ class ShopController:
             return JSONResponse(
                 content={"Message": "Unexpected error"},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    async def update_shop(self, shop: ShopBase, current_user: User):
+        try:
+            get_shop_query = select(Shop).where(Shop.owner_id == current_user.user_id)
+            shop_result = await self.db.execute(get_shop_query)
+            exist_shop = shop_result.scalar_one_or_none()
+
+            if not exist_shop:
+                return JSONResponse(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    content={"error": "Shop not found"}
+                )
+
+            update_shop_query = (
+                update(Shop)
+                .where(Shop.owner_id == current_user.user_id)
+                .values(
+                    shop_name=shop.shop_name,
+                    shop_address=shop.shop_address,
+                    shop_bio=shop.shop_bio
+                )
+                .returning(Shop)
+            )
+            
+            updated_shop = await self.db.execute(update_shop_query)
+            updated_shop = updated_shop.scalar_one_or_none()
+            await self.db.commit()
+
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={
+                    "shop_id": str(updated_shop.shop_id),
+                    "shop_name": updated_shop.shop_name,
+                    "shop_address": updated_shop.shop_address,
+                    "shop_bio": updated_shop.shop_bio,
+                    "shop_phone_number": updated_shop.shop_phone_number,
+                    "owner_id": str(updated_shop.owner_id),
+                    "avg_stars": float(updated_shop.avg_stars) if updated_shop.avg_stars else 0.0,
+                    "total_ratings": updated_shop.total_ratings or 0
+                }
+            )
+
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(str(e))
+            return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"error": str(e)}
             )

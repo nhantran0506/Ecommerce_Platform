@@ -114,7 +114,7 @@ class ProductController:
                 content={"error": "Internal server"},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-    
+
     async def get_single_product(self, product_id):
         try:
 
@@ -139,7 +139,6 @@ class ProductController:
             )
             cat_names = cat_name.scalars().all()
             cat_names = [cat.cat_name.value for cat in cat_names]
-
 
             image_query = select(ImageProduct).where(
                 ImageProduct.product_id == product_id
@@ -178,7 +177,7 @@ class ProductController:
                 "product_total_ratings": product.total_ratings,
                 "product_total_sales": product.total_sales,
                 "price": product.price,
-                "inventory" : product.inventory,
+                "inventory": product.inventory,
                 "image_urls": image_urls,
                 "shop_name": {
                     "shop_id": str(shop.shop_id),
@@ -280,7 +279,7 @@ class ProductController:
                 "product_total_ratings": product.total_ratings,
                 "product_total_sales": product.total_sales,
                 "price": product.price,
-                "inventory" : product.inventory,
+                "inventory": product.inventory,
                 "image_urls": image_urls,
                 "shop_name": {
                     "shop_id": str(shop.shop_id),
@@ -374,6 +373,11 @@ class ProductController:
         current_user: User,
     ):
         try:
+            if not image_list:
+                return JSONResponse(
+                    content={"message": "At least one product image is required"},
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
 
             get_shop = select(Shop).where(Shop.owner_id == current_user.user_id)
             shop_result = await self.db.execute(get_shop)
@@ -918,7 +922,6 @@ class ProductController:
                 shop_product_result = await self.db.execute(get_shop_name)
                 shop_product = shop_product_result.scalar_one_or_none()
 
-                print(product.product_id)
                 response.append(
                     {
                         "product_id": str(product.product_id),
