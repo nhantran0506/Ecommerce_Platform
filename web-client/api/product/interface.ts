@@ -3,9 +3,9 @@ interface IProductData {
   product_name: string;
   price: number;
   image_urls: string[];
-  product_total_ratings: number;
-  product_avg_stars: number;
-  product_total_sales: number;
+  product_total_ratings?: number;
+  product_avg_stars?: number;
+  product_total_sales?: number;
   inventory: number;
 }
 

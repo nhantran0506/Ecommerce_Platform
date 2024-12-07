@@ -37,5 +37,7 @@ export const API_ROUTES = {
   GET_RECOMMENDED_PRODUCTS: "/recommed/get_recommed",
   PRODUCT_RATING: "/products/product_rating",
   CREATE_PRODUCT: "/products/create",
-  UPDATE_PRODUCT: "/products/product_update",
+  UPDATE_PRODUCT: "/products/product_update",,
+  CREATE_SHOP: "/shops/create_shop",
+  GET_SHOP: "/shops",
 };

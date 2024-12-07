@@ -1,4 +1,5 @@
 import { API_BASE_URL, API_ROUTES } from "@/libraries/api";
+import { IReqLogin, IReqUpdateUser, IResGetUser, IResLogin } from "./interface";
 
 class Auth {
   async login(reqBody: IReqLogin): Promise<IResLogin> {
@@ -14,13 +15,13 @@ class Auth {
       throw new Error(`Login failed with status ${response.status}`);
     }
 
-    const data = await response.json() as IResLogin;
-    
+    const data = (await response.json()) as IResLogin;
+
     document.cookie = `token=${data.token}; path=/; max-age=2592000`;
     localStorage.setItem("token", data.token);
-    
+
     localStorage.removeItem("chatMessages");
-    
+
     return data;
   }
 

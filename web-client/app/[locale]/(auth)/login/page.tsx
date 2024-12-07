@@ -13,6 +13,7 @@ import authAPIs from "@/api/auth";
 import PasswordInput from "@/components/password_input";
 import { Input } from "@nextui-org/react";
 import { useTranslations } from "use-intl";
+import { IReqLogin } from "@/api/auth/interface";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -45,7 +46,8 @@ export default function LoginPage() {
     try {
       const response = await authAPIs.login(reqBody);
 
-      localStorage.setItem("token", response.token);
+      await localStorage.setItem("token", response.token);
+
       router.push("/");
     } catch (error) {
       setError(

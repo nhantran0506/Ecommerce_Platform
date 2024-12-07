@@ -1,9 +1,10 @@
 "use client";
 
+import orderAPIs from "@/api/order";
 import CartItemCard from "@/components/cart_item_card";
+import OrderDetailPageSkeleton from "@/components/order_detail_skeleton";
 import SectionHeader from "@/components/section_header";
-import { listOrderItem } from "@/data/data";
-import { IOrder } from "@/interface/Data/IOrderData";
+import { formatDate } from "@/libraries/helpers";
 import {
   Button,
   Card,
@@ -34,7 +35,7 @@ const listOrderStep: IOrderStep = {
     "Shipping",
     "Delivered",
   ],
-  currentStep: 2,
+  currentStep: 3,
 };
 
 const columns: ITableColumProp[] = [
@@ -57,63 +58,75 @@ const columns: ITableColumProp[] = [
 ];
 
 const OrderDetailPage = ({ params }: { params: { id: string } }) => {
-  const [order, setOrder] = useState<IOrder | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [order, setOrder] = useState<IOrderDetails | null>(null);
 
   useEffect(() => {
-    setOrder(listOrderItem[Number(params.id)]);
+    fetchOrderDetail();
   }, [params.id]);
 
+  const fetchOrderDetail = async () => {
+    try {
+      setLoading(true);
+      const res = await orderAPIs.getOrderById(params.id);
+      setOrder(res);
+    } catch (error) {
+      console.log("Failed to fetch products:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const rows =
-    order?.listOrderItem?.map((item, index) => ({
+    order?.product?.map((item, index) => ({
       key: index,
       index: index,
-      item: (
-        <CartItemCard
-          product={{
-            ...item.product,
-            quantity: item.number,
-          }}
-          onClick={() => {}}
-        />
-      ),
-      price: item?.product?.price ? `$${item.product.price.toFixed(2)}` : "N/A",
-      quantity: item.number,
+      // item: <CartItemCard product={item} onClick={() => {}} />,
+      item: <div className="font-bold text-base">{item.product_name}</div>,
+      price: item?.total ? `$${item.total.toFixed(2)}` : "N/A",
+      quantity: item.quantity,
     })) || [];
+
+  if (loading) {
+    return <OrderDetailPageSkeleton />;
+  }
 
   return (
     <div className="flex flex-col mx-60 my-10">
-      <h1 className="text-3xl font-bold mb-8">OrderDetailPage #{order?.id}</h1>
+      <h1 className="text-3xl font-bold mb-8">
+        OrderDetailPage #{order?.order_id}
+      </h1>
 
       <SectionHeader
         title={"Progress"}
         content={
-          <div>
-            <Card>
-              <CardBody>
-                <div className="flex gap-4">
-                  {listOrderStep.orderStep.map((item, index) => (
-                    <Progress
-                      key={index}
-                      aria-label="Loading..."
-                      label={item}
-                      value={index <= listOrderStep.currentStep ? 100 : 0}
-                      className="max-w-md"
-                    />
-                  ))}
-                </div>
-              </CardBody>
-              <Divider />
-              <CardFooter className="flex justify-between">
-                <Button radius="full" variant="bordered">
-                  Estimated shipping date:{" "}
-                  <span className="font-semibold">20 Oct, 2024</span>
-                </Button>
-                <Button radius="full" className="bg-black text-white">
-                  Mask as received
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
+          <Card>
+            <CardBody>
+              <div className="flex gap-4">
+                {listOrderStep.orderStep.map((item, index) => (
+                  <Progress
+                    key={index}
+                    aria-label="Loading..."
+                    label={item}
+                    value={index <= listOrderStep.currentStep ? 100 : 0}
+                    className="max-w-md"
+                  />
+                ))}
+              </div>
+            </CardBody>
+            <Divider />
+            <CardFooter className="flex justify-between">
+              <Button radius="full" variant="bordered">
+                Estimated shipping date:{" "}
+                <span className="font-semibold">
+                  {formatDate(order?.created_at ?? "")}
+                </span>
+              </Button>
+              <Button radius="full" className="bg-black text-white">
+                Mask as received
+              </Button>
+            </CardFooter>
+          </Card>
         }
       />
 

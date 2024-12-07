@@ -1,5 +1,6 @@
 "use client";
 import authAPIs from "@/api/auth";
+import { IReqUpdateUser, IResGetUser } from "@/api/auth/interface";
 import PersonalInfoSkeleton from "@/components/personal-info-skeleton";
 import SectionHeader from "@/components/section_header";
 import { Button, Input } from "@nextui-org/react";
@@ -9,7 +10,7 @@ import { X } from "react-feather";
 
 const PersonalInfomationPage = () => {
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<IResGetUser | null>(null); // Initial state as null
+  const [user, setUser] = useState<IResGetUser | null>(null);
   const t = useTranslations();
 
   useEffect(() => {

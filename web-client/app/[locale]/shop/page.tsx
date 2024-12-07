@@ -9,7 +9,7 @@ const ShopPage = () => {
   const locale = pathname.split("/")[1];
 
   useEffect(() => {
-    router.push(`/${locale}/shop/dashboard`);
+    router.push(`/${locale}/shop/shop-profile`);
   }, [router, locale]);
 
   return <></>;

@@ -3,18 +3,18 @@ interface IReqAddToCart {
   quantity: number;
 }
 
-interface IProductTable {
-  product_name: string;
-  product_id: string;
-  quantity: number;
-  price: number;
-  image_urls: string[];
-  total_price?: number;
-}
+// interface IProductTable {
+//   product_name: string;
+//   product_id: string;
+//   quantity: number;
+//   product_price: number;
+//   image_urls: string[];
+//   total_price?: number;
+// }
 
 interface IResCartProductList {
   cart_details: {
-    products: IProductTable[];
+    products: IProductData[];
     created_at: string;
     total_price: number;
   };

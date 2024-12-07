@@ -1,14 +1,16 @@
-interface IReqLogin {
+import { UserRoleEnum } from "@/state/enum";
+
+export interface IReqLogin {
   user_name: string;
   password: string;
 }
 
-interface IResLogin {
+export interface IResLogin {
   token: string;
   type: string;
 }
 
-interface IResGetUser {
+export interface IResGetUser {
   user_id: string;
   phone_number: string;
   dob: string;
@@ -19,7 +21,7 @@ interface IResGetUser {
   email: string;
 }
 
-interface IReqUpdateUser {
+export interface IReqUpdateUser {
   first_name: string;
   last_name: string;
   address: string;

@@ -42,6 +42,7 @@
   "product_quantity": "Quantity",
   "product_description": "Description",
   "product_add_to_cart": "Add to cart",
+  "shop_profile": "Shop Profile",
   "shop_dashboard": "Dashboard",
   "shop_products": "Products",
   "shop_orders": "Orders",
@@ -52,5 +53,14 @@
   "clear_all": "Clear all",
   "submit": "Submit",
   "save_changes": "Save changes",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+  "shop_profile_title": "Shop Profile",
+  "input_shop_name": "Shop name",
+  "input_shop_address": "Shop address",
+  "input_shop_phone": "Phone number",
+  "input_shop_bio": "Shop bio",
+  "placeholder_shop_name": "Enter your shop name",
+  "placeholder_shop_address": "Enter your shop address",
+  "placeholder_shop_phone": "Enter your shop phone",
+  "placeholder_shop_bio": "Enter your shop bio"
 }
