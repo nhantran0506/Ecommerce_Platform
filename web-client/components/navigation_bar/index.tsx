@@ -28,11 +28,14 @@ import usImg from "@/assets/united-states-of-america.png";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import SearchBar from "../search";
+import { useLocaleState } from "@/state/state";
+import { LocaleEnum } from "@/state/enum";
 
 export default function NavigationBar() {
   const router = useRouter();
   const pathname = usePathname();
-  const locale = pathname.split("/")[1];
+  const locale = useLocaleState((state) => state.locale);
+  const setLocale = useLocaleState((state) => state.setLocale);
 
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isVietNamese, setIsVietNamese] = useState<boolean>(false);
@@ -96,7 +99,7 @@ export default function NavigationBar() {
     setToken(storedToken);
     if (storedToken && storedToken !== "") setIsLogin(true);
 
-    setIsVietNamese(locale == "vi" ? true : false);
+    setIsVietNamese(locale == LocaleEnum.vi ? true : false);
   }, []);
 
   const handleLogout = () => {
@@ -136,7 +139,8 @@ export default function NavigationBar() {
   };
 
   const handleSwitchLanguages = () => {
-    const newLocale = isVietNamese ? "en" : "vi";
+    const newLocale = isVietNamese ? LocaleEnum.en : LocaleEnum.vi;
+    setLocale(newLocale);
     setIsVietNamese(!isVietNamese);
     const newPathname = `/${newLocale}${pathname.slice(locale.length + 1)}`;
     router.push(newPathname);

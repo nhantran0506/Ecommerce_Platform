@@ -1,62 +1,85 @@
 import { create } from "zustand";
-import { UserRoleEnum } from "./enum";
-
-// // Define the store types
-// interface CounterState {
-//   count: number;
-//   increase: () => void;
-//   decrease: () => void;
-//   reset: () => void;
-// }
-
-// // // Create the store
-// export const useCounterStore = create<CounterState>((set) => ({
-//   count: 0, // Initial state
-
-//   // Action to increase the count
-//   increase: () => set((state) => ({ count: state.count + 1 })),
-
-//   // Action to decrease the count
-//   decrease: () => set((state) => ({ count: state.count - 1 })),
-
-//   // Action to reset the count
-//   reset: () => set({ count: 0 }),
-// }));
+import { persist } from "zustand/middleware";
+import {
+  IListCategoryState,
+  IListProductState,
+  ILocaleState,
+  IProductId,
+  IUserState,
+} from "./interface";
+import { LocaleEnum } from "./enum";
+import { IResGetUser } from "@/api/auth/interface";
 
 export const useProductId = create<IProductId>((set) => ({
   productId: "",
   setProductId: (newId) => set(() => ({ productId: newId })),
 }));
 
-export const userState = create<IUserState>((set) => ({
+export const useUserState = create<IUserState>((set) => ({
   user: {
+    user_id: "",
     first_name: "",
     last_name: "",
     phone_number: "",
     address: "",
     email: "",
-    role: UserRoleEnum.user,
+    role: "",
+    dob: "",
   },
 
-  setUser: (userInfo: IUserData) => set(() => ({ user: userInfo })),
+  setUser: (userInfo: IResGetUser) => set(() => ({ user: userInfo })),
   clearUser: () =>
     set({
       user: {
+        user_id: "",
         first_name: "",
         last_name: "",
         phone_number: "",
         address: "",
         email: "",
-        role: UserRoleEnum.user,
+        role: "",
+        dob: "",
       },
     }),
 }));
 
-export const productState = create<IListProductState>((set) => ({
-  productList: [],
+export const useProductState = create(
+  persist<IListProductState>(
+    (set) => ({
+      productList: [],
+      setProductList: (productList: IProductData[]) =>
+        set(() => ({ productList: productList })),
+      clearProductList: () => set({ productList: [] }),
+    }),
+    {
+      name: "product-storage",
+    }
+  )
+);
 
-  setProductList: (productList: IProductData[]) =>
-    set(() => ({ productList: productList })),
+export const useCategporyState = create(
+  persist<IListCategoryState>(
+    (set) => ({
+      categoryList: [],
+      setCategoryList: (categoryList: ICategory[]) =>
+        set(() => ({ categoryList: categoryList })),
+      clearCategoryList: () => set({ categoryList: [] }),
+    }),
+    {
+      name: "category-storage",
+    }
+  )
+);
 
-  clearProductList: () => set({ productList: [] }),
-}));
+export const useLocaleState = create(
+  persist<ILocaleState>(
+    (set) => ({
+      locale: LocaleEnum.en,
+      setLocale: (locale: LocaleEnum) => set(() => ({ locale: locale })),
+      clearLocale: () => set({ locale: LocaleEnum.en }),
+    }),
+    {
+      name: "locale-storage",
+    }
+  )
+);

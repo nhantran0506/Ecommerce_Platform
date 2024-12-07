@@ -1,17 +1,15 @@
 "use client";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import SingleComboBoxItem from "@/components/single_combo_box_item";
 import {
   IFilterMenu,
   IOptionMenuFilter,
 } from "@/interface/UI/ISingleComboBoxItem";
 import ProductCard from "@/components/product_card";
-import SearchBar from "@/components/search";
 import SectionHeader from "@/components/section_header";
 import { DollarSign, MapPin } from "react-feather";
 import FilterMenu from "@/components/filter_menu";
-import { Suspense, useEffect, useState } from "react";
-import { productState } from "@/state/state";
+import { useEffect, useState } from "react";
+import { useCategporyState, useProductState } from "@/state/state";
 import productAPIs from "@/api/product";
 import { useTranslations } from "next-intl";
 import ListProductCardSkeleton from "@/components/list_product_card_skeleton";
@@ -19,26 +17,41 @@ import ListProductCardSkeleton from "@/components/list_product_card_skeleton";
 const ProductPage = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const locale = pathname.split("/")[1];
-
+  const t = useTranslations();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
-  const productlist = productState((state) => state.productList);
-  const setProductList = productState((state) => state.setProductList);
-  const t = useTranslations();
+  const [isHydrated, setIsHydrated] = useState(false);
 
+  const productlist = useProductState((state) => state.productList);
+  const setProductList = useProductState((state) => state.setProductList);
+  const cateList = useCategporyState((state) => state.categoryList);
+  const setCateList = useCategporyState((state) => state.setCategoryList);
+
+  const locale = pathname.split("/")[1];
   const searchQuery = searchParams.get("search") || "";
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        console.log("productlist.length ", productlist.length);
+
         setLoading(true);
+        if (searchQuery) {
+          const products = await productAPIs.getSearchListProduct(searchQuery);
+          setProductList(products);
+        } else if (isHydrated && productlist.length === 0) {
+          const products = await productAPIs.getAll();
+          setProductList(products);
+        }
 
-        const res = searchQuery
-          ? await productAPIs.getSearchListProduct(searchQuery)
-          : await productAPIs.getAll();
-
-        setProductList(res);
+        if (isHydrated && cateList.length === 0) {
+          const cateListRes = await productAPIs.getAllCategories();
+          setCateList(cateListRes);
+        }
       } catch (error) {
         console.error("Failed to fetch products:", error);
       } finally {
@@ -47,7 +60,7 @@ const ProductPage = () => {
     };
 
     fetchProducts();
-  }, [searchQuery, setProductList]);
+  }, [searchQuery, setProductList, isHydrated]);
 
   const listFilterOptionForPrice: IOptionMenuFilter[] = [
     { key: "ascending", label: "Ascending" },

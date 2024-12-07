@@ -50,14 +50,13 @@ class Order {
     const token = localStorage.getItem("token");
 
     const response = await fetch(
-      `${API_BASE_URL}${API_ROUTES.GET_ORDER_BY_ID}`,
+      `${API_BASE_URL}${API_ROUTES.GET_ORDER_BY_ID}?order_id=${orderId}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ order_id: orderId }),
       }
     );
 
@@ -65,7 +64,7 @@ class Order {
       throw new Error(`Failed to fetch order with status ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as IOrderDetails;
     return data;
   }
 

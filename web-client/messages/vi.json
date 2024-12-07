@@ -42,6 +42,7 @@
   "product_quantity": "Số lượng",
   "product_description": "Mô tả",
   "product_add_to_cart": "Thêm vào giỏ hàng",
+  "shop_profile": "Thông tin cửa hàng",
   "shop_dashboard": "Bảng điều khiển",
   "shop_products": "Sản phẩm",
   "shop_orders": "Đơn hàng",
@@ -52,5 +53,14 @@
   "clear_all": "Xóa tất cả",
   "submit": "Xác nhận",
   "save_changes": "Lưu thay đổi",
-  "cancel": "Hủy"
+  "cancel": "Hủy",
+  "shop_profile_title": "Thông tin cửa hàng",
+  "input_shop_name": "Tên cửa hàng",
+  "input_shop_address": "Địa chỉ",
+  "input_shop_phone": "Số điện thoại",
+  "input_shop_bio": "Tiểu sử",
+  "placeholder_shop_name": "Nhập tên cửa hàng",
+  "placeholder_shop_address": "Nhập địa chỉ cửa hàng",
+  "placeholder_shop_phone": "Nhập số điện thoại",
+  "placeholder_shop_bio": "Nhập tiểu sử cửa hàng"
 }

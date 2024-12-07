@@ -35,7 +35,7 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale}>
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
