@@ -40,4 +40,5 @@ export const API_ROUTES = {
   UPDATE_PRODUCT: "/products/product_update",,
   CREATE_SHOP: "/shops/create_shop",
   GET_SHOP: "/shops",
+  GET_CURRENT_SHOP: "/shops/get_shop_details",
 };

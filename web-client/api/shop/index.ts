@@ -21,6 +21,28 @@ class Shop {
     return data;
   }
 
+  async getCurrentShopInfo(): Promise<IResCurrentShopDetail> {
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(
+      `${API_BASE_URL}${API_ROUTES.GET_CURRENT_SHOP}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`createShop failed with status ${response.status}`);
+    }
+
+    const data = (await response.json()) as IResCurrentShopDetail;
+    return data;
+  }
+
   async getShopInfo(id: string): Promise<any> {
     const token = localStorage.getItem("token");
 

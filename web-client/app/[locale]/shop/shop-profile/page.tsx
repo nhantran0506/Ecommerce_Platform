@@ -17,16 +17,27 @@ interface IShopInfo {
 const ShopProfilePage = () => {
   const [loading, setLoading] = useState(false);
   const [shop, setShop] = useState<IShopInfo | null>(null);
+  const [haveShop, setHaveShop] = useState<boolean>(false);
   const t = useTranslations();
 
   useEffect(() => {
     const fetchShopInfo = async () => {
       try {
         setLoading(true);
-        const res = await shopAPIs.getShopInfo("");
-        setShop(res);
+        const res = await shopAPIs.getCurrentShopInfo();
+
+        const shopInfo: IShopInfo = {
+          shop_name: res.shop_name,
+          shop_address: res.shop_address,
+          shop_phone_number: res.shop_phone_number,
+          shop_bio: res.shop_bio,
+        };
+
+        setShop(shopInfo);
+        setHaveShop(true);
       } catch (error) {
         console.error("Failed to fetch shop info:", error);
+        setHaveShop(false);
       } finally {
         setLoading(false);
       }
@@ -69,19 +80,23 @@ const ShopProfilePage = () => {
   ];
 
   const handleUpdateShop = async () => {
-    // try {
-    //   setLoading(true);
-    //   await shopAPIs.updateShopInfo({
-    //     shop_name: shop?.shop_name ?? "",
-    //     shop_address: shop?.shop_address ?? "",
-    //     shop_phone_number: shop?.shop_phone_number ?? "",
-    //     shop_bio: shop?.shop_bio ?? "",
-    //   });
-    // } catch (error) {
-    //   console.error("Failed to update shop:", error);
-    // } finally {
-    //   setLoading(false);
-    // }
+    if (!haveShop) {
+      // create shop
+      try {
+        setLoading(true);
+        await shopAPIs.createShop({
+          shop_name: shop?.shop_name ?? "",
+          shop_address: shop?.shop_address ?? "",
+          shop_bio: shop?.shop_bio ?? "",
+        });
+      } catch (error) {
+        console.error("Failed to update shop:", error);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // update shop
+    }
   };
 
   if (loading) {
