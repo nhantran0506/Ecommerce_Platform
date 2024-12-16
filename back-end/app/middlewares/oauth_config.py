@@ -16,6 +16,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 import httpx
 
+
 async def verify_google_oauth_token(code: str) -> dict:
     token_url = "https://oauth2.googleapis.com/token"
     data = {
@@ -25,11 +26,11 @@ async def verify_google_oauth_token(code: str) -> dict:
         "redirect_uri": GOOGLE_REDIRECT_URI,
         "grant_type": "authorization_code",
     }
-    
+
     # Exchange the code for an access token
     async with httpx.AsyncClient() as client:
         token_response = await client.post(token_url, data=data)
-        
+
         # Handle errors during token exchange
         if token_response.status_code != 200:
             raise ValueError("Failed to obtain access token from Google")
@@ -42,7 +43,7 @@ async def verify_google_oauth_token(code: str) -> dict:
         # Use the access token to fetch user information
         user_info_response = await client.get(
             "https://www.googleapis.com/oauth2/v1/userinfo",
-            headers={"Authorization": f"Bearer {access_token}"}
+            headers={"Authorization": f"Bearer {access_token}"},
         )
 
         # Handle errors when fetching user info
@@ -56,7 +57,7 @@ async def verify_google_oauth_token(code: str) -> dict:
 async def verify_fb_oauth_token(code: str) -> dict:
     token_url = "https://graph.facebook.com/v21.0/oauth/access_token"
     user_info_url = "https://graph.facebook.com/v21.0/me"
-    
+
     data = {
         "client_id": FACEBOOK_CLIENT_ID,
         "redirect_uri": FACEBOOK_REDIRECT_URI,
@@ -66,7 +67,7 @@ async def verify_fb_oauth_token(code: str) -> dict:
 
     async with httpx.AsyncClient() as client:
         token_response = await client.get(token_url, params=data)
-        
+
         if token_response.status_code != 200:
             raise ValueError("Failed to obtain access token from Facebook")
 
@@ -77,7 +78,7 @@ async def verify_fb_oauth_token(code: str) -> dict:
 
         user_info_response = await client.get(
             user_info_url,
-            params={"access_token": access_token, "fields": "id,name,email"}
+            params={"access_token": access_token, "fields": "id,name,email"},
         )
 
         if user_info_response.status_code != 200:
@@ -85,4 +86,3 @@ async def verify_fb_oauth_token(code: str) -> dict:
 
         user_info = user_info_response.json()
         return user_info
-

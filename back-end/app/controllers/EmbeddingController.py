@@ -473,7 +473,6 @@ class EmbeddingController:
             limit=top_k,
             return_metadata=MetadataQuery(score=True),
         )
-        
 
         results = self.faq_index.retrieve(query)
         responses = []

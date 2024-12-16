@@ -7,14 +7,15 @@ from sqlalchemy.orm import Session
 from db_connector import Base
 from models.Users import User
 import enum
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class ProviderEnum(enum.Enum):
     DEFAULT = "website"
     GOOGLE_PROVIDER = "google"
     FACEBOOK_PROVIDER = "facebook"
+
 
 class Authentication(Base):
     __tablename__ = "authentication"
@@ -34,11 +35,11 @@ class Authentication(Base):
     hash_pwd: Mapped[String] = mapped_column(String, nullable=True)
     temp_code: Mapped[String] = mapped_column(String, nullable=True)
     temp_code_expiration: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
-    provider_user_id : Mapped[String] = mapped_column(String, nullable=True)
-    provider : Mapped[String] = mapped_column(String, nullable=False,  default=ProviderEnum.DEFAULT.value)
-    user: Mapped["User"] = relationship(
-        "User", back_populates="authenticate"
+    provider_user_id: Mapped[String] = mapped_column(String, nullable=True)
+    provider: Mapped[String] = mapped_column(
+        String, nullable=False, default=ProviderEnum.DEFAULT.value
     )
+    user: Mapped["User"] = relationship("User", back_populates="authenticate")
 
     @staticmethod
     async def hash_password(password: str) -> str:

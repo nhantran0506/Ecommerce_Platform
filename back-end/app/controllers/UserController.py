@@ -3,7 +3,7 @@ from models.Authentication import Authentication
 from serializers.UserSearializers import *
 from middlewares.token_config import *
 from fastapi.responses import JSONResponse
-from fastapi import status, Header, HTTPException ,Depends
+from fastapi import status, Header, HTTPException, Depends
 from helper_collections import UTILS, EMAIL_TEMPLATE
 from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -142,56 +142,61 @@ class UserController:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
             )
-    
 
-    async def get_current_user(self, current_user : User):
+    async def get_current_user(self, current_user: User):
         try:
             if not current_user:
                 return JSONResponse(
-                    content={"error" : "Invalid user"}, status_code=status.HTTP_401_UNAUTHORIZED
+                    content={"error": "Invalid user"},
+                    status_code=status.HTTP_401_UNAUTHORIZED,
                 )
 
-            return current_user 
+            return current_user
         except Exception as e:
             logger.error(str(e))
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
             )
-    
 
-    async def update_password(self, update_password: UserChangePasswordSerializer, current_user : User):
+    async def update_password(
+        self, update_password: UserChangePasswordSerializer, current_user: User
+    ):
         try:
-            query = select(Authentication).where(Authentication.user_name == current_user.email)
+            query = select(Authentication).where(
+                Authentication.user_name == current_user.email
+            )
             result = await self.db.execute(query)
             user_auth = result.scalar_one_or_none()
 
             if not user_auth.verify_password(update_password.old_password):
                 return JSONResponse(
                     content={"error": "User not found."},
-                    status_code=status.HTTP_404_NOT_FOUND
+                    status_code=status.HTTP_404_NOT_FOUND,
                 )
-    
+
             auth_update = (
                 update(Authentication)
                 .where(Authentication.user_id == current_user.user_id)
-                .values(hash_pwd=await Authentication.hash_password(update_password.new_password))
+                .values(
+                    hash_pwd=await Authentication.hash_password(
+                        update_password.new_password
+                    )
+                )
             )
             await self.db.execute(auth_update)
             await self.db.commit()
 
             return JSONResponse(
                 content={"message": "Password updated successfully."},
-                status_code=status.HTTP_200_OK
+                status_code=status.HTTP_200_OK,
             )
 
         except Exception as e:
             await self.db.rollback()
             logger.error(str(e))
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=str(e)
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
             )
-
 
     async def get_user_by_id(self, user_id: str):
         try:
@@ -204,16 +209,14 @@ class UserController:
                     content={"Message": "Unable to find any user."},
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
-            
+
             response = {
-                "first_name" : user.first_name,
-                "last_name" : user.last_name,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
             }
 
-            return JSONResponse(
-                    content=response, status_code=status.HTTP_200_OK
-                )
-                
+            return JSONResponse(content=response, status_code=status.HTTP_200_OK)
+
         except Exception as e:
             logger.error(str(e))
             raise HTTPException(
@@ -262,7 +265,9 @@ class UserController:
             )
 
     async def forgot_password(self, user_data: UserForgotPassword):
-        query = select(Authentication).where(Authentication.user_name == user_data.email)
+        query = select(Authentication).where(
+            Authentication.user_name == user_data.email
+        )
         result = await self.db.execute(query)
         auth = result.scalar_one_or_none()
 
@@ -274,14 +279,16 @@ class UserController:
 
         # Generate a 6-digit temporary code
         temp_code = str(random.randint(100000, 999999))
-        
+
         # Store the temp_code and its expiration time in the authentication record
         auth.temp_code = temp_code
         auth.temp_code_expiration = datetime.now() + timedelta(minutes=5)
         await self.db.commit()
 
         # Send the temporary code via email
-        email_body = f"Your temporary code is: {temp_code}. It will expire in 5 minutes."
+        email_body = (
+            f"Your temporary code is: {temp_code}. It will expire in 5 minutes."
+        )
         await UTILS.send_email(user_data.email, "Password Reset Code", email_body)
 
         return JSONResponse(
@@ -336,7 +343,9 @@ class UserController:
 
     async def validate_temp_code(self, user_data: UserValidateCode):
         try:
-            query = select(Authentication).where(Authentication.user_name == user_data.email)
+            query = select(Authentication).where(
+                Authentication.user_name == user_data.email
+            )
             result = await self.db.execute(query)
             auth = result.scalar_one_or_none()
 
@@ -360,9 +369,17 @@ class UserController:
         except Exception as e:
             await self.db.rollback()
             logger.error(str(e))
-            return JSONResponse(content={"error:" : "INTERNAL_SERVER_ERROR"}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return JSONResponse(
+                content={"error:": "INTERNAL_SERVER_ERROR"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
-    async def change_password_with_code(self, update_password: UserChangeNewPasswordSerializer, temp_code: str, user_email : str):
+    async def change_password_with_code(
+        self,
+        update_password: UserChangeNewPasswordSerializer,
+        temp_code: str,
+        user_email: str,
+    ):
         try:
             query = select(Authentication).where(Authentication.user_name == user_email)
             result = await self.db.execute(query)
@@ -374,22 +391,24 @@ class UserController:
                     status_code=status.HTTP_400_BAD_REQUEST,
                 )
 
-           
             if datetime.now() > auth.temp_code_expiration:
                 return JSONResponse(
                     content={"Message": "Temporary code has expired."},
                     status_code=status.HTTP_400_BAD_REQUEST,
                 )
 
-           
-            user_query = select(Authentication).where(Authentication.user_name == user_email)
+            user_query = select(Authentication).where(
+                Authentication.user_name == user_email
+            )
             user_result = await self.db.execute(user_query)
             user = user_result.scalar_one_or_none()
 
             if user:
-                user.hash_pwd = await Authentication.hash_password(update_password.new_password)
-                auth.temp_code = None 
-                auth.temp_code_expiration = None  
+                user.hash_pwd = await Authentication.hash_password(
+                    update_password.new_password
+                )
+                auth.temp_code = None
+                auth.temp_code_expiration = None
                 await self.db.commit()
 
             return JSONResponse(
@@ -399,4 +418,7 @@ class UserController:
         except Exception as e:
             await self.db.rollback()
             logger.error(str(e))
-            return JSONResponse(content={"error:" : "INTERNAL_SERVER_ERROR"}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return JSONResponse(
+                content={"error:": "INTERNAL_SERVER_ERROR"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

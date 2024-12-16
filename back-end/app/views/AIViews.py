@@ -11,15 +11,16 @@ import json
 from middlewares import token_config
 
 
-
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ai", tags=["ai"])
 
 
-
-
 @router.post("/chatbot")
-async def chatbot(query_payload : QueryPayload, chat_controller : ChatBotController = Depends(), current_user = Depends(token_config.get_current_user)):
+async def chatbot(
+    query_payload: QueryPayload,
+    chat_controller: ChatBotController = Depends(),
+    current_user=Depends(token_config.get_current_user),
+):
     try:
         return await chat_controller.answer(query_payload, current_user)
     except Exception as e:

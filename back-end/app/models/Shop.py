@@ -13,7 +13,9 @@ class Shop(Base):
     )
     shop_name: Mapped[String] = mapped_column(String, nullable=False)
     shop_address: Mapped[String] = mapped_column(String, nullable=False)
-    shop_phone_number: Mapped[String] = mapped_column(String,nullable=False, unique=True)
+    shop_phone_number: Mapped[String] = mapped_column(
+        String, nullable=False, unique=True
+    )
     shop_bio: Mapped[String] = mapped_column(String)
     owner_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False

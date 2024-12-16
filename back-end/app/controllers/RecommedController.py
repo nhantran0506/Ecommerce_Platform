@@ -48,10 +48,8 @@ class RecommendedController:
         self.redis = get_redis()
         try:
             self.client = weaviate.connect_to_local(host=WEAVIATE_URL, port=8080)
-            
-            self.embed_model = HuggingFaceEmbedding(
-                model_name="BAAI/bge-small-en"
-            )
+
+            self.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en")
 
             # self.embed_model = OllamaEmbedding(
             #     model_name=OLLAMA_EMBEDDING_MODEL,
@@ -59,8 +57,6 @@ class RecommendedController:
             #     request_timeout=500.0,
             #     show_progress=True,
             # )
-
-            
 
             self._vector_store = WeaviateVectorStore(
                 weaviate_client=self.client,
@@ -71,7 +67,7 @@ class RecommendedController:
             self._storage_context = StorageContext.from_defaults(
                 vector_store=self._vector_store
             )
-            
+
             try:
                 self.client.collections.get(self.collection_name)
             except:
@@ -88,24 +84,24 @@ class RecommendedController:
                         },
                         {
                             "name": "product_id",
-                            "dataType": ["string"],  
-                            "indexSearchable": True,  
+                            "dataType": ["string"],
+                            "indexSearchable": True,
                         },
                         {
                             "name": "product_name",
-                            "dataType": ["string"],  
-                            "indexSearchable": True, 
+                            "dataType": ["string"],
+                            "indexSearchable": True,
                         },
                         {
                             "name": "product_cat",
-                            "dataType": ["string"],  
-                            "indexSearchable": True, 
+                            "dataType": ["string"],
+                            "indexSearchable": True,
                         },
                     ],
                     "vectorizer": "none",
                 }
                 self.client.collections.create_from_dict(schema)
-                
+
             self._index = VectorStoreIndex.from_vector_store(
                 self._vector_store,
                 embed_model=self.embed_model,
@@ -130,7 +126,6 @@ class RecommendedController:
                         }
         except Exception as e:
             return {"success": False, "error": str(e)}
-
 
     def __del__(self):
         if hasattr(self, "client") and self.client is not None:
@@ -239,7 +234,6 @@ class RecommendedController:
                 weighted_sum / np.sum(scores) if np.sum(scores) != 0 else weighted_sum
             )
 
-            
             _index = self.client.collections.get(self.collection_name)
             vector_result = _index.query.near_vector(
                 near_vector=average_vectors,
@@ -329,7 +323,7 @@ class RecommendedController:
                                 "product_avg_stars": product.avg_stars,
                                 "product_total_ratings": product.total_ratings,
                                 "trending_score": trending_score,
-                                "inventory" : product.inventory,
+                                "inventory": product.inventory,
                                 "shop_name": {
                                     "shop_id": str(shop.shop_id) if shop else None,
                                     "shop_name": shop.shop_name if shop else None,
@@ -349,6 +343,7 @@ class RecommendedController:
                 content={"Message": "Error getting recommendations"},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
     async def get_default_recommed(self):
         try:
             cache_key = "default_recommendations"
@@ -371,7 +366,6 @@ class RecommendedController:
 
             product_metrics = {}
 
-            
             if not orders:
                 get_products_list_query = select(Product).limit(256)
                 products_lists_result = await self.db.execute(get_products_list_query)
@@ -438,8 +432,8 @@ class RecommendedController:
                             "product_category": cat_names,
                             "product_avg_stars": product.avg_stars,
                             "product_total_ratings": product.total_ratings,
-                            "trending_score": 0, 
-                            "inventory" : product.inventory,
+                            "trending_score": 0,
+                            "inventory": product.inventory,
                             "shop_name": {
                                 "shop_id": str(shop.shop_id) if shop else None,
                                 "shop_name": shop.shop_name if shop else None,
@@ -450,7 +444,6 @@ class RecommendedController:
                 self.redis.setex(cache_key, REDIS_TTL, json.dumps(response))
                 return JSONResponse(content=response, status_code=status.HTTP_200_OK)
 
-           
             for order in orders:
                 if order.product_id not in product_metrics:
                     product_metrics[order.product_id] = {
@@ -547,7 +540,7 @@ class RecommendedController:
                             "product_avg_stars": product.avg_stars,
                             "product_total_ratings": product.total_ratings,
                             "trending_score": trending_score,
-                            "inventory" : product.inventory,
+                            "inventory": product.inventory,
                             "shop_name": {
                                 "shop_id": str(shop.shop_id) if shop else None,
                                 "shop_name": shop.shop_name if shop else None,
@@ -563,9 +556,9 @@ class RecommendedController:
 
         except Exception as e:
             return JSONResponse(
-                content={"error": str(e)}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
+                content={"error": str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         except Exception as e:
             await self.db.rollback()

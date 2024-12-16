@@ -32,23 +32,26 @@ from config import (
 
 routing = RouteConfig()
 
+
 async def insert_default_enum_values(session: AsyncSession):
     async with session.begin():
         for cat_type in CatTypes:
-            insert_cat_query = insert(Category).values(
-                cat_name = cat_type.value
-            ).on_conflict_do_update(
-                index_elements=["cat_name"],
-                set_={"cat_name": Category.cat_name},
+            insert_cat_query = (
+                insert(Category)
+                .values(cat_name=cat_type.value)
+                .on_conflict_do_update(
+                    index_elements=["cat_name"],
+                    set_={"cat_name": Category.cat_name},
+                )
             )
             await session.execute(insert_cat_query)
         await session.commit()
+
 
 async def create_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    
     async for session in get_db():
         await insert_default_enum_values(session)
 
@@ -66,8 +69,6 @@ async def startup_event():
 #             for dep in route.dependencies:
 #                 if hasattr(dep, "client"):
 #                     dep.client.close()
-
-
 
 
 user_tasks = UserTasks()
@@ -96,7 +97,6 @@ routing.routing_config(
 @app.get("/")
 def connection_check():
     return {"message": "connect to server successfully!"}
-
 
 
 if __name__ == "__main__":

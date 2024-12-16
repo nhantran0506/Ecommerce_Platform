@@ -13,7 +13,10 @@ class ShopRating(Base):
         UUID(as_uuid=True), ForeignKey("shop.shop_id"), nullable=False, primary_key=True
     )
     user_id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False, primary_key=True
+        UUID(as_uuid=True),
+        ForeignKey("users.user_id"),
+        nullable=False,
+        primary_key=True,
     )
     rating_stars: Mapped[Integer] = mapped_column(Integer, nullable=False)
     created_at: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now())
@@ -27,10 +30,16 @@ class ProductRating(Base):
     __tablename__ = "product_rating"
 
     product_id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("products.product_id"), nullable=False, primary_key=True
+        UUID(as_uuid=True),
+        ForeignKey("products.product_id"),
+        nullable=False,
+        primary_key=True,
     )
     user_id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False, primary_key=True
+        UUID(as_uuid=True),
+        ForeignKey("users.user_id"),
+        nullable=False,
+        primary_key=True,
     )
     rating_stars: Mapped[Integer] = mapped_column(Integer, nullable=False)
     created_at: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now())

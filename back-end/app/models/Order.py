@@ -8,8 +8,16 @@ import uuid
 
 class Order(Base):
     __tablename__ = "orders"
-    order_id : Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id"), index=True)
-    created_at : Mapped[UUID] = mapped_column(DateTime, nullable=False, default=datetime.now)
+    order_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.user_id"), index=True
+    )
+    created_at: Mapped[UUID] = mapped_column(
+        DateTime, nullable=False, default=datetime.now
+    )
 
-    order_items : Mapped["OrderItem"] = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
+    order_items: Mapped["OrderItem"] = relationship(
+        "OrderItem", back_populates="order", cascade="all, delete-orphan"
+    )

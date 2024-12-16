@@ -30,8 +30,6 @@ class CatTypes(enum.Enum):
     FOOD = "FOOD"
 
 
-
-
 class Category(Base):
     __tablename__ = "categories"
 

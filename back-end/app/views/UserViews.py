@@ -34,7 +34,6 @@ async def login(user: UserLogin, user_controller: UserController = Depends()):
         )
 
 
-
 # # google login
 # @router.get("/get_google_login")
 # async def get_google_login(request: Request):
@@ -113,10 +112,14 @@ async def signup(
 
 @router.post("/change_password")
 async def change_password(
-   user_update_password : UserChangePasswordSerializer , user_controller: UserController = Depends(), current_user=Depends(token_config.get_current_user)
+    user_update_password: UserChangePasswordSerializer,
+    user_controller: UserController = Depends(),
+    current_user=Depends(token_config.get_current_user),
 ):
     try:
-        return await user_controller.update_password(user_update_password, current_user=current_user)
+        return await user_controller.update_password(
+            user_update_password, current_user=current_user
+        )
     except Exception as e:
         logger.error(str(e))
         return JSONResponse(
@@ -124,8 +127,12 @@ async def change_password(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+
 @router.post("/get_current_user")
-async def get_current_user(user_controller: UserController = Depends(), current_user=Depends(token_config.get_current_user)):
+async def get_current_user(
+    user_controller: UserController = Depends(),
+    current_user=Depends(token_config.get_current_user),
+):
     try:
         return await user_controller.get_current_user(current_user=current_user)
     except Exception as e:
@@ -134,7 +141,6 @@ async def get_current_user(user_controller: UserController = Depends(), current_
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-
 
 
 @router.post("/update_user")
@@ -182,10 +188,10 @@ async def forgot_password(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+
 @router.post("/validate_temp_code")
 async def validate_temp_code(
-    user_data: UserValidateCode, 
-    user_controller: UserController = Depends()
+    user_data: UserValidateCode, user_controller: UserController = Depends()
 ):
     try:
         return await user_controller.validate_temp_code(user_data)
@@ -195,8 +201,8 @@ async def validate_temp_code(
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-    
-    
+
+
 @router.get("/{user_id}")
 async def get_user(user_id: str, user_controller: UserController = Depends()):
     try:
@@ -208,19 +214,21 @@ async def get_user(user_id: str, user_controller: UserController = Depends()):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+
 @router.post("/change_password_with_code")
 async def change_password_with_code(
-    user_update_password: UserChangeNewPasswordSerializer, 
-    temp_code: str, 
-    user_email : str,
-    user_controller: UserController = Depends(), 
+    user_update_password: UserChangeNewPasswordSerializer,
+    temp_code: str,
+    user_email: str,
+    user_controller: UserController = Depends(),
 ):
     try:
-        return await user_controller.change_password_with_code(user_update_password, temp_code, user_email = user_email)
+        return await user_controller.change_password_with_code(
+            user_update_password, temp_code, user_email=user_email
+        )
     except Exception as e:
         logger.error(str(e))
         return JSONResponse(
             content={"Message": "Unexpected error"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-

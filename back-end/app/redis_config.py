@@ -6,12 +6,13 @@ redis_client = Redis(
     port=REDIS_PORT,
     password=REDIS_PASSWORD,
     ssl=True,
-    decode_responses=True
+    decode_responses=True,
 )
+
 
 def get_redis():
     try:
         redis_client.ping()
         return redis_client
     except Exception as e:
-        raise Exception(f"Could not connect to Redis: {str(e)}") 
+        raise Exception(f"Could not connect to Redis: {str(e)}")

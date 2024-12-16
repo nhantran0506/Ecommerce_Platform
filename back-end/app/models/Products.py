@@ -8,6 +8,7 @@ from models.CartProduct import CartProduct
 from models.OrderItem import *
 from models.ImageProduct import ImageProduct
 
+
 class Product(Base):
     __tablename__ = "products"
     product_id: Mapped[UUID] = mapped_column(
@@ -40,7 +41,7 @@ class Product(Base):
     shop_products: Mapped["ShopProduct"] = relationship(
         "ShopProduct", back_populates="product", cascade="all, delete-orphan"
     )
-    
-    image_product : Mapped["ImageProduct"] =  relationship(
+
+    image_product: Mapped["ImageProduct"] = relationship(
         "ImageProduct", back_populates="product", cascade="all, delete-orphan"
     )

@@ -2,8 +2,10 @@ from pydantic import BaseModel, field_validator
 from models.Category import CatTypes
 from datetime import datetime as DateTime
 
+
 class CategoryCreate(BaseModel):
     cat_name: str
+
 
 class AdminCreate(BaseModel):
     first_name: str
@@ -12,19 +14,18 @@ class AdminCreate(BaseModel):
     password: str
     dob: DateTime
 
-    @field_validator('username')
+    @field_validator("username")
     def validate_username(cls, v):
         if not v or len(v.strip()) == 0:
-            raise ValueError('Username cannot be empty')
+            raise ValueError("Username cannot be empty")
         return v.strip()
 
-    @field_validator('password')
+    @field_validator("password")
     def validate_password(cls, v):
         if len(v) < 8:
-            raise ValueError('Password must be at least 8 characters long')
+            raise ValueError("Password must be at least 8 characters long")
         return v
 
 
 class AdminGetData(BaseModel):
     timestamp: DateTime
-

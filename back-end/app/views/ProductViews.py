@@ -33,7 +33,7 @@ async def create_product(
     product_description: str = Form(...),
     price: float = Form(...),
     category: list[str] = Form(...),
-    inventory : int = Form(...),
+    inventory: int = Form(...),
     images: list[UploadFile] = File(...),
     current_user=Depends(token_config.get_current_user),
     product_controller: ProductController = Depends(),
@@ -44,7 +44,7 @@ async def create_product(
             product_description=product_description,
             price=price,
             category=category,
-            inventory = inventory,
+            inventory=inventory,
         )
         return await product_controller.create_product(
             product=product, image_list=images, current_user=current_user
@@ -63,7 +63,7 @@ async def product_update(
     product_id: uuid.UUID = Form(...),
     product_description: str = Form(...),
     price: float = Form(...),
-    inventory : int = Form(...),
+    inventory: int = Form(...),
     category: list[str] = Form(...),
     images: Optional[list[UploadFile]] = File(...),
     product_controller: ProductController = Depends(),
@@ -75,7 +75,7 @@ async def product_update(
             product_name=product_name,
             product_description=product_description,
             price=price,
-            inventory = inventory,
+            inventory=inventory,
             category=category,
         )
 
@@ -96,14 +96,16 @@ async def search_products(
     categories: Optional[List[str]] = Query(None),
     min_price: Optional[float] = Query(None),
     max_price: Optional[float] = Query(None),
-    sort_price: Optional[str] = Query(None, description="'asc' for low to high, 'desc' for high to low"),
+    sort_price: Optional[str] = Query(
+        None, description="'asc' for low to high, 'desc' for high to low"
+    ),
     embedding_controller: EmbeddingController = Depends(),
 ):
     filters = SearchFilter(
-        categories=categories, 
-        min_price=min_price, 
+        categories=categories,
+        min_price=min_price,
         max_price=max_price,
-        sort_price=sort_price
+        sort_price=sort_price,
     )
     return await embedding_controller.search_product(user_query, filters)
 
@@ -173,11 +175,11 @@ async def get_all_products_cat(product_controller: ProductController = Depends()
 async def get_product(
     product_id: uuid.UUID,
     product_controller: ProductController = Depends(),
-    current_user = Depends(token_config.get_current_user)
+    current_user=Depends(token_config.get_current_user),
 ):
     try:
         return await product_controller.post_single_product(
-            product_id=product_id, current_user = current_user
+            product_id=product_id, current_user=current_user
         )
     except Exception as e:
         logger.error(str(e))
@@ -193,9 +195,7 @@ async def get_product(
     product_controller: ProductController = Depends(),
 ):
     try:
-        return await product_controller.get_single_product(
-            product_id=product_id
-        )
+        return await product_controller.get_single_product(product_id=product_id)
     except Exception as e:
         logger.error(str(e))
         return JSONResponse(

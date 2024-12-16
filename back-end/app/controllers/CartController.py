@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 class CartController:
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
-    
 
     async def _get_image(self, image_url: str) -> dict:
         try:
@@ -54,8 +53,10 @@ class CartController:
                     user_id=current_user.user_id, created_at=datetime.now()
                 )
                 await self.db.execute(user_cart_create_query)
-            
-            get_user_shop_query = select(Shop).where(Shop.owner_id == current_user.user_id)
+
+            get_user_shop_query = select(Shop).where(
+                Shop.owner_id == current_user.user_id
+            )
             shop = await self.db.execute(get_user_shop_query)
             shop = shop.scalar_one_or_none()
 
@@ -74,26 +75,32 @@ class CartController:
                     #             status_code=status.HTTP_403_FORBIDDEN
                     #         )
 
-
-
-                    query = insert(CartProduct).values(
-                        cart_id=user_cart.cart_id,
-                        product_id=cart_items.product_id,
-                        quantity=cart_items.quantity,
-                    ).on_conflict_do_update(
-                        index_elements=["cart_id", "product_id"],
-                        set_={"quantity": cart_items.quantity},
+                    query = (
+                        insert(CartProduct)
+                        .values(
+                            cart_id=user_cart.cart_id,
+                            product_id=cart_items.product_id,
+                            quantity=cart_items.quantity,
+                        )
+                        .on_conflict_do_update(
+                            index_elements=["cart_id", "product_id"],
+                            set_={"quantity": cart_items.quantity},
+                        )
                     )
 
                     await self.db.execute(query)
 
-                    insert_user_interest = insert(UserInterest).values(
-                        user_id=current_user.user_id,
-                        product_id=cart_items.product_id,
-                        score=InterestScore.CART.value
-                    ).on_conflict_do_update(
-                        index_elements=["user_id", "product_id"],
-                        set_={"score": InterestScore.CART.value}
+                    insert_user_interest = (
+                        insert(UserInterest)
+                        .values(
+                            user_id=current_user.user_id,
+                            product_id=cart_items.product_id,
+                            score=InterestScore.CART.value,
+                        )
+                        .on_conflict_do_update(
+                            index_elements=["user_id", "product_id"],
+                            set_={"score": InterestScore.CART.value},
+                        )
                     )
 
                     await self.db.execute(insert_user_interest)
@@ -102,7 +109,6 @@ class CartController:
                         CartProduct.cart_id == user_cart.cart_id
                     )
 
-            
             await self.db.commit()
 
             return await self.get_cart_details(current_user)
@@ -151,8 +157,10 @@ class CartController:
                         status_code=404,
                         detail=f"Product with id {items.product_id} not found",
                     )
-                
-                image_query = select(ImageProduct).where(ImageProduct.product_id == product.product_id)
+
+                image_query = select(ImageProduct).where(
+                    ImageProduct.product_id == product.product_id
+                )
                 image_results = await self.db.execute(image_query)
                 product_images = image_results.scalars().all()
                 if product_images:
@@ -165,7 +173,6 @@ class CartController:
                         for result in image_url_results
                         if result["success"]
                     ]
-
 
                 cart_items_details.append(
                     {
@@ -183,7 +190,7 @@ class CartController:
                 "cart_details": {
                     "products": cart_items_details,
                     "created_at": datetime.now(),
-                    "total_price": total_price
+                    "total_price": total_price,
                 }
             }
         except Exception as e:

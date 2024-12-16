@@ -31,8 +31,6 @@ class UserPostSerializer(UserGetSerializer):
 class UserChangeNewPasswordSerializer(BaseModel):
     new_password: str = Field(..., alias="new_password")
 
-    
-
     @field_validator("new_password")
     def validate_new_password(cls, value):
         pattern = r"^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*().]).+$"
@@ -62,6 +60,7 @@ class UserChangePasswordSerializer(UserChangeNewPasswordSerializer):
             )
 
         return value
+
 
 class UserCreateSerializer(UserPostSerializer):
     first_name: str = Field(..., alias="first_name")

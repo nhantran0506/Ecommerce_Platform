@@ -103,7 +103,6 @@ class ChatBotController:
         self.db = db
         self.embedding_engine = EmbeddingController(self.db)
 
-
     async def add_user(self, user: User, model_name: str):
         try:
             insert_stmt = (
@@ -186,8 +185,7 @@ class ChatBotController:
                 )
 
                 default_prompt = PromptTemplate(DEFAULT_PROMPT).format(
-                    context=context,
-                    user_query=query
+                    context=context, user_query=query
                 )
 
                 session_id = await self.add_message(

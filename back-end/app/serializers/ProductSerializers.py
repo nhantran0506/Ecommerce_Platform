@@ -97,15 +97,15 @@ class ProductRatingSerializer(BaseModel):
 
 
 class SearchFilter(BaseModel):
-    categories: Optional[List[str]] = None  
+    categories: Optional[List[str]] = None
     min_price: Optional[float] = None
     max_price: Optional[float] = None
-    sort_price: Optional[str] = None 
+    sort_price: Optional[str] = None
 
     @field_validator("sort_price")
     @classmethod
     def validate_sort_price(cls, sort_price: Optional[str]) -> Optional[str]:
-        if sort_price and sort_price not in ['asc', 'desc']:
+        if sort_price and sort_price not in ["asc", "desc"]:
             raise ValueError("sort_price must be either 'asc' or 'desc'")
         return sort_price
 

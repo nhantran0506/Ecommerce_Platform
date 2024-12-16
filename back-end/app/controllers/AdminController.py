@@ -547,7 +547,7 @@ class AdminController:
 
             result = await self.db.execute(query)
             await self.db.commit()
-            
+
             new_category = result.scalar_one()
 
             return JSONResponse(
@@ -555,8 +555,8 @@ class AdminController:
                     "Message": "Category created successfully",
                     "category": {
                         "cat_id": str(new_category.cat_id),
-                        "cat_name": new_category.cat_name.value
-                    }
+                        "cat_name": new_category.cat_name.value,
+                    },
                 },
                 status_code=status.HTTP_201_CREATED,
             )
@@ -575,33 +575,32 @@ class AdminController:
                 content={"Message": "Invalid credentials."},
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
-        
+
         try:
             # Get all categories
             categories_query = select(Category)
             result = await self.db.execute(categories_query)
             categories = result.scalars().all()
-            
+
             response = []
             for category in categories:
                 # Count products for each category
-                product_count_query = select(func.count(CategoryProduct.product_id)).where(
-                    CategoryProduct.cat_id == category.cat_id
-                )
+                product_count_query = select(
+                    func.count(CategoryProduct.product_id)
+                ).where(CategoryProduct.cat_id == category.cat_id)
                 count_result = await self.db.execute(product_count_query)
                 product_count = count_result.scalar()
-                
-                response.append({
-                    "category_id": str(category.cat_id),
-                    "category_name": category.cat_name.value,
-                    "number_of_products": product_count
-                })
-            
-            return JSONResponse(
-                content=response,
-                status_code=status.HTTP_200_OK
-            )
-            
+
+                response.append(
+                    {
+                        "category_id": str(category.cat_id),
+                        "category_name": category.cat_name.value,
+                        "number_of_products": product_count,
+                    }
+                )
+
+            return JSONResponse(content=response, status_code=status.HTTP_200_OK)
+
         except Exception as e:
             await self.db.rollback()
             logger.error(str(e))

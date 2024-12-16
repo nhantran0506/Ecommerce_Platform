@@ -54,7 +54,7 @@ HOST_DB_DBNAME = str(os.getenv("HOST_DB_DBNAME"))
 REDIS_HOST = str(os.getenv("REDIS_HOST"))
 REDIS_PORT = int(os.getenv("REDIS_PORT"))
 REDIS_PASSWORD = str(os.getenv("REDIS_PASSWORD"))
-REDIS_TTL = int(os.getenv("REDIS_TTL", 3600))  
+REDIS_TTL = int(os.getenv("REDIS_TTL", 3600))
 
 
 VNPAY_TMN_CODE = str(os.getenv("VNPAY_TMN_CODE"))

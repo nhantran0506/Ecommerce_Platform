@@ -171,7 +171,7 @@ async def get_sale_history(
 async def update_shop(
     shop: ShopBase,
     current_user: User = Depends(token_config.get_current_user),
-    shop_controller: ShopController = Depends()
+    shop_controller: ShopController = Depends(),
 ):
     try:
         return await shop_controller.update_shop(shop=shop, current_user=current_user)
@@ -179,5 +179,5 @@ async def update_shop(
         logger.error(str(e))
         return JSONResponse(
             content={"Message": "Unexpected error"},
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )

@@ -639,7 +639,7 @@ class ShopController:
             if not exist_shop:
                 return JSONResponse(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    content={"error": "Shop not found"}
+                    content={"error": "Shop not found"},
                 )
 
             update_shop_query = (
@@ -648,11 +648,11 @@ class ShopController:
                 .values(
                     shop_name=shop.shop_name,
                     shop_address=shop.shop_address,
-                    shop_bio=shop.shop_bio
+                    shop_bio=shop.shop_bio,
                 )
                 .returning(Shop)
             )
-            
+
             updated_shop = await self.db.execute(update_shop_query)
             updated_shop = updated_shop.scalar_one_or_none()
             await self.db.commit()
@@ -666,9 +666,11 @@ class ShopController:
                     "shop_bio": updated_shop.shop_bio,
                     "shop_phone_number": updated_shop.shop_phone_number,
                     "owner_id": str(updated_shop.owner_id),
-                    "avg_stars": float(updated_shop.avg_stars) if updated_shop.avg_stars else 0.0,
-                    "total_ratings": updated_shop.total_ratings or 0
-                }
+                    "avg_stars": (
+                        float(updated_shop.avg_stars) if updated_shop.avg_stars else 0.0
+                    ),
+                    "total_ratings": updated_shop.total_ratings or 0,
+                },
             )
 
         except Exception as e:
@@ -676,5 +678,5 @@ class ShopController:
             logger.error(str(e))
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content={"error": str(e)}
+                content={"error": str(e)},
             )

@@ -15,7 +15,6 @@ class ShopBase(BaseModel):
         from_attributes = True
 
 
-
 class ShopCreate(ShopBase):
     pass
 
